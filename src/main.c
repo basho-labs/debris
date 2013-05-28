@@ -20,6 +20,7 @@ int main (int argc, char *argv[])
 
    struct riak_pb_transport riak;
    riak_default_transport(&riak);
+   // ip and port are hardcoded internally right now
    riak_pb_connect(&riak, 0, "127.0.0.1", 10017);
 
    struct riak_string *bucket = new_string("Foo");

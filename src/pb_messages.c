@@ -27,9 +27,10 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    printf("riak_get [%s|%s = %i bytes]\n", bucket->data, key->data, msglen);
    pbtransport->send_message(pbtransport->transport_data, MSG_RPBGETREQ, msgbuf, msglen);
 
-   void* buf;
-   pbtransport->receive_message(pbtransport->transport_data, MSG_RPBGETRESP, &buf);
-   printf("Response = %s\n", buf);
-   free(buf);
+   struct pb_response request;
+   pbtransport->receive_message(pbtransport->transport_data, MSG_RPBGETRESP, &request);
+   //RpbGetResp getresp = rpn_get_resp__unpack(NULL, msg_len, buf);
+
+   // free(buf); <- this free blows up, I have a problem upstream
 }
 

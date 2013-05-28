@@ -81,23 +81,27 @@ int default_send_message(void* transport_data, uint32_t reqid, void* data, uint3
   GET_TD;
   uint32_t msglen = htonl(len + 5);
   // TODO: clean up!
+  // http://docs.basho.com/riak/1.1.4/references/apis/protocol-buffers/
   send(td->socket_fd, (void*)&msglen, 4, 0);
   send(td->socket_fd, (void*)&reqid, 1, 0);
   send(td->socket_fd, data, msglen, 0);
 }
 
-int default_receive_message(void *transport_data, uint32_t msgid, void **data) {
+int default_receive_message(void *transport_data, uint32_t msgid, struct pb_response *resp) {
   printf("Receive data\n");
   GET_TD;
   uint32_t resplen = 0;
   uint8_t  respid;
-  recv(td->socket_fd, (void*)&resplen, 4, 0);
-  recv(td->socket_fd, (void*)&respid, 1, 0);
-  uint32_t encoded_msg_length = ntohl(resplen) - 1;
+  recv(td->socket_fd, (void*)&resplen, 4, 0);       // length is 4 bytes
+  recv(td->socket_fd, (void*)&respid, 1, 0);        // 1 byte for the response code
+  uint32_t encoded_msg_length = ntohl(resplen) - 1; // -1 for the length byte
   void* buf = malloc(sizeof(encoded_msg_length));
-  bzero(buf, encoded_msg_length+1);
+  bzero(buf, encoded_msg_length);
   recv(td->socket_fd, buf, encoded_msg_length, 0);
-  *data = "foo";
+  resp->len = encoded_msg_length;
+  printf("WARNING: malloc without free in resp->buf\n");
+  resp->buf = buf;
+  return 0;
 }
 
 int default_receive_message_chunked() {
@@ -110,6 +114,13 @@ int default_disconnect(void* transport_data) {
   GET_TD;
   close(td->socket_fd);
   printf("Disconnecting from Riak\n");
+}
+
+void riak_pb_connect(struct riak_pb_transport* t,
+                                  struct riak_protocol* p,
+                                  char* ip,
+                                  int port) {
+  t->connect(t->transport_data, ip, port);
 }
 
 

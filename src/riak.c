@@ -20,12 +20,5 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 
-struct riak_context *riak_pb_connect(struct riak_pb_transport* t,
-                                  struct riak_protocol* p,
-                                  char* ip,
-                                  int port) {
-  t->connect(t->transport_data, ip, port);
-}
-
 
 

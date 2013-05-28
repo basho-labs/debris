@@ -1,3 +1,25 @@
+/*
+ * -------------------------------------------------------------------
+ * riak-c-client
+ *
+ * Copyright (c) 2013 Dave Parfitt
+ *
+ * This file is provided to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License.  You may obtain
+ * a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ * -------------------------------------------------------------------
+ */
+
 
 #ifndef RIAK_H
 #define RIAK_H
@@ -13,43 +35,15 @@ struct riak_context {
   // anything else... network options etc
 };
 
+
 // let the dev worry about string length
 struct riak_string {
   char* data;
   size_t len;
 };
 
-// NOT USED
-//struct pb_request {
-//  uint32_t msglength;
-//  uint8_t reqid;          // Protobuffs msg id for request
-//  uint8_t respid;         // Expected protobuffs msg id for response
-//  void* msgdata;
-//};
-
-// NOT USED
-//struct pb_response {
-//  uint8_t respid;
-//  uint32_t len;
-//  void* buf;
-//};
-
-struct riak_pb_transport {
-  // socket layer
-  void* transport_data;
-  int (*connect)(void *transport_data, char* ip, int port);
-  int (*disconnect)();
-  int (*send_message)(void *transport_data, uint32_t msgid, void* data, unsigned len);
-  int (*receive_message)(void *transport_data, uint32_t msgid, void**);
-  int (*receive_message_chunked)();
-};
 
 
-// riak_context is incorrect here
-struct riak_context *riak_pb_connect(struct riak_pb_transport*,
-                                  struct riak_protocol*,
-                                  char* ip,
-                                  int port);
 
 void riak_ping(struct riak_context*);
 

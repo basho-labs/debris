@@ -2,7 +2,7 @@
 #define PB_MESSAGES_H
 
 #include "riak.h"
-
+#include "pb_transport.h"
 #define MSG_RPBERRORRESP 0
 
 // 0 length
