@@ -36,6 +36,6 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    printf("RPB msg %d\n",getresp->n_content);
    RpbContent *c = getresp->content[0];
    printf("Value=[%s]\n", c->value.data);
-     //free(response.buf);
+   free(response.buf);
 }
 
