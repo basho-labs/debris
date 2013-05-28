@@ -34,8 +34,6 @@ void riak_pb_connect(struct riak_pb_transport*,
                       char* ip,
                       int port);
 
-
-
 struct riak_pb_default_transport_data {
   int socket_fd;
 };

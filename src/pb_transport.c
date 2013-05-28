@@ -91,15 +91,16 @@ int default_receive_message(void *transport_data, uint32_t msgid, struct pb_resp
   printf("Receive data\n");
   GET_TD;
   uint32_t resplen = 0;
-  uint8_t  respid;
+  uint8_t  respid = 0;
   recv(td->socket_fd, (void*)&resplen, 4, 0);       // length is 4 bytes
   recv(td->socket_fd, (void*)&respid, 1, 0);        // 1 byte for the response code
+
   uint32_t encoded_msg_length = ntohl(resplen) - 1; // -1 for the length byte
-  void* buf = malloc(sizeof(encoded_msg_length));
+  char* buf = malloc(encoded_msg_length);
   bzero(buf, encoded_msg_length);
   recv(td->socket_fd, buf, encoded_msg_length, 0);
   resp->len = encoded_msg_length;
-  printf("WARNING: malloc without free in resp->buf\n");
+  resp->respid = respid;
   resp->buf = buf;
   return 0;
 }

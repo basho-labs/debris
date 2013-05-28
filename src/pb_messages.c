@@ -30,10 +30,12 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    struct pb_response response;
    pbtransport->receive_message(pbtransport->transport_data, MSG_RPBGETRESP, &response);
    printf("Response = %s\n", (char*)response.buf);
-   printf("Response length = %d", response.len);
+   printf("Response length = %d\n", response.len);
    // decode the PB response etc
-   //RpbGetResp getresp = rpn_get_resp__unpack(NULL, msg_len, buf);
-
-   // free(buf); <- this free blows up, I have a problem upstream
+   RpbGetResp *getresp = rpb_get_resp__unpack(NULL, response.len, (char*)response.buf);
+   printf("RPB msg %d\n",getresp->n_content);
+   RpbContent *c = getresp->content[0];
+   printf("Value=[%s]\n", c->value.data);
+     //free(response.buf);
 }
 
