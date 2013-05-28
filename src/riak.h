@@ -11,7 +11,7 @@ struct riak_protocol {
 struct riak_context {
   struct riak_protocol *proto;
   // anything else... network options etc
-}
+};
 
 // let the dev worry about string length
 struct riak_string {
