@@ -1,20 +1,17 @@
+
 #ifndef RIAK_H
 #define RIAK_H
 #include <arpa/inet.h>
 
-typedef enum {RIAK_PROTO_HTTP,
-              RIAK_PROTO_PB} riak_proto;
-
-
-
 struct riak_protocol {
-  // protocol *implementation*
-  int bar;
+  // protobuffs OR http
+  // fn pointers to implementation of each riak feature (ping, get, put)
 };
 
 struct riak_context {
-  int foo;
-};
+  struct riak_protocol *proto;
+  // anything else... network options etc
+}
 
 // let the dev worry about string length
 struct riak_string {
@@ -22,18 +19,20 @@ struct riak_string {
   size_t len;
 };
 
-struct pb_request {
-  uint32_t msglength;
-  uint8_t reqid;          // Protobuffs msg id for request
-  uint8_t respid;         // Expected protobuffs msg id for response
-  void* msgdata;
-};
+// NOT USED
+//struct pb_request {
+//  uint32_t msglength;
+//  uint8_t reqid;          // Protobuffs msg id for request
+//  uint8_t respid;         // Expected protobuffs msg id for response
+//  void* msgdata;
+//};
 
-struct pb_response {
-  uint8_t respid;
-  uint32_t len;
-  void* buf;
-};
+// NOT USED
+//struct pb_response {
+//  uint8_t respid;
+//  uint32_t len;
+//  void* buf;
+//};
 
 struct riak_pb_transport {
   // socket layer
@@ -45,37 +44,39 @@ struct riak_pb_transport {
   int (*receive_message_chunked)();
 };
 
+
+// riak_context is incorrect here
 struct riak_context *riak_pb_connect(struct riak_pb_transport*,
                                   struct riak_protocol*,
                                   char* ip,
                                   int port);
 
-void riak_ping();
+void riak_ping(struct riak_context*);
 
-void riak_get();
+void riak_get(struct riak_context*);
 
-void riak_server_info();
+void riak_server_info(struct riak_context*);
 
-void riak_fetch();
+void riak_fetch(struct riak_context*);
 
-void riak_store();
+void riak_store(struct riak_context*);
 
-void riak_delete();
+void riak_delete(struct riak_context*);
 
-void riak_bucket_set_props();
+void riak_bucket_set_props(struct riak_context*);
 
-void riak_bucket_get_props();
+void riak_bucket_get_props(struct riak_context*);
 
-void riak_list_buckets();
+void riak_list_buckets(struct riak_context*);
 
-void riak_list_keys();
+void riak_list_keys(struct riak_context*);
 
-void riak_set_client_id();
+void riak_set_client_id(struct riak_context*);
 
-void riak_get_client_id();
+void riak_get_client_id(struct riak_context*);
 
-void riak_query_2i();
+void riak_query_2i(struct riak_context*);
 
-void riak_map_reduce();
+void riak_map_reduce(struct riak_context*);
 
 #endif
