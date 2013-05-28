@@ -1,0 +1,21 @@
+lib_files = Split('riak.c pb_messages.c pb_transport.c riak.pb-c.c riak_kv.pb-c.c')
+Library('riak_c_client', lib_files)
+Program('main.c', LIBS=['riak_c_client', 'pthread', 'protobuf', 'protobuf-c'], LIBPATH='.')
+
+env = Environment()
+conf = Configure(env)
+if not conf.CheckLib('pthread'):
+  print 'Did not find pthread lib, exiting!'
+  Exit(1)
+
+if not conf.CheckLib('protobuf'):
+  print 'Did not find protobuf lib, exiting!'
+  Exit(1)
+
+if not conf.CheckLib('protobuf-c'):
+  print 'Did not find protobuf-c lib, exiting!'
+  Exit(1)
+
+
+env = conf.Finish()
+
