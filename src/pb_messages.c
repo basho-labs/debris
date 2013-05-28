@@ -33,9 +33,11 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    printf("Response length = %d\n", response.len);
    // decode the PB response etc
    RpbGetResp *getresp = rpb_get_resp__unpack(NULL, response.len, (char*)response.buf);
-   printf("RPB msg %d\n",getresp->n_content);
+   //printf("RPB msg %d\n",getresp->n_content);
+
    RpbContent *c = getresp->content[0];
    printf("Value=[%s]\n", c->value.data);
+   rpb_get_resp__free_unpacked(getresp, NULL);
    free(response.buf);
 }
 

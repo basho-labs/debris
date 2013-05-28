@@ -23,7 +23,7 @@ void riak_default_transport(struct riak_pb_transport *t) {
   t->disconnect = default_disconnect;
   t->send_message = default_send_message;
   t->receive_message = default_receive_message;
-  t->receive_message_chunked = default_receive_message_chunked;
+  t->receive_message_streamed = default_receive_message_streamed;
 }
 
 
@@ -105,7 +105,7 @@ int default_receive_message(void *transport_data, uint32_t msgid, struct pb_resp
   return 0;
 }
 
-int default_receive_message_chunked() {
+int default_receive_message_streamed() {
 
 }
 

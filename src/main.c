@@ -17,7 +17,6 @@ struct riak_string* new_string(char *foo) {
 
 int main (int argc, char *argv[])
 {
-
    struct riak_pb_transport riak;
    riak_default_transport(&riak);
    // ip and port are hardcoded internally right now
