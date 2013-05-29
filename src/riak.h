@@ -38,12 +38,50 @@ struct riak_context {
 
 // let the dev worry about string length
 struct riak_string {
-  char* data;
   size_t len;
+  char* data;
 };
 
+// protobuf-c maps boolean to an int
+typedef int riak_boolean;
 
+// TODO: riak_string vs riak_binary
+struct riak_binary {
+  size_t len;
+  uint8_t *data;
+};
 
+struct riak_object {
+  riak_boolean has_content_type;
+  riak_boolean has_charset;
+  riak_boolean has_content_encoding;
+  riak_boolean has_vtag;
+  riak_boolean has_last_mod;
+  riak_boolean has_last_mod_usecs;
+
+  struct riak_binary *value;
+  struct riak_binary *content_type;
+  struct riak_binary *encoding;
+  struct riak_binary *vtag;
+
+  size_t n_links;
+  //RpbLink **links;
+
+  uint32_t last_mod;
+  uint32_t last_mod_usecs;
+  size_t n_usermeta;
+  //RpbPair **usermeta;
+  size_t n_indexes;
+  //RpbPair **indexes;
+  riak_boolean has_deleted;
+  riak_boolean deleted;
+};
+
+struct riak_object *new_riak_object();
+void free_riak_object(struct riak_object*);
+
+struct riak_binary *new_riak_binary(size_t len, uint8_t *data);
+void free_riak_binary(struct riak_binary*);
 
 void riak_ping(struct riak_context*);
 
