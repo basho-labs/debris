@@ -47,6 +47,9 @@
 #define MSG_RPBSEARCHQUERYREQ 27
 #define MSG_RBPSEARCHQUERYRESP 28
 
-struct riak_response* riak_pb_get(struct riak_pb_transport *transport, struct riak_string *bucket, struct riak_string *key);
+int riak_pb_get(struct riak_pb_transport *,
+                struct riak_string *bucket,
+                struct riak_string *key,
+                struct riak_response *);
 
 #endif

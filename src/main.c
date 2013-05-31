@@ -28,11 +28,10 @@ int main (int argc, char *argv[])
 
    struct riak_string *bucket = new_string("Foo");
    struct riak_string *key = new_string("Bar");
-
-   riak_pb_get(&riak, bucket, key);
-
-   free(bucket);
-   free(key);
+   struct riak_response response;
+   riak_pb_get(&riak, bucket, key, &response);
+   printf("Response object count = %d\n", response.object_count);
+   printf("[%s]\n", response.objects[0].value->data);
 
    /*
    struct riak_pb_transport riak;

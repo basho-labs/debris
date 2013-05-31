@@ -90,9 +90,10 @@ struct riak_vclock {
 
 struct riak_response {
   struct riak_vclock *vclock;
-  //struct riak_object objects[];
   riak_boolean unmodified;
   riak_boolean deleted;
+  int object_count;
+  struct riak_object *objects;
 };
 
 

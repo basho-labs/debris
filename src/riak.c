@@ -33,7 +33,8 @@ void free_riak_object(struct riak_object *o) {
 struct riak_binary *new_riak_binary(size_t len, uint8_t *data) {
   struct riak_binary *b = (struct riak_binary*)malloc(sizeof(struct riak_binary));
   b->len = len;
-  b->data = data;
+  b->data = (uint8_t*)malloc(len);
+  memcpy(b->data, data, len);
   return b;
 }
 
