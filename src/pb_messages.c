@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int riak_pb_get(struct riak_pb_transport *pbtransport,
-                struct riak_string *bucket,
-                struct riak_string *key) {
+struct riak_response* riak_pb_get(struct riak_pb_transport *pbtransport,
+                                  struct riak_string *bucket,
+                                  struct riak_string *key) {
    void *msgbuf;
    unsigned msglen;
 
@@ -39,5 +39,6 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    printf("Value=[%s]\n", c->value.data);
    rpb_get_resp__free_unpacked(getresp, NULL);
    free(response.buf);
+   return 0;
 }
 

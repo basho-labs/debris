@@ -13,26 +13,8 @@
 
 struct riak_object *new_riak_object() {
   struct riak_object *o = (struct riak_object*)malloc(sizeof(struct riak_object));
-  o->has_content_type = 0;
-  o->has_charset = 0;
-  o->has_content_encoding = 0;
-  o->has_vtag = 0;
-  o->has_last_mod = 0;
-  o->has_last_mod_usecs = 0;
+  bzero(o, sizeof(struct riak_object));
   o->value = (struct riak_binary*)malloc(sizeof(struct riak_binary));
-  o->content_type = 0;
-  o->encoding = 0;
-  o->vtag = 0;
-  o->n_links = 0;
-  //RpbLink **links;
-  o->last_mod = 0;
-  o->last_mod_usecs = 0;
-  o->n_usermeta = 0;
-  //RpbPair **usermeta;
-  o->n_indexes = 0;
-  //RpbPair **indexes;
-  o->has_deleted = 0;
-  o->deleted = 0;
   return o;
 }
 
@@ -63,4 +45,16 @@ void free_riak_binary(struct riak_binary *b) {
   free(b);
 }
 
+
+struct riak_response* new_riak_response() {
+  struct riak_response* r = (struct riak_response*)malloc(sizeof(struct riak_response));
+  bzero(r, sizeof(struct riak_response));
+  return r;
+}
+
+void free_riak_response(struct riak_response *r) {
+  if(r == 0) {
+    return;
+  }
+}
 

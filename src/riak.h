@@ -52,30 +52,53 @@ struct riak_binary {
 };
 
 struct riak_object {
-  riak_boolean has_content_type;
-  riak_boolean has_charset;
-  riak_boolean has_content_encoding;
-  riak_boolean has_vtag;
-  riak_boolean has_last_mod;
-  riak_boolean has_last_mod_usecs;
-
   struct riak_binary *value;
+
+  riak_boolean has_charset;
+  struct riak_binary *charset;
+
+  riak_boolean has_last_mod;
+  uint32_t last_mod;
+
+  riak_boolean has_last_mod_usecs;
+  uint32_t last_mod_usecs;
+
+  riak_boolean has_content_type;
   struct riak_binary *content_type;
+
+  riak_boolean has_content_encoding;
   struct riak_binary *encoding;
+
+  riak_boolean has_deleted;
+  riak_boolean deleted;
+
+  riak_boolean has_vtag;
   struct riak_binary *vtag;
 
   size_t n_links;
   //RpbLink **links;
 
-  uint32_t last_mod;
-  uint32_t last_mod_usecs;
   size_t n_usermeta;
   //RpbPair **usermeta;
   size_t n_indexes;
   //RpbPair **indexes;
-  riak_boolean has_deleted;
+};
+
+struct riak_vclock {
+
+};
+
+struct riak_response {
+  struct riak_vclock *vclock;
+  //struct riak_object objects[];
+  riak_boolean unmodified;
   riak_boolean deleted;
 };
+
+
+// helper fn's
+struct riak_response *new_riak_response();
+void free_riak_response(struct riak_response*);
 
 struct riak_object *new_riak_object();
 void free_riak_object(struct riak_object*);
@@ -83,6 +106,9 @@ void free_riak_object(struct riak_object*);
 struct riak_binary *new_riak_binary(size_t len, uint8_t *data);
 void free_riak_binary(struct riak_binary*);
 
+
+
+// basic ops
 void riak_ping(struct riak_context*);
 
 void riak_get(struct riak_context*);

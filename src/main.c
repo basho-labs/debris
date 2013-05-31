@@ -17,9 +17,10 @@ struct riak_string* new_string(char *foo) {
 
 int main (int argc, char *argv[])
 {
-   //struct riak_object *o = new_riak_object();
-   //o->value = new_riak_binary(3,"Foo");
-   //free_riak_object(o);
+   struct riak_object *o = new_riak_object();
+   o->value = new_riak_binary(3,"Foo");
+   free_riak_object(o);
+
    struct riak_pb_transport riak;
    riak_default_transport(&riak);
    // ip and port are hardcoded internally right now
