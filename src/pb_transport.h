@@ -5,7 +5,6 @@
 struct pb_request {
   uint32_t msglength;
   uint8_t reqid;          // Protobuffs msg id for request
-  uint8_t respid;         // Expected protobuffs msg id for response
   void* msgdata;
 };
 
