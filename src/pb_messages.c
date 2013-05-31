@@ -25,20 +25,30 @@ struct riak_response* riak_pb_get(struct riak_pb_transport *pbtransport,
    msgbuf = malloc (msglen);
    rpb_get_req__pack (&getmsg, msgbuf);
    printf("riak_get [%s|%s = %i bytes]\n", bucket->data, key->data, msglen);
-   pbtransport->send_message(pbtransport->transport_data, MSG_RPBGETREQ, msgbuf, msglen);
 
+   struct pb_request request;
+   request.reqid = MSG_RPBGETREQ;
+   request.msglength = msglen;
+   request.reqdata = msgbuf;
+   pbtransport->send_message(pbtransport->transport_data, &request);
    struct pb_response response;
-   pbtransport->receive_message(pbtransport->transport_data, MSG_RPBGETRESP, &response);
-   printf("Response = %s\n", (char*)response.buf);
-   printf("Response length = %d\n", response.len);
-   // decode the PB response etc
-   RpbGetResp *getresp = rpb_get_resp__unpack(NULL, response.len, (char*)response.buf);
-   //printf("RPB msg %d\n",getresp->n_content);
+   response.expected_respid = MSG_RPBGETRESP;
 
-   RpbContent *c = getresp->content[0];
-   printf("Value=[%s]\n", c->value.data);
+   pbtransport->receive_message(pbtransport->transport_data, &response);
+
+   //printf("Response = %s\n", (char*)response.respdata);
+   //printf("Response length = %d\n", response.msglength);
+   //printf("Response code = %d\n", response.actual_respid);
+
+   // decode the PB response etc
+   RpbGetResp *getresp = rpb_get_resp__unpack(NULL, response.msglength, (char*)response.respdata);
+   printf("RPB values %d\n",getresp->n_content);
+   if(getresp->n_content > 0) {
+     RpbContent *c = getresp->content[0];
+     printf("Value=[%s]\n", c->value.data);
+   }
    rpb_get_resp__free_unpacked(getresp, NULL);
-   free(response.buf);
+   free(response.respdata);
    return 0;
 }
 

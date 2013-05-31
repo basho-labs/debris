@@ -15,8 +15,8 @@
 #define GET_TD struct riak_pb_default_transport_data *td = (struct riak_pb_default_transport_data*)transport_data
 
 void riak_default_transport(struct riak_pb_transport *t) {
-  struct riak_pb_default_transport_data *td = (struct riak_pb_default_transport_data*)
-                                              malloc(sizeof(struct riak_pb_default_transport_data));
+  struct riak_pb_default_transport_data *td =
+    (struct riak_pb_default_transport_data*) malloc(sizeof(struct riak_pb_default_transport_data));
 
   t->transport_data = (void*)td;
   t->connect = default_connect;
@@ -77,21 +77,26 @@ int default_connect(void* transport_data, char* ip, int port) {
 
 }
 
-int default_send_message(void* transport_data, uint32_t reqid, void* data, uint32_t len) {
+int default_send_message(void* transport_data, struct pb_request *req) {
   GET_TD;
-  uint32_t msglen = htonl(len + 5);
-  // TODO: clean up!
+  uint32_t pb_len = req->msglength + 5;
+  uint32_t netlen = htonl(pb_len);
+  // for the (void*) in send
+  uint32_t msgid = req->reqid;
+  // TODO: clean up, single send etc
   // http://docs.basho.com/riak/1.1.4/references/apis/protocol-buffers/
-  send(td->socket_fd, (void*)&msglen, 4, 0);
-  send(td->socket_fd, (void*)&reqid, 1, 0);
-  send(td->socket_fd, data, msglen, 0);
+  send(td->socket_fd, (void*)&netlen, 4, 0);
+  send(td->socket_fd, (void*)&msgid, 1, 0);
+  send(td->socket_fd, req->reqdata, pb_len, 0);
+  // TODO: error handling
+  return 0;
 }
 
-int default_receive_message(void *transport_data, uint32_t msgid, struct pb_response *resp) {
-  printf("Receive data\n");
+int default_receive_message(void *transport_data, struct pb_response *resp) {
   GET_TD;
   uint32_t resplen = 0;
   uint8_t  respid = 0;
+
   recv(td->socket_fd, (void*)&resplen, 4, 0);       // length is 4 bytes
   recv(td->socket_fd, (void*)&respid, 1, 0);        // 1 byte for the response code
 
@@ -99,9 +104,11 @@ int default_receive_message(void *transport_data, uint32_t msgid, struct pb_resp
   char* buf = malloc(encoded_msg_length);
   bzero(buf, encoded_msg_length);
   recv(td->socket_fd, buf, encoded_msg_length, 0);
-  resp->len = encoded_msg_length;
-  resp->respid = respid;
-  resp->buf = buf;
+
+  resp->msglength = encoded_msg_length;
+  resp->actual_respid = respid;
+  resp->respdata = buf;
+  // TODO: error handling
   return 0;
 }
 

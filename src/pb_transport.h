@@ -5,13 +5,14 @@
 struct pb_request {
   uint32_t msglength;
   uint8_t reqid;          // Protobuffs msg id for request
-  void* msgdata;
+  void *reqdata;
 };
 
 struct pb_response {
-  uint8_t respid;
-  uint32_t len;
-  void* buf;
+  uint32_t msglength;
+  uint8_t expected_respid;
+  uint8_t actual_respid;
+  void *respdata;
 };
 
 
@@ -20,8 +21,8 @@ struct riak_pb_transport {
   void* transport_data;
   int (*connect)(void *transport_data, char* ip, int port);
   int (*disconnect)();
-  int (*send_message)(void *transport_data, uint32_t msgid, void* data, unsigned len); // maybe use a pb_request?
-  int (*receive_message)(void *transport_data, uint32_t msgid, struct pb_response*);
+  int (*send_message)(void *transport_data, struct pb_request*);
+  int (*receive_message)(void *transport_data, struct pb_response*);
   int (*receive_message_streamed)();
 };
 
@@ -39,8 +40,8 @@ struct riak_pb_default_transport_data {
 
 
 int default_connect(void *transport_data, char* ip, int port);
-int default_send_message(void *transport_data, uint32_t msgid, void* data, unsigned len);
-int default_receive_message(void *transport_data, uint32_t msgid, struct pb_response* resp);
+int default_send_message(void *transport_data, struct pb_request* req);
+int default_receive_message(void *transport_data, struct pb_response* resp);
 int default_receive_message_streamed();
 int default_disconnect();
 
