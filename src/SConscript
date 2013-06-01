@@ -1,8 +1,9 @@
+env = Environment(CCFLAGS = '-Wall')
 lib_files = Split('riak.c pb_messages.c pb_transport.c riak.pb-c.c riak_kv.pb-c.c')
-Library('riak_c_client', lib_files)
-Program('main.c', LIBS=['riak_c_client', 'iconv', 'pthread', 'protobuf', 'protobuf-c'], LIBPATH='.')
+env.Library('riak_c_client', lib_files)
+env.Program('main.c', LIBS=['riak_c_client', 'iconv', 'pthread', 'protobuf', 'protobuf-c'], LIBPATH='.')
 
-env = Environment()
+
 conf = Configure(env)
 if not conf.CheckLib('pthread'):
   print 'Did not find pthread lib, exiting!'

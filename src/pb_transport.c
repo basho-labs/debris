@@ -30,11 +30,9 @@ void riak_default_transport(struct riak_pb_transport *t) {
 int default_connect(void* transport_data, char* ip, int port) {
   printf("Connecting to Riak\n");
   // http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html#simpleclient
-  int sockfd, numbytes;
-    char buf[MAXDATASIZE];
+  int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    char s[INET6_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -74,10 +72,12 @@ int default_connect(void* transport_data, char* ip, int port) {
   struct riak_pb_default_transport_data *td =
     (struct riak_pb_default_transport_data*)transport_data;
   td->socket_fd = sockfd;
-
+  // TODO: error handling
+  return 0;
 }
 
 int default_send_message(void* transport_data, struct pb_request *req) {
+  printf("Send message\n");
   GET_TD;
   uint32_t pb_len = req->msglength + 5;
   uint32_t netlen = htonl(pb_len);
@@ -85,35 +85,39 @@ int default_send_message(void* transport_data, struct pb_request *req) {
   uint32_t msgid = req->reqid;
   // TODO: clean up, single send etc
   // http://docs.basho.com/riak/1.1.4/references/apis/protocol-buffers/
-  send(td->socket_fd, (void*)&netlen, 4, 0);
-  send(td->socket_fd, (void*)&msgid, 1, 0);
-  send(td->socket_fd, req->reqdata, pb_len, 0);
+  int s1 = send(td->socket_fd, (void*)&netlen, 4, 0);
+  int s2 = send(td->socket_fd, (void*)&msgid, 1, 0);
+  int s3 = send(td->socket_fd, req->reqdata, pb_len, 0);
+  printf("%d %d %d\n",s1,s2,s3);
   // TODO: error handling
   return 0;
 }
 
 int default_receive_message(void *transport_data, struct pb_response *resp) {
+  printf("Receive message\n");
   GET_TD;
   uint32_t resplen = 0;
   uint8_t  respid = 0;
 
-  recv(td->socket_fd, (void*)&resplen, 4, 0);       // length is 4 bytes
-  recv(td->socket_fd, (void*)&respid, 1, 0);        // 1 byte for the response code
-
-  uint32_t encoded_msg_length = ntohl(resplen) - 1; // -1 for the length byte
-  char* buf = malloc(encoded_msg_length);
-  bzero(buf, encoded_msg_length);
-  recv(td->socket_fd, buf, encoded_msg_length, 0);
-
-  resp->msglength = encoded_msg_length;
-  resp->actual_respid = respid;
-  resp->respdata = buf;
-  // TODO: error handling
+  int count = recv(td->socket_fd, (void*)&resplen, 4, 0);       // length is 4 bytes
+  printf("Count =%d\n", count);
+  if(resplen > 0) {
+    recv(td->socket_fd, (void*)&respid, 1, 0);        // 1 byte for the response code
+    uint32_t encoded_msg_length = ntohl(resplen) - 1; // -1 for the length byte
+    char* buf = malloc(encoded_msg_length);
+    bzero(buf, encoded_msg_length);
+    recv(td->socket_fd, buf, encoded_msg_length, 0);
+    resp->msglength = encoded_msg_length;
+    resp->actual_respid = respid;
+    resp->respdata = buf;
+    printf("Receive message 2\n");
+    // TODO: error handling
+  }
   return 0;
 }
 
 int default_receive_message_streamed() {
-
+  return 0;
 }
 
 int default_disconnect(void* transport_data) {
@@ -122,6 +126,8 @@ int default_disconnect(void* transport_data) {
   GET_TD;
   close(td->socket_fd);
   printf("Disconnecting from Riak\n");
+  // TODO: error handling
+  return 0;
 }
 
 void riak_pb_connect(struct riak_pb_transport* t,

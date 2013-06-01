@@ -48,8 +48,8 @@
 #define MSG_RBPSEARCHQUERYRESP 28
 
 int riak_pb_get(struct riak_pb_transport *,
-                struct riak_string *bucket,
-                struct riak_string *key,
+                struct riak_binary *bucket,
+                struct riak_binary *key,
                 struct riak_response *);
 
 #endif

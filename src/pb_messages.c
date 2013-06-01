@@ -8,8 +8,8 @@
 #include <stdlib.h>
 
 int riak_pb_get(struct riak_pb_transport *pbtransport,
-                struct riak_string *bucket,
-                struct riak_string *key,
+                struct riak_binary *bucket,
+                struct riak_binary *key,
                 struct riak_response *response) {
    void *msgbuf;
    unsigned msglen;
@@ -25,7 +25,7 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    msglen = rpb_get_req__get_packed_size (&getmsg);
    msgbuf = malloc (msglen);
    rpb_get_req__pack (&getmsg, msgbuf);
-   //printf("riak_get [%s,%s] = %i bytes\n", bucket->data, key->data, msglen);
+   printf("riak_get [%s,%s] = %i bytes\n", bucket->data, key->data, msglen);
 
    struct pb_request request;
    request.reqid = MSG_RPBGETREQ;
@@ -43,7 +43,7 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
    //printf("Response code = %d\n", response.actual_respid);
 
    // decode the PB response etc
-   RpbGetResp *getresp = rpb_get_resp__unpack(NULL, pbresponse.msglength, (char*)pbresponse.respdata);
+   RpbGetResp *getresp = rpb_get_resp__unpack(NULL, pbresponse.msglength, pbresponse.respdata);
    int i = 0;
    if(getresp->n_content > 0) {
      response->objects = (struct riak_object*)malloc(sizeof(struct riak_object) * getresp->n_content);
