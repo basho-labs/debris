@@ -17,43 +17,24 @@ struct riak_string* new_string(char *foo) {
 
 int main (int argc, char *argv[])
 {
-   struct riak_object *o = new_riak_object();
-   o->value = new_riak_binary(3,"Foo");
-   free_riak_object(o);
-
    struct riak_pb_transport riak;
    riak_default_transport(&riak);
    // ip and port are hardcoded internally right now
    riak_pb_connect(&riak, 0, "127.0.0.1", 10017);
    int i = 0;
-   {
-     printf("i = %d\n", i);
+
+   for(i = 0; i < 1000; i++) {
      struct riak_binary *bucket = new_riak_binary(3, "Foo");
      struct riak_binary *key = new_riak_binary(3, "Bar");
-     struct riak_response* response = (struct riak_response*)malloc(sizeof(struct riak_response));
+     struct riak_response* response = new_riak_response();
      riak_pb_get(&riak, bucket, key, response);
-     printf("Response object count = %d\n", response->object_count);
-     printf("[%s]\n", response->objects[0].value->data);
      free_riak_binary(bucket);
      free_riak_binary(key);
-     free(response);
+     free_riak_response(response);
    }
 
-    i++;
-   {
-     printf("i = %d\n", i);
-     struct riak_binary *bucket = new_riak_binary(3, "Foo");
-     struct riak_binary *key = new_riak_binary(3, "Bar");
-     struct riak_response* response = (struct riak_response*)malloc(sizeof(struct riak_response));
-     riak_pb_get(&riak, bucket, key, response);
-     printf("Response object count = %d\n", response->object_count);
-     printf("[%s]\n", response->objects[0].value->data);
-     free_riak_binary(bucket);
-     free_riak_binary(key);
-     free(response);
-   }
-
-
+   riak.disconnect(riak.transport_data);
+   free(riak.transport_data);
 
    /*
    struct riak_pb_transport riak;
@@ -62,4 +43,5 @@ int main (int argc, char *argv[])
    default_send_message(riak.transport_data, 9, buf, len);
    riak.disconnect();
    */
+   exit(0);
 }

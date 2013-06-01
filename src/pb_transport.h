@@ -20,7 +20,7 @@ struct riak_pb_transport {
   // socket layer
   void* transport_data;
   int (*connect)(void *transport_data, char* ip, int port);
-  int (*disconnect)();
+  int (*disconnect)(void *transport_data);
   int (*send_message)(void *transport_data, struct pb_request*);
   int (*receive_message)(void *transport_data, struct pb_response*);
   int (*receive_message_streamed)();
@@ -43,6 +43,6 @@ int default_connect(void *transport_data, char* ip, int port);
 int default_send_message(void *transport_data, struct pb_request* req);
 int default_receive_message(void *transport_data, struct pb_response* resp);
 int default_receive_message_streamed();
-int default_disconnect();
+int default_disconnect(void *transport_data);
 
 #endif

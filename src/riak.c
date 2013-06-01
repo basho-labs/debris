@@ -57,5 +57,11 @@ void free_riak_response(struct riak_response *r) {
   if(r == 0) {
     return;
   }
+  if(r->object_count > 0) {
+    // TODO
+    free(r->objects);
+  }
+  free(r);
+
 }
 
