@@ -13,8 +13,21 @@
 
 struct riak_object *new_riak_object() {
   struct riak_object *o = (struct riak_object*)malloc(sizeof(struct riak_object));
+  // TODO: do I need bzero?
   bzero(o, sizeof(struct riak_object));
-  o->value = (struct riak_binary*)malloc(sizeof(struct riak_binary));
+  return o;
+}
+
+struct riak_object *new_riak_object_with_kv(struct riak_binary *bucket,
+                                            struct riak_binary *key,
+                                            struct riak_binary *value) {
+  struct riak_object *o = (struct riak_object*)malloc(sizeof(struct riak_object));
+  // TODO: review this
+  o->bucket = *bucket;
+  o->key = *key;
+  o->value = *value;
+  bzero(o, sizeof(struct riak_object));
+  // TODO: do I need bzero?
   return o;
 }
 
@@ -22,10 +35,7 @@ void free_riak_object(struct riak_object *o) {
   if(o == 0) {
     return;
   }
-
-  if(o->value != 0) {
-    free(o->value);
-  }
+  // TODO
   free(o);
 }
 
@@ -36,6 +46,12 @@ struct riak_binary *new_riak_binary(size_t len, uint8_t *data) {
   b->data = (uint8_t*)malloc(len);
   memcpy(b->data, data, len);
   return b;
+}
+
+void populate_riak_binary(struct riak_binary *b, size_t len, uint8_t *data) {
+  b->len = len;
+  b->data = (uint8_t*)malloc(len);
+  memcpy(b->data, data, len);
 }
 
 void free_riak_binary(struct riak_binary *b) {
@@ -58,8 +74,9 @@ void free_riak_response(struct riak_response *r) {
     return;
   }
   if(r->object_count > 0) {
-    // TODO
-    free(r->objects);
+    //for(i = 0; i < r->object_count; i++) {
+    //  free_riak_object(&r->objects[i]);
+    //}
   }
   free(r);
 
