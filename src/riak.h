@@ -161,7 +161,6 @@ struct riak_response *new_riak_response();
 void free_riak_response(struct riak_response*);
 
 struct riak_object *new_riak_object();
-struct riak_object *new_riak_object_with_kv(struct riak_binary *bucket, struct riak_binary *key, struct riak_binary *val);
 
 void free_riak_object(struct riak_object*);
 

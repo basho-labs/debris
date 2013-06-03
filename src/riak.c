@@ -18,19 +18,6 @@ struct riak_object *new_riak_object() {
   return o;
 }
 
-struct riak_object *new_riak_object_with_kv(struct riak_binary *bucket,
-                                            struct riak_binary *key,
-                                            struct riak_binary *value) {
-  struct riak_object *o = (struct riak_object*)malloc(sizeof(struct riak_object));
-  // TODO: review this
-  o->bucket = *bucket;
-  o->key = *key;
-  o->value = *value;
-  bzero(o, sizeof(struct riak_object));
-  // TODO: do I need bzero?
-  return o;
-}
-
 void free_riak_object(struct riak_object *o) {
   if(o == 0) {
     return;
