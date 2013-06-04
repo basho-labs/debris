@@ -20,8 +20,26 @@ int main (int argc, char *argv[])
    struct riak_pb_transport riak;
    riak_default_transport(&riak);
    // ip and port are hardcoded internally right now
+   // so the IP and port are really ignored
    riak_pb_connect(&riak, 0, "127.0.0.1", 10017);
 
+
+   // TODO: create a single file with a list of error messages
+   if(riak_pb_ping(&riak) == 0) {
+     printf("PONG\n");
+   }
+
+
+   // test set_client_id
+   // do we need to count the \0?
+   struct riak_binary *client_id = new_riak_binary(6, "Foobar");
+   riak_pb_set_client_id(&riak, client_id);
+   free_riak_binary(client_id);
+
+   // test get_client_id
+   riak_pb_get_client_id(&riak);
+
+   // basic PUT test
    {
      struct riak_object *o = new_riak_object();
      char *bucket = "CTestBucket";
@@ -44,6 +62,9 @@ int main (int argc, char *argv[])
          response);
      free(response);
    }
+
+
+   // basic GET test
    int i;
    for(i = 0; i < 1000; i++) {
      struct riak_binary *bucket = new_riak_binary(3, "Foo");
@@ -60,12 +81,5 @@ int main (int argc, char *argv[])
    riak.disconnect(riak.transport_data);
    free(riak.transport_data);
 
-   /*
-   struct riak_pb_transport riak;
-   riak_default_transport(&riak);
-   riak_connect(&riak, 0, "127.0.0.1", 10017);
-   default_send_message(riak.transport_data, 9, buf, len);
-   riak.disconnect();
-   */
    exit(0);
 }

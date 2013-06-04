@@ -47,6 +47,12 @@
 #define MSG_RPBSEARCHQUERYREQ 27
 #define MSG_RBPSEARCHQUERYRESP 28
 
+
+int riak_pb_ping(struct riak_pb_transport*);
+
+int riak_pb_get_client_id(struct riak_pb_transport*);
+int riak_pb_set_client_id(struct riak_pb_transport*, struct riak_binary *id);
+
 int riak_pb_get(struct riak_pb_transport*,
                 struct riak_binary *bucket,
                 struct riak_binary *key,
