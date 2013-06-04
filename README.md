@@ -1,7 +1,7 @@
-riak-c-client
+debris
 =============
 
-# NOTHING TO SEE HERE, MOVE ALONG
+#### NOTHING TO SEE HERE, MOVE ALONG
 
 ---
 
@@ -11,4 +11,4 @@ http://www.apache.org/licenses/LICENSE-2.0.html
 
 ---
 
-© 2013 Dave Parfitt
+© 2013 Dave Parfitt and Basho Technologies  
