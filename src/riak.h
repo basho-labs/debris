@@ -25,6 +25,10 @@
 #define RIAK_H
 #include <arpa/inet.h>
 
+
+#define riak_free(p) _riak_free((void**)&(p))
+void _riak_free(void **p);
+
 struct riak_protocol {
   // protobuffs OR http
   // fn pointers to implementation of each riak feature (ping, get, put)

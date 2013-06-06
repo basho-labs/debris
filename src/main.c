@@ -72,6 +72,7 @@ int main (int argc, char *argv[])
      struct riak_response* response = new_riak_response();
      struct riak_get_options opts;
      riak_pb_get(&riak, bucket, key, &opts, response);
+     printf("Object count = %d\n", response->object_count);
      free_riak_binary(bucket);
      free_riak_binary(key);
      free_riak_response(response);

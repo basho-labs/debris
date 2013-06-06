@@ -11,6 +11,13 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+void _riak_free(void **pp) {
+  if(pp != NULL && *pp != NULL) {
+    free(*pp);
+    *pp = NULL;
+  }
+}
+
 struct riak_object *new_riak_object() {
   struct riak_object *o = (struct riak_object*)malloc(sizeof(struct riak_object));
   // TODO: do I need bzero?
@@ -23,7 +30,7 @@ void free_riak_object(struct riak_object *o) {
     return;
   }
   // TODO
-  free(o);
+  riak_free(o);
 }
 
 
@@ -45,8 +52,8 @@ void free_riak_binary(struct riak_binary *b) {
   if(b == 0) {
     return;
   }
-  free(b->data);
-  free(b);
+  riak_free(b->data);
+  riak_free(b);
 }
 
 
@@ -65,7 +72,7 @@ void free_riak_response(struct riak_response *r) {
     //  free_riak_object(&r->objects[i]);
     //}
   }
-  free(r);
+  riak_free(r);
 
 }
 
