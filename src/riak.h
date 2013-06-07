@@ -177,6 +177,9 @@ void free_riak_binary(struct riak_binary*);
 // basic ops
 void riak_ping(struct riak_context*);
 
+// we'll provide an async version
+// int riak_get(struct riak_context*, struct riak_get_options*, riak_get_callback*);
+// and a sync version that calls the async version:
 void riak_get(struct riak_context*);
 
 void riak_server_info(struct riak_context*);
