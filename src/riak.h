@@ -29,11 +29,9 @@
 #define riak_free(p) _riak_free((void**)&(p))
 void _riak_free(void **p);
 
-struct riak_protocol {
-  // protobuffs OR http
-  // fn pointers to implementation of each riak feature (ping, get, put)
-};
+struct riak_protocol;
 
+// TOP level structures
 struct riak_context {
   struct riak_protocol *proto;
   // anything else... network options etc
@@ -157,6 +155,38 @@ struct riak_put_options {
   riak_boolean sloppy_quorum;
   riak_boolean has_n_val;
   uint32_t n_val;
+};
+
+
+// RIAK_PROTOCOL
+typedef void (*riak_proto_get_callback)(void *protocol_data,
+                                        void *data,
+                                        struct riak_response*);
+
+typedef void (*riak_proto_put_callback)(void *protocol_data,
+                                        void *data,
+                                        struct riak_response*);
+
+
+typedef int (*riak_protocol_get)(void *protocol_data,
+                              struct riak_binary *bucket,
+                              struct riak_binary *key,
+                              struct riak_get_options*,
+                              riak_proto_get_callback);
+
+typedef int (*riak_protocol_put)(void *protocol_data,
+                              struct riak_binary *bucket,
+                              struct riak_binary *key,
+                              struct riak_binary *value,
+                              struct riak_put_options*,
+                              riak_proto_put_callback);
+
+
+
+struct riak_protocol {
+  void *protocol_data; // passed as the first param to each op
+  riak_protocol_get get_impl;
+  riak_protocol_put put_impl;
 };
 
 

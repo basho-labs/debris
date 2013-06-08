@@ -12,7 +12,7 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
                 struct riak_binary *bucket,
                 struct riak_binary *key,
                 struct riak_get_options *options,
-                struct riak_response *response) {
+                struct riak_response* response) {
    void *msgbuf;
    unsigned msglen;
 
@@ -50,7 +50,7 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
      RpbGetResp *getresp = rpb_get_resp__unpack(NULL, pbresponse.msglength, pbresponse.respdata);
      int i = 0;
      if(getresp->n_content > 0) {
-       response->objects = (struct riak_object*)malloc(sizeof(struct riak_object) * getresp->n_content);
+       response->objects = malloc(sizeof(struct riak_object) * getresp->n_content);
        response->object_count = getresp->n_content;
        for(i = 0; i < getresp->n_content; i++) {
          RpbContent *c = getresp->content[i];
@@ -76,17 +76,17 @@ int riak_pb_put(struct riak_pb_transport *pbtransport,
    unsigned msglen;
    RpbPutReq putmsg = RPB_PUT_REQ__INIT;
 
-   putmsg.bucket.data = (uint8_t*)malloc(riak_obj->bucket.len);
+   putmsg.bucket.data = malloc(riak_obj->bucket.len);
    memcpy(&putmsg.bucket.data, &riak_obj->bucket.data, riak_obj->bucket.len);
    putmsg.bucket.len  = riak_obj->bucket.len;
 
    // TODO: key may not be present
    putmsg.has_key=1;
-   putmsg.key.data = (uint8_t*)malloc(riak_obj->key.len);
+   putmsg.key.data = malloc(riak_obj->key.len);
    memcpy(&putmsg.key.data, &riak_obj->key.data, riak_obj->key.len);
    putmsg.key.len  = riak_obj->key.len;
 
-   RpbContent *content = (RpbContent*)malloc(sizeof(RpbContent));
+   RpbContent *content = malloc(sizeof(RpbContent));
    rpb_content__init(content);
    putmsg.content = content;
 

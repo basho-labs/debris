@@ -16,7 +16,7 @@
 
 void riak_default_transport(struct riak_pb_transport *t) {
   struct riak_pb_default_transport_data *td =
-    (struct riak_pb_default_transport_data*) malloc(sizeof(struct riak_pb_default_transport_data));
+    malloc(sizeof(struct riak_pb_default_transport_data));
 
   t->transport_data = (void*)td;
   t->connect = default_connect;
@@ -84,10 +84,10 @@ int default_send_message(void* transport_data, struct pb_request *req) {
   uint32_t msgid = req->reqid;
   // TODO: clean up, single send etc
   // http://docs.basho.com/riak/1.1.4/references/apis/protocol-buffers/
-  int s1 = send(td->socket_fd, &netlen, 4, 0);
-  int s2 = send(td->socket_fd, &msgid, 1, 0);
+  send(td->socket_fd, &netlen, 4, 0);
+  send(td->socket_fd, &msgid, 1, 0);
   if(req->msglength > 0) {
-    int s3 = send(td->socket_fd, req->reqdata, req->msglength, 0);
+    send(td->socket_fd, req->reqdata, req->msglength, 0);
   }
   // TODO: error handling
   return 0;

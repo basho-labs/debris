@@ -1,7 +1,7 @@
 env = Environment(CCFLAGS = '-g -Wall')
 lib_files = Split('riak.c pb_messages.c pb_transport.c riak.pb-c.c riak_kv.pb-c.c')
 env.Library('riak_c_client', lib_files)
-env.Program('main.c', LIBS=['riak_c_client', 'iconv', 'pthread', 'protobuf', 'protobuf-c'], LIBPATH='.')
+env.Program('main.c', LIBS=['riak_c_client', 'iconv', 'pthread', 'protobuf', 'protobuf-c', 'curl'], LIBPATH='.')
 
 
 conf = Configure(env)
@@ -20,6 +20,11 @@ if not conf.CheckLib('protobuf-c'):
 if not conf.CheckLib('iconv'):
   print 'Did not find iconv lib, exiting!'
   Exit(1)
+
+if not conf.CheckLib('curl'):
+  print 'Did not find curl lib, exiting!'
+  Exit(1)
+
 
 
 env = conf.Finish()
