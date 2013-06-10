@@ -8,13 +8,6 @@
 #include "stdlib.h"
 #include "string.h"
 
-struct riak_string* new_string(char *foo) {
-   struct riak_string *s = (struct riak_string*)malloc(sizeof(struct riak_string));
-   s->data = foo;
-   s->len = strlen(foo);
-   return s;
-}
-
 int main (int argc, char *argv[])
 {
    struct riak_pb_transport riak;
@@ -25,7 +18,7 @@ int main (int argc, char *argv[])
 
 
    // TODO: create a single file with a list of error messages
-   if(riak_pb_ping(&riak) == 0) {
+   /*if(riak_pb_ping(&riak) == 0) {
      printf("PONG\n");
    }
 
@@ -62,7 +55,7 @@ int main (int argc, char *argv[])
          response);
      free(response);
    }
-
+  */
 
    // basic GET test
    int i;
@@ -72,7 +65,7 @@ int main (int argc, char *argv[])
      struct riak_response* response = new_riak_response();
      struct riak_get_options opts;
      riak_pb_get(&riak, bucket, key, &opts, response);
-     printf("Object count = %d\n", response->object_count);
+     //printf("Object count = %d\n", response->object_count);
      free_riak_binary(bucket);
      free_riak_binary(key);
      free_riak_response(response);

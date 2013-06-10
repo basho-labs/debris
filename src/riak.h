@@ -32,26 +32,19 @@ void _riak_free(void **p);
 struct riak_protocol;
 
 // TOP level structures
-struct riak_context {
+typedef struct riak_context {
   struct riak_protocol *proto;
   // anything else... network options etc
-};
+} RiakContext;
 
-
-// let the dev worry about string length
-struct riak_string {
-  size_t len;
-  char* data;
-};
 
 // protobuf-c maps boolean to an int
 typedef int riak_boolean;
 
-// TODO: riak_string vs riak_binary
-struct riak_binary {
+typedef struct riak_binary {
   size_t len;
   uint8_t *data;
-};
+} RiakBinary;
 
 struct riak_object {
   struct riak_binary bucket;
@@ -198,7 +191,8 @@ struct riak_object *new_riak_object();
 
 void free_riak_object(struct riak_object*);
 
-struct riak_binary *new_riak_binary(size_t len, uint8_t *data);
+// TODO: NOT CHARSET SAFE, need iconv
+struct riak_binary *new_riak_binary(size_t len, char *data);
 void populate_riak_binary(struct riak_binary *b, size_t len, uint8_t *data);
 void free_riak_binary(struct riak_binary*);
 

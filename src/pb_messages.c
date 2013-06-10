@@ -125,7 +125,7 @@ int riak_pb_put(struct riak_pb_transport *pbtransport,
    /// TODO: errors!
    return 0;
 }
-
+/*
 int riak_pb_ping(struct riak_pb_transport *pbtransport) {
   struct pb_request request;
   request.reqid = MSG_RPBPINGREQ;
@@ -207,4 +207,4 @@ int riak_pb_set_client_id(struct riak_pb_transport * pbtransport, struct riak_bi
 }
 
 
-
+*/

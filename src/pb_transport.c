@@ -98,7 +98,7 @@ int default_receive_message(void *transport_data, struct pb_response *resp) {
   uint32_t resplen = 0;
   uint8_t  respid = 0;
 
-  int count = recv(td->socket_fd, &resplen, 4, 0);       // length is 4 bytes
+  /*int count = */recv(td->socket_fd, &resplen, 4, 0);       // length is 4 bytes
   if(resplen > 0) {
     recv(td->socket_fd, (void*)&respid, 1, 0);        // 1 byte for the response code
     uint32_t encoded_msg_length = ntohl(resplen) - 1; // -1 for the length byte
