@@ -30,19 +30,19 @@
 struct riak_protocol;
 
 // TOP level structures
-typedef struct riak_context {
+struct riak_context {
   struct riak_protocol *proto;
   // anything else... network options etc
-} RiakContext;
+};
 
 
 // protobuf-c maps boolean to an int
 typedef int riak_boolean;
 
-typedef struct riak_binary {
+struct riak_binary {
   size_t len;
   uint8_t *data;
-} RiakBinary;
+};
 
 struct riak_object {
   struct riak_binary bucket;
@@ -82,11 +82,8 @@ struct riak_object {
   //RpbPair **indexes;
 };
 
-struct riak_vclock {
-};
-
 struct riak_response {
-  struct riak_vclock *vclock;
+  struct riak_binary *vclock;
   riak_boolean unmodified;
   riak_boolean deleted;
   int object_count;
@@ -150,6 +147,7 @@ struct riak_put_options {
 
 
 // RIAK_PROTOCOL
+// TODO: probably need user_data as a void*
 typedef void (*riak_proto_get_callback)(void *protocol_data,
                                         void *data,
                                         struct riak_response*);
@@ -179,8 +177,6 @@ struct riak_protocol {
   riak_protocol_get get_impl;
   riak_protocol_put put_impl;
 };
-
-
 
 
 // basic ops

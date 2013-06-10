@@ -11,4 +11,5 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include "riak_utils.h"
 

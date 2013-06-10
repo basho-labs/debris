@@ -3,6 +3,7 @@
 #include "riak.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
+#include "riak_utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
