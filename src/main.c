@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include "riak.h"
+#include "riak_utils.h"
 #include "pb_messages.h"
 #include <stdio.h>
 #include "riak.pb-c.h"

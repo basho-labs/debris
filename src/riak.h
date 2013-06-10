@@ -26,8 +26,6 @@
 #include <arpa/inet.h>
 
 
-#define riak_free(p) _riak_free((void**)&(p))
-void _riak_free(void **p);
 
 struct riak_protocol;
 
@@ -182,19 +180,6 @@ struct riak_protocol {
   riak_protocol_put put_impl;
 };
 
-
-// helper fn's
-struct riak_response *new_riak_response();
-void free_riak_response(struct riak_response*);
-
-struct riak_object *new_riak_object();
-
-void free_riak_object(struct riak_object*);
-
-// TODO: NOT CHARSET SAFE, need iconv
-struct riak_binary *new_riak_binary(size_t len, char *data);
-void populate_riak_binary(struct riak_binary *b, size_t len, uint8_t *data);
-void free_riak_binary(struct riak_binary*);
 
 
 
