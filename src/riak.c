@@ -13,3 +13,16 @@
 
 #include "riak_utils.h"
 
+void riak_get(struct riak_protocol *proto,
+              struct riak_binary *bucket,
+              struct riak_binary *key,
+              struct riak_get_options* opts,
+              riak_response_callback user_cb) {
+  proto->get_impl(0,
+           proto->get_callback,
+           bucket,
+           key,
+           opts,
+           user_cb);
+}
+

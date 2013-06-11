@@ -22,12 +22,13 @@ int main (int argc, char *argv[])
    struct riak_get_options opts;
 
    struct riak_protocol pb = setup_riak_pb_proto();
-   pb.get_impl(0,
-       get_cb,
-       bucket,
-       key,
-       &opts,
-       foo);
+
+
+   riak_get(&pb,
+             bucket,
+             key,
+             &opts,
+             foo);
 
    free_riak_binary(bucket);
    free_riak_binary(key);
