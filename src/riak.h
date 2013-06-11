@@ -147,35 +147,31 @@ struct riak_put_options {
 
 
 // RIAK_PROTOCOL
+
+typedef void (*riak_response_callback)(struct riak_response*);
+
 // TODO: probably need user_data as a void*
-typedef void (*riak_proto_get_callback)(void *protocol_data,
-                                        void *data,
-                                        struct riak_response*);
-
-typedef void (*riak_proto_put_callback)(void *protocol_data,
-                                        void *data,
-                                        struct riak_response*);
-
+// TODO: do bolth get fn and callback need to return an int?
+typedef void (*riak_protocol_get_callback)(void *protocol_data,
+                                           void *raw_response_data,
+                                           riak_response_callback);
 
 typedef int (*riak_protocol_get)(void *protocol_data,
-                              struct riak_binary *bucket,
-                              struct riak_binary *key,
-                              struct riak_get_options*,
-                              riak_proto_get_callback);
+                                 riak_protocol_get_callback,
+                                 struct riak_binary *bucket,
+                                 struct riak_binary *key,
+                                 struct riak_get_options*,
+                                 riak_response_callback);    // a riak_response sent back to the user
 
-typedef int (*riak_protocol_put)(void *protocol_data,
-                              struct riak_binary *bucket,
-                              struct riak_binary *key,
-                              struct riak_binary *value,
-                              struct riak_put_options*,
-                              riak_proto_put_callback);
-
-
+//typedef void (*riak_protocol_init)(void **protocol_data);
+//typedef void (*riak_protocol_term)(void **protocol_data);
 
 struct riak_protocol {
-  void *protocol_data; // passed as the first param to each op
-  riak_protocol_get get_impl;
-  riak_protocol_put put_impl;
+  void *protocol_data;
+//  riak_protocol_init              proto_init;
+//  riak_protocol_term              proto_term;
+  riak_protocol_get               get_impl;
+  riak_protocol_get_callback      get_callback;
 };
 
 

@@ -68,7 +68,7 @@ int riak_pb_get(struct riak_pb_transport *pbtransport,
 }
 
 
-int riak_pb_put(struct riak_pb_transport *pbtransport,
+/*int riak_pb_put(struct riak_pb_transport *pbtransport,
                 struct riak_object *riak_obj,
                 struct riak_put_options *options,
                 struct riak_response *response) {
@@ -126,6 +126,8 @@ int riak_pb_put(struct riak_pb_transport *pbtransport,
    /// TODO: errors!
    return 0;
 }
+*/
+
 /*
 int riak_pb_ping(struct riak_pb_transport *pbtransport) {
   struct pb_request request;

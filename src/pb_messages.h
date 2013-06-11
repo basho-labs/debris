@@ -65,8 +65,10 @@ int riak_pb_get(struct riak_pb_transport*,
                 struct riak_get_options*,
                 struct riak_response*);
 
+/*
 int riak_pb_put(struct riak_pb_transport*,
                 struct riak_object*,
                 struct riak_put_options*,
                 struct riak_response*);
+                */
 #endif
