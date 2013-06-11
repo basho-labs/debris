@@ -150,7 +150,7 @@ struct riak_put_options {
 
 typedef void (*riak_response_callback)(struct riak_response*);
 
-// TODO: probably need user_data as a void*
+// TODO: void *user_data?
 // TODO: do bolth get fn and callback need to return an int?
 typedef void (*riak_protocol_get_callback)(void *protocol_data,
                                            void *raw_response_data,
@@ -163,13 +163,13 @@ typedef int (*riak_protocol_get)(void *protocol_data,
                                  struct riak_get_options*,
                                  riak_response_callback);    // a riak_response sent back to the user
 
-//typedef void (*riak_protocol_init)(void **protocol_data);
-//typedef void (*riak_protocol_term)(void **protocol_data);
+typedef void (*riak_protocol_init)(void **protocol_data);
+typedef void (*riak_protocol_term)(void **protocol_data);
 
 struct riak_protocol {
   void *protocol_data;
-//  riak_protocol_init              proto_init;
-//  riak_protocol_term              proto_term;
+  riak_protocol_init              proto_init;
+  riak_protocol_term              proto_term;
   riak_protocol_get               get_impl;
   riak_protocol_get_callback      get_callback;
 };
