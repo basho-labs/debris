@@ -9,7 +9,8 @@
 #include "riak_kv.pb-c.h"
 #include "stdlib.h"
 #include "string.h"
-
+#include <event.h>
+#include <event2/event.h>
 void foo(struct riak_response *resp) {
   printf("FOO cb!\n");
 }
@@ -24,7 +25,7 @@ int main (int argc, char *argv[])
    struct riak_protocol pb = setup_riak_pb_proto();
    struct riak_context ctx;
    ctx.proto = &pb;
-
+   ctx.malloc_fn=malloc;
    riak_get(&ctx,
              bucket,
              key,
@@ -34,7 +35,8 @@ int main (int argc, char *argv[])
    free_riak_binary(bucket);
    free_riak_binary(key);
    free_riak_response(response);
-
-
-   exit(0);
+   // typedef void (*event_callback_fn)(evutil_socket_t, short, void *);
+   //struct event_base *eb = event_base_new();
+   //event_base_free(eb);
+   return 0;
 }

@@ -30,9 +30,17 @@
 struct riak_protocol;
 
 // TOP level structures
+
+
+// per-thread
+// do we need a *shared* context to complement?
 struct riak_context {
   struct riak_protocol *proto;
-  // anything else...
+
+  // should we allow custom mem functions?
+  void *(*malloc_fn)(size_t sz);
+  void *(*realloc_fn)(void *ptr, size_t size);
+  void (*free_fn)(void *ptr);
 };
 
 

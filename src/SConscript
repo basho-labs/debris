@@ -1,7 +1,7 @@
 env = Environment(CCFLAGS = '-g -Wall')
-lib_files = Split('riak.c riak_utils.c riak_pb_proto.c pb_messages.c pb_transport.c riak.pb-c.c riak_kv.pb-c.c')
+lib_files = Split('riak.c riak_utils.c riak_pb_proto.c riak_pb_messages.c riak.pb-c.c riak_kv.pb-c.c')
 env.Library('riak_c_client', lib_files)
-env.Program('main.c', LIBS=['riak_c_client', 'iconv', 'pthread', 'protobuf', 'protobuf-c', 'curl'], LIBPATH='.')
+env.Program('main.c', LIBS=['riak_c_client', 'event', 'iconv', 'pthread', 'protobuf', 'protobuf-c', 'curl'], LIBPATH='.')
 
 
 conf = Configure(env)
