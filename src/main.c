@@ -22,9 +22,10 @@ int main (int argc, char *argv[])
    struct riak_get_options opts;
 
    struct riak_protocol pb = setup_riak_pb_proto();
+   struct riak_context ctx;
+   ctx.proto = &pb;
 
-
-   riak_get(&pb,
+   riak_get(&ctx,
              bucket,
              key,
              &opts,

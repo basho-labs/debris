@@ -32,7 +32,7 @@ struct riak_protocol;
 // TOP level structures
 struct riak_context {
   struct riak_protocol *proto;
-  // anything else... network options etc
+  // anything else...
 };
 
 
@@ -181,7 +181,7 @@ void riak_ping(struct riak_context*);
 // we'll provide an async version
 // int riak_get(struct riak_context*, struct riak_get_options*, riak_get_callback*);
 // and a sync version that calls the async version:
-void riak_get(struct riak_protocol*,
+void riak_get(struct riak_context*,
               struct riak_binary *bucket,
               struct riak_binary *key,
               struct riak_get_options*,

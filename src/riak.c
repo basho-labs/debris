@@ -11,16 +11,14 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "riak_utils.h"
-
-void riak_get(struct riak_protocol *proto,
+void riak_get(struct riak_context *ctx,
               struct riak_binary *bucket,
               struct riak_binary *key,
               struct riak_get_options* opts,
               riak_response_callback user_cb) {
 
-  proto->get_impl(proto->protocol_data,
-                  proto->get_callback,
+  ctx->proto->get_impl(ctx->proto->protocol_data,
+                  ctx->proto->get_callback,
                   bucket,
                   key,
                   opts,
