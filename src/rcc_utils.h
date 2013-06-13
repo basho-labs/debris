@@ -23,7 +23,7 @@
 
 #ifndef RIAK_UTILS_H
 #define RIAK_UTILS_H
-#include "riak.h"
+#include "rcc.h"
 
 #define riak_free(p) _riak_free((void**)&(p))
 void _riak_free(void **p);

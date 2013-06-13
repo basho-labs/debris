@@ -1,6 +1,6 @@
 #ifndef RIAK_PB_PROTO_H
 #define RIAK_PB_PROTO_H
-#include "riak.h"
+#include "rcc.h"
 
 // TODO: probably need user_data as a void*
 // TODO: do bolth get fn and callback need to return an int?

@@ -1,5 +1,5 @@
-#include "riak.h"
-#include "riak_pb_proto.h"
+#include "rcc.h"
+#include "rcc_pb_proto.h"
 #include <stdio.h>
 
 void get_cb(void *protocol_data,

@@ -1,9 +1,8 @@
-#include "riak_pb_messages.h"
-#include "riak.h"
+#include "rcc.h"
+#include "rcc_pb_message.h"
+#include "rcc_utils.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
-#include "riak_utils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

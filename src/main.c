@@ -1,9 +1,5 @@
 #include <pthread.h>
 #include <stdlib.h>
-#include "riak.h"
-#include "riak_pb_proto.h"
-#include "riak_utils.h"
-#include "pb_messages.h"
 #include <stdio.h>
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
@@ -11,6 +7,11 @@
 #include "string.h"
 #include <event.h>
 #include <event2/event.h>
+
+#include "rcc.h"
+#include "rcc_pb_proto.h"
+#include "rcc_utils.h"
+
 void foo(struct riak_response *resp) {
   printf("FOO cb!\n");
 }
