@@ -39,7 +39,7 @@ struct pb_request* pb_encode_get_request(struct riak_context *ctx,
    return request;
 }
 
-void* pb_decode_get_response(struct riak_context *ctx,
+struct riak_object* pb_decode_get_response(struct riak_context *ctx,
                              struct pb_response *raw_response) {
   // decode the PB response etc
      struct riak_response *response = malloc(sizeof(struct riak_response));
@@ -56,6 +56,7 @@ void* pb_decode_get_response(struct riak_context *ctx,
      }
      rpb_get_resp__free_unpacked(getresp, NULL);
      // TODO: something will have to free raw_response and the buffer inside of it
+    return 0;
 }
 
 

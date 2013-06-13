@@ -64,6 +64,6 @@ struct pb_request* pb_encode_get_request(struct riak_context *ctx,
                                          struct riak_binary *key,
                                          struct riak_get_options* opts);
 
-void* pb_decode_get_response(struct riak_context *ctx,
-                             struct pb_response*);
+struct riak_object* pb_decode_get_response(struct riak_context *ctx,
+                                           struct pb_response*);
 #endif
