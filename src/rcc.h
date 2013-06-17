@@ -24,14 +24,12 @@
 #ifndef RIAK_H
 #define RIAK_H
 #include <arpa/inet.h>
-
+#include "uthash.h" //TODO: could probably just forward declare UT_hash_handle etc
 
 
 struct riak_protocol;
 
 // TOP level structures
-
-
 
 // per-thread
 // do we need a *shared* context to complement?
@@ -46,6 +44,10 @@ struct riak_context {
 
 #define RIAK_FALSE 0
 #define RIAK_TRUE  1
+
+#define RIAK_GET_REQ_R  0
+#define RIAK_GET_REQ_PR 1
+
 
 // protobuf-c maps boolean to an int
 typedef int riak_boolean;
@@ -158,6 +160,8 @@ struct riak_put_options {
   uint32_t n_val;
 };
 
+#define RIAK_EMPTY_PARAMS NULL
+
 enum RIAK_PARAM_TYPE {
   RIAK_PARAM_UINT32,
   RIAK_PARAM_BOOL,
@@ -173,12 +177,25 @@ struct riak_param
     uint32_t           uint32_val;
     riak_boolean       bool_val;
     struct riak_binary *bin_val;
+    UT_hash_handle hh;
   };
 };
 
-int get_uint32_param_value(struct riak_param* p, uint32_t *val);
-int get_bool_param_value(struct riak_param* p, riak_boolean *val);
-int get_binary_param_value(struct riak_param* p, struct riak_binary *val);
+
+
+int riak_get_uint32_param_value(struct riak_param **p, int param_id, uint32_t *val);
+int riak_get_bool_param_value(struct riak_param **p, int param_id, riak_boolean *val);
+int riak_get_binary_param_value(struct riak_param **p, int param_id, struct riak_binary *val);
+
+
+void riak_add_uint32_param(struct riak_param **params, int param_id, uint32_t val);
+struct riak_param* riak_new_uint32_param(int param_id, uint32_t val);
+
+void riak_add_boolean_param(struct riak_param **params, int param_id, riak_boolean val);
+struct riak_param* riak_new_boolean_param(int param_id, riak_boolean val);
+
+void riak_add_binary_param(struct riak_param **params, int param_id, struct riak_binary *val);
+struct riak_param* riak_new_binary_param(int param_id, struct riak_binary *val);
 
 
 // RIAK_PROTOCOL

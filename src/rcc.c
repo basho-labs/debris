@@ -11,8 +11,10 @@
 #include <arpa/inet.h>
 
 
-int get_uint32_param_value(struct riak_param* p, uint32_t *val) {
-  if(p != 0) {
+int riak_get_uint32_param_value(struct riak_param **params, int param_id, uint32_t *val) {
+  struct riak_param *p = NULL;
+  HASH_FIND_INT(*params, &param_id, p);
+  if(p != NULL) {
     if(p->t == RIAK_PARAM_UINT32) {
       *val = p->uint32_val;
     } else {
@@ -24,8 +26,10 @@ int get_uint32_param_value(struct riak_param* p, uint32_t *val) {
   return 0;
 }
 
-int get_bool_param_value(struct riak_param* p, riak_boolean *val) {
-  if(p != 0) {
+int riak_get_bool_param_value(struct riak_param **params, int param_id, riak_boolean *val) {
+  struct riak_param *p = NULL;
+  HASH_FIND_INT(*params, &param_id, p);
+  if(p != NULL) {
     if(p->t == RIAK_PARAM_BOOL) {
       *val = p->bool_val;
     } else {
@@ -37,9 +41,11 @@ int get_bool_param_value(struct riak_param* p, riak_boolean *val) {
   return 0;
 }
 
-int get_binary_param_value(struct riak_param* p, struct riak_binary *val) {
-  if(p != 0) {
-    if(p->t == RIAK_PARAM_UINT32) {
+int riak_get_binary_param_value(struct riak_param **params, int param_id, struct riak_binary *val) {
+  struct riak_param *p = NULL;
+  HASH_FIND_INT(*params, &param_id, p);
+  if(p != NULL) {
+    if(p->t == RIAK_PARAM_BIN) {
       val = p->bin_val;
     } else {
       return -2; // TODO: invalid param type error
@@ -50,7 +56,61 @@ int get_binary_param_value(struct riak_param* p, struct riak_binary *val) {
   return 0;
 }
 
+struct riak_param* riak_new_uint32_param(int param_id, uint32_t val) {
+  struct riak_param *p = malloc(sizeof(struct riak_param));
+  p->id = param_id;
+  p->t = RIAK_PARAM_UINT32;
+  p->uint32_val = val;
+  return p;
+}
 
+// internal function
+void maybe_delete_param(struct riak_param **params, int param_id) {
+  struct riak_param *p = NULL;
+  HASH_FIND_INT(*params, &param_id, p);
+  if(p != NULL) {
+    HASH_DEL(*params, p);
+    printf("TODO: make this free() work correctly!!\n");
+    free(p);
+  }
+}
+
+void riak_add_uint32_param(struct riak_param **params, int param_id, uint32_t val) {
+  struct riak_param *p = NULL;
+  maybe_delete_param(params, param_id);
+  p = riak_new_uint32_param(param_id, val);
+  HASH_ADD_INT(*params, id, p);
+}
+
+struct riak_param* riak_new_boolean_param(int param_id, riak_boolean val) {
+  struct riak_param *p = malloc(sizeof(struct riak_param));
+  p->id = param_id;
+  p->t = RIAK_PARAM_BOOL;
+  p->bool_val = val;
+  return p;
+}
+
+void riak_add_boolean_param(struct riak_param** params, int param_id, riak_boolean val) {
+  struct riak_param *p = NULL;
+  maybe_delete_param(params, param_id);
+  p = riak_new_boolean_param(param_id, val);
+  HASH_ADD_INT(*params, id, p);
+}
+
+struct riak_param* riak_new_binary_param(int param_id, struct riak_binary *val) {
+  struct riak_param *p = malloc(sizeof(struct riak_param));
+  p->id = param_id;
+  p->t = RIAK_PARAM_BIN;
+  p->bin_val = val;
+  return p;
+}
+
+void riak_add_binary_param(struct riak_param** params, int param_id, struct riak_binary *val) {
+  struct riak_param *p = NULL;
+  maybe_delete_param(params, param_id);
+  p = riak_new_binary_param(param_id, val);
+  HASH_ADD_INT(*params, id, p);
+}
 
 void riak_get(struct riak_context *ctx,
               struct riak_binary *bucket,
