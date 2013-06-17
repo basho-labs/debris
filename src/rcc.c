@@ -16,7 +16,7 @@ int riak_get_uint32_param_value(struct riak_param **params, int param_id, uint32
   HASH_FIND_INT(*params, &param_id, p);
   if(p != NULL) {
     if(p->t == RIAK_PARAM_UINT32) {
-      *val = p->uint32_val;
+      *val = (p->uint32_val);
     } else {
       return -2; // TODO: invalid param type error
     }
@@ -64,6 +64,23 @@ struct riak_param* riak_new_uint32_param(int param_id, uint32_t val) {
   return p;
 }
 
+struct riak_param* riak_new_boolean_param(int param_id, riak_boolean val) {
+  struct riak_param *p = malloc(sizeof(struct riak_param));
+  p->id = param_id;
+  p->t = RIAK_PARAM_BOOL;
+  p->bool_val = val;
+  return p;
+}
+
+struct riak_param* riak_new_binary_param(int param_id, struct riak_binary *val) {
+  struct riak_param *p = malloc(sizeof(struct riak_param));
+  p->id = param_id;
+  p->t = RIAK_PARAM_BIN;
+  p->bin_val = val;
+  return p;
+}
+
+
 // internal function
 void maybe_delete_param(struct riak_param **params, int param_id) {
   struct riak_param *p = NULL;
@@ -71,6 +88,8 @@ void maybe_delete_param(struct riak_param **params, int param_id) {
   if(p != NULL) {
     HASH_DEL(*params, p);
     printf("TODO: make this free() work correctly!!\n");
+    // ie, should it free the binary etc. OR should this be an error?
+    // maybe just log an error and exit ;-)
     free(p);
   }
 }
@@ -82,27 +101,11 @@ void riak_add_uint32_param(struct riak_param **params, int param_id, uint32_t va
   HASH_ADD_INT(*params, id, p);
 }
 
-struct riak_param* riak_new_boolean_param(int param_id, riak_boolean val) {
-  struct riak_param *p = malloc(sizeof(struct riak_param));
-  p->id = param_id;
-  p->t = RIAK_PARAM_BOOL;
-  p->bool_val = val;
-  return p;
-}
-
 void riak_add_boolean_param(struct riak_param** params, int param_id, riak_boolean val) {
   struct riak_param *p = NULL;
   maybe_delete_param(params, param_id);
   p = riak_new_boolean_param(param_id, val);
   HASH_ADD_INT(*params, id, p);
-}
-
-struct riak_param* riak_new_binary_param(int param_id, struct riak_binary *val) {
-  struct riak_param *p = malloc(sizeof(struct riak_param));
-  p->id = param_id;
-  p->t = RIAK_PARAM_BIN;
-  p->bin_val = val;
-  return p;
 }
 
 void riak_add_binary_param(struct riak_param** params, int param_id, struct riak_binary *val) {

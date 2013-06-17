@@ -177,8 +177,8 @@ struct riak_param
     uint32_t           uint32_val;
     riak_boolean       bool_val;
     struct riak_binary *bin_val;
-    UT_hash_handle hh;
   };
+  UT_hash_handle hh;
 };
 
 
