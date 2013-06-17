@@ -32,6 +32,7 @@ struct riak_protocol;
 // TOP level structures
 
 
+
 // per-thread
 // do we need a *shared* context to complement?
 struct riak_context {
@@ -43,6 +44,8 @@ struct riak_context {
   void (*free_fn)(void *ptr);
 };
 
+#define RIAK_FALSE 0
+#define RIAK_TRUE  1
 
 // protobuf-c maps boolean to an int
 typedef int riak_boolean;
@@ -123,6 +126,8 @@ struct riak_get_options {
 };
 
 
+
+
 struct riak_put_options {
   riak_boolean has_key;
   struct riak_binary key;
@@ -152,6 +157,28 @@ struct riak_put_options {
   riak_boolean has_n_val;
   uint32_t n_val;
 };
+
+enum RIAK_PARAM_TYPE {
+  RIAK_PARAM_UINT32,
+  RIAK_PARAM_BOOL,
+  RIAK_PARAM_BIN }
+riak_param_type;
+
+struct riak_param
+{
+  int id;
+  int t;
+  union
+  {
+    uint32_t           uint32_val;
+    riak_boolean       bool_val;
+    struct riak_binary *bin_val;
+  };
+};
+
+int get_uint32_param_value(struct riak_param* p, uint32_t *val);
+int get_bool_param_value(struct riak_param* p, riak_boolean *val);
+int get_binary_param_value(struct riak_param* p, struct riak_binary *val);
 
 
 // RIAK_PROTOCOL
