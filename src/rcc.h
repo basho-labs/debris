@@ -160,6 +160,9 @@ struct riak_put_options {
   uint32_t n_val;
 };
 
+//------------------------------------------------------------
+// REQUEST PARAMS
+//------------------------------------------------------------
 #define RIAK_EMPTY_PARAMS NULL
 
 enum RIAK_PARAM_TYPE {
@@ -181,24 +184,24 @@ struct riak_param
   UT_hash_handle hh;
 };
 
-
-
+// get parameters as various types from a param hash
 int riak_get_uint32_param_value(struct riak_param **p, int param_id, uint32_t *val);
 int riak_get_bool_param_value(struct riak_param **p, int param_id, riak_boolean *val);
 int riak_get_binary_param_value(struct riak_param **p, int param_id, struct riak_binary *val);
 
-
-void riak_add_uint32_param(struct riak_param **params, int param_id, uint32_t val);
+// create params of various types
 struct riak_param* riak_new_uint32_param(int param_id, uint32_t val);
-
-void riak_add_boolean_param(struct riak_param **params, int param_id, riak_boolean val);
 struct riak_param* riak_new_boolean_param(int param_id, riak_boolean val);
-
-void riak_add_binary_param(struct riak_param **params, int param_id, struct riak_binary *val);
 struct riak_param* riak_new_binary_param(int param_id, struct riak_binary *val);
 
+// add a param to hash of params
+void riak_add_uint32_param(struct riak_param **params, int param_id, uint32_t val);
+void riak_add_boolean_param(struct riak_param **params, int param_id, riak_boolean val);
+void riak_add_binary_param(struct riak_param **params, int param_id, struct riak_binary *val);
 
-// RIAK_PROTOCOL
+//------------------------------------------------------------
+// RIAK PROTOCOL -> this will be scrapped
+//------------------------------------------------------------
 
 typedef void (*riak_response_callback)(struct riak_response*);
 
