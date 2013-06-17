@@ -24,35 +24,8 @@ void foo(struct riak_response *resp) {
 #define RIAK_GET_PR 1001
 
 
-#define riak_get_param_p_set(_p, p_val) riak_add_uint32_param(&_p, RIAK_GET_P, p_val);
-#define riak_get_param_pr_set(_p, pr_val) riak_add_uint32_param(&_p, RIAK_GET_PR, pr_val);
-
 int main (int argc, char *argv[])
 {
-
-  struct riak_param *params = RIAK_EMPTY_PARAMS;
-  /*
-  riak_add_uint32_param(&params, RIAK_GET_P, 3);
-  riak_add_uint32_param(&params, RIAK_GET_PR, 2);
-  */
-  // the above, wrapped with a macro, looks like this:
-  riak_get_param_p_set(params, 3);
-  riak_get_param_pr_set(params, 2);
-
-  int count = HASH_COUNT(params);
-  printf("Param count = %d\n", count);
-
-  uint32_t param_P = 0;
-  uint32_t param_PR = 0;
-
-  // should be wrapped in a function or macro
-  riak_get_uint32_param_value(&params, RIAK_GET_P, &param_P);
-  riak_get_uint32_param_value(&params, RIAK_GET_PR, &param_PR);
-  // TODO: should check return value of each call to see if the param exists
-  printf("P  = %d\n", param_P);
-  printf("PR = %d\n", param_PR);
-
-
 /*
    struct riak_binary *bucket = new_riak_binary(3, "Foo");
    struct riak_binary *key = new_riak_binary(3, "Bar");
