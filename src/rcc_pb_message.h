@@ -59,11 +59,14 @@ struct pb_response {
   void *respdata;
 };
 
-struct pb_request* pb_encode_get_request(struct riak_context *ctx,
-                                         struct riak_binary *bucket,
-                                         struct riak_binary *key,
-                                         struct riak_get_options* opts);
+int pb_encode_get_request(struct riak_context*,
+                                         struct riak_binary*,
+                                         struct riak_binary*,
+                                         struct riak_get_options*,
+                                         struct pb_request*);
 
-struct riak_object* pb_decode_get_response(struct riak_context *ctx,
-                                           struct pb_response*);
+int pb_decode_get_response(struct riak_context*,
+                                           struct pb_response*,
+                                           struct riak_response*);
+
 #endif

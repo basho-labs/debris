@@ -109,7 +109,7 @@ struct riak_get_options {
   riak_boolean has_notfound_ok;
   riak_boolean notfound_ok;
   riak_boolean has_if_modified;
-  struct riak_binary  if_modified;
+  struct riak_binary if_modified;
   riak_boolean has_head;
   riak_boolean head;
   riak_boolean has_deletedvclock;
@@ -141,6 +141,7 @@ struct riak_put_options {
   uint32_t pw;
   riak_boolean has_if_not_modified;
   riak_boolean if_not_modified;
+
   riak_boolean has_if_none_match;
   riak_boolean if_none_match;
   riak_boolean has_return_head;
