@@ -8,9 +8,6 @@
 
 // TODO: not the best way to go about this
 // just for play, COPY ALL THE BITS!!
-struct riak_protocol setup_riak_pb_proto();
-
-
 
 void get_cb(void *protocol_data,
             void *raw_response_data,

@@ -27,16 +27,11 @@
 #include "uthash.h" //TODO: could probably just forward declare UT_hash_handle etc
 
 
-struct riak_protocol;
-
 // TOP level structures
 
 // per-thread
 // do we need a *shared* context to complement?
 struct riak_context {
-  struct riak_protocol *proto;
-
-  // should we allow custom mem functions?
   void *(*malloc_fn)(size_t sz);
   void *(*realloc_fn)(void *ptr, size_t size);
   void (*free_fn)(void *ptr);
@@ -160,35 +155,8 @@ struct riak_put_options {
   uint32_t n_val;
 };
 
-//------------------------------------------------------------
-// RIAK PROTOCOL -> this will be scrapped
-//------------------------------------------------------------
 
 typedef void (*riak_response_callback)(struct riak_response*);
-
-// TODO: void *user_data?
-// TODO: do bolth get fn and callback need to return an int?
-typedef void (*riak_protocol_get_callback)(void *protocol_data,
-                                           void *raw_response_data,
-                                           riak_response_callback);
-
-typedef int (*riak_protocol_get)(void *protocol_data,
-                                 riak_protocol_get_callback,
-                                 struct riak_binary *bucket,
-                                 struct riak_binary *key,
-                                 struct riak_get_options*,
-                                 riak_response_callback);    // a riak_response sent back to the user
-
-typedef void (*riak_protocol_init)(void **protocol_data);
-typedef void (*riak_protocol_term)(void **protocol_data);
-
-struct riak_protocol {
-  void *protocol_data;
-  riak_protocol_init              proto_init;
-  riak_protocol_term              proto_term;
-  riak_protocol_get               get_impl;
-  riak_protocol_get_callback      get_callback;
-};
 
 
 // basic ops
@@ -197,11 +165,12 @@ void riak_ping(struct riak_context*);
 // we'll provide an async version
 // int riak_get(struct riak_context*, struct riak_get_options*, riak_get_callback*);
 // and a sync version that calls the async version:
-void riak_get(struct riak_context*,
-              struct riak_binary *bucket,
-              struct riak_binary *key,
-              struct riak_get_options*,
-              riak_response_callback);
+
+int riak_get(struct riak_context*,
+             struct riak_binary *bucket,
+             struct riak_binary *key,
+             struct riak_get_options*,
+             riak_response_callback);
 
 void riak_server_info(struct riak_context*);
 
