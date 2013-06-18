@@ -10,7 +10,6 @@
 #include <inttypes.h>
 
 #include "rcc.h"
-#include "rcc_pb_proto.h"
 #include "rcc_utils.h"
 
 void foo(struct riak_response *resp) {
