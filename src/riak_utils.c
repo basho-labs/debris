@@ -1,6 +1,4 @@
-#include "rcc_utils.h"
-#include <stdlib.h>
-#include <string.h>
+#include "riak_utils.h"
 
 void _riak_free(void **pp) {
   if(pp != NULL && *pp != NULL) {
@@ -68,4 +66,23 @@ void free_riak_response(struct riak_response *r) {
 
 }
 
+/* LIBEVENT CALLBACKS */
 
+void eventcb(struct bufferevent *bev, short events, void *ptr)
+{
+    if (events & BEV_EVENT_CONNECTED) {
+         fprintf(stderr, "Connect okay.\n");
+    } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
+         struct event_base *base = ptr;
+         if (events & BEV_EVENT_ERROR) {
+            int err = bufferevent_socket_get_dns_error(bev);
+            if (err)
+                 printf("DNS error: %s\n", evutil_gai_strerror(err));
+         }
+         fprintf(stderr, "Closing\n");
+         bufferevent_free(bev);
+         event_base_loopexit(base, NULL);
+    } else {
+        fprintf(stderr, "Event %d\n", events);
+    }
+}

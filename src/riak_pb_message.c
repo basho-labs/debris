@@ -1,11 +1,8 @@
-#include "rcc.h"
-#include "rcc_pb_message.h"
-#include "rcc_utils.h"
+
+#include "riak_pb_message.h"
+#include "riak_utils.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 int pb_encode_get_request(struct riak_context *ctx,
                           struct riak_binary *bucket,

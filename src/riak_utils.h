@@ -1,8 +1,8 @@
-/*
- * -------------------------------------------------------------------
- * riak-c-client
+/*********************************************************************
  *
- * Copyright (c) 2013 Dave Parfitt
+ * riak_types.h: Riak Utilities
+ *
+ * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
  * This file is provided to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file
@@ -17,13 +17,13 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * -------------------------------------------------------------------
- */
-
+ *
+ *********************************************************************/
 
 #ifndef RIAK_UTILS_H
 #define RIAK_UTILS_H
-#include "rcc.h"
+
+#include "riak.h"
 
 #define riak_free(p) _riak_free((void**)&(p))
 void _riak_free(void **p);
@@ -40,6 +40,6 @@ struct riak_binary *new_riak_binary(size_t len, char *data);
 void populate_riak_binary(struct riak_binary *b, size_t len, uint8_t *data);
 void free_riak_binary(struct riak_binary*);
 
-
+void eventcb(struct bufferevent *bev, short events, void *ptr);
 
 #endif

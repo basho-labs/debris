@@ -1,7 +1,7 @@
 #ifndef RIAK_PB_MESSAGE_H
 #define RIAK_PB_MESSAGE_H
 
-#include "rcc.h"
+#include "riak.h"
 
 #define MSG_RPBERRORRESP 0
 

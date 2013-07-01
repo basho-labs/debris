@@ -1,8 +1,8 @@
-/*
- * -------------------------------------------------------------------
- * riak-c-client
+/*********************************************************************
  *
- * Copyright (c) 2013 Dave Parfitt
+ * riak_types.h: Riak C Client Types
+ *
+ * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
  * This file is provided to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file
@@ -17,15 +17,20 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * -------------------------------------------------------------------
- */
-
+ *
+ *********************************************************************/
 
 #ifndef RIAK_H
 #define RIAK_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
 #include <arpa/inet.h>
-#include "uthash.h" //TODO: could probably just forward declare UT_hash_handle etc
-
+#include <event2/dns.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
+#include <event2/util.h>
+#include <event2/event.h>
 
 // TOP level structures
 
@@ -36,13 +41,6 @@ struct riak_context {
   void *(*realloc_fn)(void *ptr, size_t size);
   void (*free_fn)(void *ptr);
 };
-
-#define RIAK_FALSE 0
-#define RIAK_TRUE  1
-
-#define RIAK_GET_REQ_R  0
-#define RIAK_GET_REQ_PR 1
-
 
 // protobuf-c maps boolean to an int
 typedef int riak_boolean;
@@ -158,6 +156,7 @@ struct riak_put_options {
 
 
 typedef void (*riak_response_callback)(struct riak_response*);
+void write_callback(struct bufferevent *bev, void *ptr);
 
 
 // basic ops
@@ -185,7 +184,9 @@ void riak_bucket_set_props(struct riak_context*);
 
 void riak_bucket_get_props(struct riak_context*);
 
-void riak_list_buckets(struct riak_context*);
+//void riak_list_buckets(struct riak_context*);
+int riak_list_buckets(struct bufferevent *bev);
+void riak_list_buckets_callback(struct bufferevent *bev, void *ptr);
 
 void riak_list_keys(struct riak_context*);
 

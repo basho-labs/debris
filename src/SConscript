@@ -1,8 +1,10 @@
-env = Environment(CCFLAGS = '-g -Wall')
-lib_files = Split('rcc.c rcc_utils.c rcc_pb_message.c riak.pb-c.c riak_kv.pb-c.c')
+env = Environment(CCFLAGS = '-g -Wall -DUSE_DEBUG',
+CPPPATH=['/usr/local/protobuf-2.5.0/include','/usr/local/protobuf-c-0.15/include','/usr/local/Cellar/libevent/2.0.21/include'],
+LIBPATH=['/usr/local/protobuf-2.5.0/lib','/usr/local/protobuf-c-0.15/lib','/usr/local/lib','.'])
+lib_files = Split('riak.c riak_utils.c riak_pb_message.c riak.pb-c.c riak_kv.pb-c.c')
 
 env.Library('riak_c_client', lib_files)
-env.Program('main.c', LIBS=['riak_c_client', 'event', 'iconv', 'pthread', 'protobuf', 'protobuf-c', 'curl'], LIBPATH='.')
+env.Program('riak_c_client','main.c', LIBS=['riak_c_client', 'event_core', 'event_extra', 'iconv', 'pthread', 'protobuf', 'protobuf-c'])
 
 
 conf = Configure(env)
