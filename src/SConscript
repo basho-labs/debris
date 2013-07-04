@@ -1,7 +1,33 @@
-env = Environment(CCFLAGS = '-g -Wall -DUSE_DEBUG',
-CPPPATH=['/usr/local/protobuf-2.5.0/include','/usr/local/protobuf-c-0.15/include','/usr/local/Cellar/libevent/2.0.21/include'],
-LIBPATH=['/usr/local/protobuf-2.5.0/lib','/usr/local/protobuf-c-0.15/lib','/usr/local/lib','.'])
-lib_files = Split('riak.c riak_utils.c riak_pb_message.c riak.pb-c.c riak_kv.pb-c.c')
+import os
+
+env = Environment(
+    ENV = {'PATH' : os.environ['PATH']},
+    CCFLAGS = '-g -Wall -DUSE_DEBUG',
+    # .. Required for proctoc-c full pathname
+    CPPPATH=['proto','include','/usr/local/protobuf-2.5.0/include','/usr/local/protobuf-c-0.15/include','/usr/local/Cellar/libevent/2.0.21/include','..'],
+    LIBPATH=['/usr/local/protobuf-2.5.0/lib','/usr/local/protobuf-c-0.15/lib','/usr/local/lib','.'],
+    toolpath=['tools'],
+    tools=['default', 'protoc'])
+riak_pb = env.Protoc(
+    [],
+    "proto/riak.proto",
+    PROTOCPROTOPATH=['.'],
+    PROTOCOUTDIR = '.', # defaults to same directory as .proto
+)
+riak_kv_pb = env.Protoc(
+    [],
+    "proto/riak_kv.proto",
+    PROTOCPROTOPATH=['.','build/proto'],
+    PROTOCOUTDIR = '.', # defaults to same directory as .proto
+)
+riak_search_pb = env.Protoc(
+    [],
+    "proto/riak_search.proto",
+    PROTOCPROTOPATH=['.','build/proto'],
+    PROTOCOUTDIR = '.', # defaults to same directory as .proto
+)
+lib_files = [riak_pb[0], riak_kv_pb[0], riak_search_pb[0], Split('riak.c riak_utils.c riak_context.c riak_pb_message.c')]
+
 
 env.Library('riak_c_client', lib_files)
 env.Program('riak_c_client','main.c', LIBS=['riak_c_client', 'event_core', 'event_extra', 'iconv', 'pthread', 'protobuf', 'protobuf-c'])
@@ -22,10 +48,6 @@ if not conf.CheckLib('protobuf-c'):
 
 if not conf.CheckLib('iconv'):
   print 'Did not find iconv lib, exiting!'
-  Exit(1)
-
-if not conf.CheckLib('curl'):
-  print 'Did not find curl lib, exiting!'
   Exit(1)
 
 if not conf.CheckLib('libevent'):

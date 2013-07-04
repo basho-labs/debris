@@ -32,11 +32,6 @@
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 
-void foo(struct riak_response *resp) {
-  printf("FOO cb!\n");
-}
-
-
 int main (int argc, char *argv[])
 {
 /*
@@ -83,7 +78,9 @@ int main (int argc, char *argv[])
     bufferevent_setcb(bev, riak_list_buckets_callback, write_callback, eventcb, base);
     bufferevent_enable(bev, EV_READ|EV_WRITE);
 
-    riak_list_buckets(bev);
+    riak_context *ctx = riak_context_new(NULL, NULL, NULL);
+    riak_context_set_event(ctx, bev);
+    riak_list_buckets(ctx);
 
     bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, argv[1], atoi(argv[2]));
     event_base_dispatch(base);

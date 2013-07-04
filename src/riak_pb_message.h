@@ -1,7 +1,30 @@
+/*********************************************************************
+ *
+ * riak_pb_message.h: Riak C Client Protocol Buffer Message
+ *
+ * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
+ *
+ * This file is provided to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License.  You may obtain
+ * a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+ *********************************************************************/
+
 #ifndef RIAK_PB_MESSAGE_H
 #define RIAK_PB_MESSAGE_H
 
 #include "riak.h"
+#include "riak_kv.pb-c.h"
 
 #define MSG_RPBERRORRESP 0
 
@@ -47,26 +70,26 @@
 #define MSG_RPBSEARCHQUERYREQ 27
 #define MSG_RBPSEARCHQUERYRESP 28
 
-struct pb_request {
-  uint32_t msglength;
-  uint8_t reqid;          // Protobuffs msg id for request
-  void *reqdata;
-};
+typedef struct _riak_pb_request {
+    riak_uint32_t msglength;
+    riak_uint8_t reqid;          // Protobuffs msg id for request
+    riak_uint8_t *reqdata;
+} riak_pb_request;
 
-struct pb_response {
-  uint32_t msglength;
-  uint8_t response_id; // TODO: need to do something for the error state
-  void *respdata;
-};
+typedef struct _riak_pb_response {
+    uint32_t msglength;
+    uint8_t response_id; // TODO: need to do something for the error state
+    riak_uint8_t *respdata;
+} riak_pb_response;
 
-int pb_encode_get_request(struct riak_context*,
-                                         struct riak_binary*,
-                                         struct riak_binary*,
-                                         struct riak_get_options*,
-                                         struct pb_request*);
+int pb_encode_get_request(riak_context*,
+                          riak_binary*,
+                          riak_binary*,
+                          riak_get_options*,
+                          riak_pb_request*);
 
-int pb_decode_get_response(struct riak_context*,
-                                           struct pb_response*,
-                                           struct riak_response*);
+int pb_decode_get_response(riak_context*,
+                           riak_pb_response*,
+                           riak_response*);
 
 #endif

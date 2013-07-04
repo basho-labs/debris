@@ -25,6 +25,7 @@
 
 #include <event2/util.h>
 
+// protobuf-c maps boolean to an int
 typedef int             riak_boolean_t;
 typedef ev_uint8_t      riak_uint8_t;
 typedef ev_int8_t       riak_int8_t;
@@ -34,6 +35,10 @@ typedef ev_uint32_t     riak_uint32_t;
 typedef ev_int32_t      riak_int32_t;
 typedef ev_uint64_t     riak_uint64_t;
 typedef ev_int64_t      riak_int64_t;
+typedef size_t          riak_size_t;
+
+// libevent types
+typedef struct bufferevent riak_bufferevent;
 
 #define RIAK_FALSE      0
 #define RIAK_TRUE       1

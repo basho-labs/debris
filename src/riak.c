@@ -23,44 +23,38 @@
 #include "riak.h"
 #include "riak_pb_message.h"
 #include "riak_kv.pb-c.h"
+#include "riak_utils.h"
 
-int riak_get(struct riak_context *ctx,
-             struct riak_binary *bucket,
-             struct riak_binary *key,
-             struct riak_get_options *get_options,
+int riak_get(riak_context *ctx,
+             riak_binary *bucket,
+             riak_binary *key,
+             riak_get_options *get_options,
              riak_response_callback resonse_cb) {
   return 0;
 }
 
-void write_callback(struct bufferevent *bev, void *ptr)
+void write_callback(riak_bufferevent *bev, void *ptr)
 {
-    fprintf(stderr, "Ready for write with %0x.\n", (int)ptr);
+    fprintf(stderr, "Ready for write with %0llx.\n", (riak_uint64_t)ptr);
 }
 
-int riak_list_buckets(struct bufferevent *bev) {
+int riak_list_buckets(riak_context *ctx) {
     RpbListBucketsReq listbucketsreq = RPB_LIST_BUCKETS_REQ__INIT;
-    size_t msglen = rpb_list_buckets_req__get_packed_size(&listbucketsreq);
-    uint8_t* msgbuf = (uint8_t*)malloc(msglen);
-    assert(msgbuf);
+    listbucketsreq.stream = RIAK_FALSE;
+    listbucketsreq.has_stream = RIAK_TRUE;
+    riak_size_t msglen = rpb_list_buckets_req__get_packed_size(&listbucketsreq);
+    riak_uint8_t *msgbuf = (riak_uint8_t*)malloc(msglen);
+    if (msgbuf == NULL) {
+        return 1;
+    }
     rpb_list_buckets_req__pack(&listbucketsreq, msgbuf);
 
-    // Convert to network byte order
-    ev_uint32_t netlen = htonl(msglen+1);
-    ev_uint8_t netreqid = MSG_RPBLISTBUCKETSREQ;
-    int result = bufferevent_write(bev, (void*)&netlen, sizeof(netlen));
-    assert(result == 0);
-    result = bufferevent_write(bev, (void*)&netreqid, sizeof(netreqid));
-    assert(result == 0);
-    if (msglen > 0) {
-        result = bufferevent_write(bev, (void*)msgbuf, msglen);
-        assert(result == 0);
-    }
-    fprintf(stderr, "Wrote %d bytes\n", (int)msglen);
+    int result = riak_send_req(ctx, MSG_RPBLISTBUCKETSREQ, msgbuf, msglen);
     free(msgbuf);
-    return 0;
+    return result;
 }
 
-void riak_list_buckets_callback(struct bufferevent *bev, void *ptr) {
+void riak_list_buckets_callback(riak_bufferevent *bev, void *ptr) {
     uint32_t inmsglen;
     size_t buflen = bufferevent_read(bev, (void*)&inmsglen, sizeof(inmsglen));
     assert(buflen == 4);
@@ -73,13 +67,12 @@ void riak_list_buckets_callback(struct bufferevent *bev, void *ptr) {
     // Pull off packing
 
     if (msgtype == MSG_RPBERRORRESP) {
-        RpbErrorResp *errresp= rpb_error_resp__unpack(NULL, buflen-1, (uint8_t*)(buffer+1));
+        RpbErrorResp *errresp = rpb_error_resp__unpack(NULL, buflen-1, (uint8_t*)(buffer+1));
         fprintf(stderr, "Err Unpacked\n");
-        uint32_t errcode = errresp->errcode;
+        riak_uint32_t errcode = errresp->errcode;
         ProtobufCBinaryData binary = errresp->errmsg;
         char errmsg[8192];
-        fprintf(stderr, "len = %d\n", (int)binary.len);
-        strncpy(errmsg, (char*)binary.data, binary.len);
+        strncpy(errmsg, (char*)binary.data, 8192);
         errmsg[binary.len] = '\0';
         fprintf(stderr, "ERR #%d - %s\n", errcode, errmsg);
         exit(1);

@@ -25,21 +25,49 @@
 
 #include "riak.h"
 
+// Why free this way?  Why not just free pointer?
 #define riak_free(p) _riak_free((void**)&(p))
 void _riak_free(void **p);
 // helper fn's
-struct riak_response *new_riak_response();
-void free_riak_response(struct riak_response*);
+riak_response *riak_response_new();
+void riak_response_free(riak_response*);
 
-struct riak_object *new_riak_object();
-
-void free_riak_object(struct riak_object*);
+riak_object *riak_object_new();
+void riak_object_free(riak_object*);
 
 // TODO: NOT CHARSET SAFE, need iconv
-struct riak_binary *new_riak_binary(size_t len, char *data);
-void populate_riak_binary(struct riak_binary *b, size_t len, uint8_t *data);
-void free_riak_binary(struct riak_binary*);
+
+/**
+ * @brief Allocate a new `riak_binary` struct
+ * @param len Length of binary in bytes
+ * @param data Pointer to binary data
+ * @returns pointer to newly created `riak_binary` struct
+ */
+riak_binary *riak_binary_new(riak_size_t len, riak_uint8_t *data);
+
+/**
+ * @brief Allocate a new riak_binary and populate from data pointer
+ * @param bin Existing `riak_binary` to be populated
+ * @param len Length of binary in bytes
+ * @param data Source of binary to be copied to bin
+ */
+void riak_binary_populate(riak_binary *bin, riak_size_t len, riak_uint8_t *data);
+
+/**
+ * @brief Free allocated memory used by `riak_binary`
+ */
+void riak_binary_free(riak_binary *bin);
+void riak_binary_copy(riak_binary* to, riak_binary* from);
+void riak_binary_deep_copy(riak_binary *to, riak_binary *from);
 
 void eventcb(struct bufferevent *bev, short events, void *ptr);
+/**
+ * @brief Send PB message via bufferevent
+ * @param ctx Context of request
+ * @param reqid Request Identifier
+ * @param msgbuf Packed binary request
+ * @param len Length of `msgbuf`
+ */
+int riak_send_req(riak_context *ctx, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len);
 
 #endif
