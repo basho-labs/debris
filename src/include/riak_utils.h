@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * riak_types.h: Riak Utilities
+ * utils.h: Riak C Client Utilities
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
@@ -25,15 +25,15 @@
 
 #include "riak.h"
 
-// Why free this way?  Why not just free pointer?
-#define riak_free(p) _riak_free((void**)&(p))
-void _riak_free(void **p);
+// Use void** to allow reseating of pointer to NULL
+#define riak_free(ctx,p) _riak_free((ctx),(void**)&(p))
+void _riak_free(riak_context *ctx, void **p);
 // helper fn's
-riak_response *riak_response_new();
-void riak_response_free(riak_response*);
+riak_get_response *riak_get_response_new(riak_context *ctx);
+void riak_get_response_free(riak_context *ctx, riak_get_response*);
 
-riak_object *riak_object_new();
-void riak_object_free(riak_object*);
+riak_object *riak_object_new(riak_context *ctx);
+void riak_object_free(riak_context *ctx, riak_object*);
 
 // TODO: NOT CHARSET SAFE, need iconv
 
@@ -43,7 +43,7 @@ void riak_object_free(riak_object*);
  * @param data Pointer to binary data
  * @returns pointer to newly created `riak_binary` struct
  */
-riak_binary *riak_binary_new(riak_size_t len, riak_uint8_t *data);
+riak_binary *riak_binary_new(riak_context *ctx, riak_size_t len, riak_uint8_t *data);
 
 /**
  * @brief Allocate a new riak_binary and populate from data pointer
@@ -51,14 +51,14 @@ riak_binary *riak_binary_new(riak_size_t len, riak_uint8_t *data);
  * @param len Length of binary in bytes
  * @param data Source of binary to be copied to bin
  */
-void riak_binary_populate(riak_binary *bin, riak_size_t len, riak_uint8_t *data);
+void riak_binary_populate(riak_context *ctx, riak_binary *bin, riak_size_t len, riak_uint8_t *data);
 
 /**
  * @brief Free allocated memory used by `riak_binary`
  */
-void riak_binary_free(riak_binary *bin);
+void riak_binary_free(riak_context *ctx, riak_binary *bin);
 void riak_binary_copy(riak_binary* to, riak_binary* from);
-void riak_binary_deep_copy(riak_binary *to, riak_binary *from);
+void riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from);
 
 void eventcb(struct bufferevent *bev, short events, void *ptr);
 /**

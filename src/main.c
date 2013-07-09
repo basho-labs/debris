@@ -34,34 +34,6 @@
 
 int main (int argc, char *argv[])
 {
-/*
-   struct riak_binary *bucket = new_riak_binary(3, "Foo");
-   struct riak_binary *key = new_riak_binary(3, "Bar");
-   struct riak_response* response = new_riak_response();
-   struct riak_get_options opts;
-
-   struct riak_protocol pb = setup_riak_pb_proto();
-   struct riak_context ctx;
-   ctx.proto = &pb;
-   ctx.malloc_fn=malloc;
-   riak_get(&ctx,
-             bucket,
-             key,
-             &opts,
-             foo);
-
-   free_riak_binary(bucket);
-   free_riak_binary(key);
-   free_riak_response(response);
-   // typedef void (*event_callback_fn)(evutil_socket_t, short, void *);
-   //struct event_base *eb = event_base_new();
-   //event_base_free(eb);
-   */
-
-    struct event_base *base;
-    struct evdns_base *dns_base;
-    struct bufferevent *bev;
-
     if (argc != 3) {
         printf("Trivial PBC Riak C client\n"
                "Syntax: %s [hostname] [port]\n"
@@ -70,17 +42,16 @@ int main (int argc, char *argv[])
     }
 
     event_enable_debug_mode();
-    base = event_base_new();
-    dns_base = evdns_base_new(base, 1);
+    struct event_base *base = event_base_new();
+    struct evdns_base *dns_base = evdns_base_new(base, 1);
 
 //    bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-    bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
-    bufferevent_setcb(bev, riak_list_buckets_callback, write_callback, eventcb, base);
+    struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
+    riak_context *ctx = riak_context_new_default(base, bev);
+    bufferevent_setcb(bev, riak_list_buckets_callback, write_callback, eventcb, ctx);
     bufferevent_enable(bev, EV_READ|EV_WRITE);
 
-    riak_context *ctx = riak_context_new(NULL, NULL, NULL);
-    riak_context_set_event(ctx, bev);
-    riak_list_buckets(ctx);
+    riak_encode_list_buckets_request(ctx);
 
     bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, argv[1], atoi(argv[2]));
     event_base_dispatch(base);

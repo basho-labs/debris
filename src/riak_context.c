@@ -22,11 +22,25 @@
 
 #include "riak.h"
 
-riak_context *riak_context_new(riak_alloc_fn alloc, riak_realloc_fn realloc, riak_free_fn freeme) {
+extern ProtobufCAllocator protobuf_c_default_allocator;
+
+riak_context *riak_context_new(riak_event_base  *base,
+                               riak_bufferevent *bev,
+                               riak_alloc_fn     alloc,
+                               riak_realloc_fn   realloc,
+                               riak_free_fn      freeme,
+                               riak_pb_alloc_fn  pb_alloc,
+                               riak_pb_free_fn   pb_free) {
     riak_alloc_fn   alloc_fn   = malloc;
     riak_realloc_fn realloc_fn = realloc;
     riak_free_fn    free_fn    = free;
 
+
+    if (base == NULL || bev == NULL) {
+        // TODO: Log message that these must be supplied
+        assert(base != NULL);
+        assert(bev != NULL);
+    }
     if (alloc != NULL) {
         alloc_fn = alloc;
     }
@@ -40,14 +54,18 @@ riak_context *riak_context_new(riak_alloc_fn alloc, riak_realloc_fn realloc, ria
     if (ctx == NULL) {
         return NULL;
     }
-    ctx->malloc_fn  = alloc_fn;
-    ctx->realloc_fn = realloc_fn;
-    ctx->free_fn    = free_fn;
-    ctx->bevent     = NULL;
+    ctx->malloc_fn    = alloc_fn;
+    ctx->realloc_fn   = realloc_fn;
+    ctx->free_fn      = free_fn;
+    ctx->base         = base;
+    ctx->bevent       = bev;
+    ctx->pb_allocator = NULL;
+    if (pb_alloc != NULL && pb_free != NULL) {
+        ctx->pb_allocator = &protobuf_c_default_allocator;
+        ctx->pb_allocator->alloc = pb_alloc;
+        ctx->pb_allocator->tmp_alloc = pb_alloc;
+        ctx->pb_allocator->free = pb_free;
+    }
 
     return ctx;
-}
-
-void riak_context_set_event(riak_context *ctx, riak_bufferevent *bev) {
-    ctx->bevent = bev;
 }

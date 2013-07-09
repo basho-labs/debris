@@ -25,28 +25,53 @@
 
 // per-thread
 // do we need a *shared* context to complement?
-// What about simply using ProtobufCAllocator?
 
 typedef     void *(*riak_alloc_fn)(size_t sz);
 typedef     void *(*riak_realloc_fn)(void *ptr, size_t size);
 typedef     void (*riak_free_fn)(void *ptr);
+typedef     void *(*riak_pb_alloc_fn)(void *allocator_data, size_t size);
+typedef     void (*riak_pb_free_fn)(void *allocator_data, void *pointer);
+
+/* --- memory management --- */
+//typedef struct _ProtobufCAllocator ProtobufCAllocator;
+//struct _ProtobufCAllocator
+//{
+//  void *(*alloc)(void *allocator_data, size_t size);
+//  void (*free)(void *allocator_data, void *pointer);
+//  void *(*tmp_alloc)(void *allocator_data, size_t size);
+//  unsigned max_alloca;
+//  void *allocator_data;
+//};
 
 typedef struct _riak_context {
-    riak_alloc_fn     malloc_fn;
-    riak_realloc_fn   realloc_fn;
-    riak_free_fn      free_fn;
-    riak_bufferevent *bevent;
+    riak_alloc_fn       malloc_fn;
+    riak_realloc_fn     realloc_fn;
+    riak_free_fn        free_fn;
+    ProtobufCAllocator *pb_allocator;
+    riak_event_base    *base;
+    riak_bufferevent   *bevent;
 } riak_context;
 
 
 /**
  * @brief Construct a Riak Context
- * @param alloc Memory allocator function
- * @param realloc Memory re-allocation function
- * @param freeme Memory releasing function
- * @returns New `riak_context` struct
+ * @param base Libevent event base
+ * @param bev Libevent `bufferevent`
+ * @param alloc Memory allocator function (optional)
+ * @param realloc Memory re-allocation function (optional)
+ * @param freeme Memory releasing function (optional)
+ * @param pb_alloc Memory allocator function for protocol buffers (optional)
+ * @param pb_free Memory releasing function for protocol buffer (optional)
+ * @returns Spanking new `riak_context` struct
  */
-riak_context *riak_context_new(riak_alloc_fn alloc, riak_realloc_fn realloc, riak_free_fn freeme);
+riak_context *riak_context_new(riak_event_base *base,
+                               riak_bufferevent *bev,
+                               riak_alloc_fn alloc,
+                               riak_realloc_fn realloc,
+                               riak_free_fn freeme,
+                               riak_pb_alloc_fn pb_alloc,
+                               riak_pb_free_fn pb_free);
 
-void riak_context_set_event(riak_context*, riak_bufferevent*);
+#define riak_context_new_default(base,bev) riak_context_new((base),(bev),NULL,NULL,NULL,NULL,NULL)
+
 #endif /* RIAK_CONTEXT_H_ */

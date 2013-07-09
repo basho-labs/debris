@@ -33,11 +33,12 @@
 #include <event2/util.h>
 #include <event2/event.h>
 #include "riak_types.h"
+#include "riak.pb-c.h"
 #include "riak_context.h"
 
 // TOP level structures
 
-// Copy of ProtobufCBinaryData
+// Similar to ProtobufCBinaryData
 typedef struct _riak_binary {
     riak_size_t   len;
     riak_uint8_t *data;
@@ -81,13 +82,13 @@ typedef struct _riak_object {
     //RpbPair **indexes;
 } riak_object;
 
-typedef struct _riak_response {
+typedef struct _riak_get_response {
       riak_binary   *vclock;
       riak_boolean_t unmodified;
       riak_boolean_t deleted;
       riak_int32_t   object_count;
       riak_object   *objects;
-} riak_response;
+} riak_get_response;
 
 
 typedef struct _riak_get_options {
@@ -146,7 +147,15 @@ typedef struct _riak_put_options {
 } riak_put_options;
 
 
-typedef void (*riak_response_callback)(riak_response*);
+typedef struct _riak_listbuckets_response {
+    riak_uint32_t  n_buckets;
+    riak_binary*   buckets;
+    // TODO: Probably don't need these in the struct
+    riak_boolean_t has_done;
+    riak_boolean_t done;
+} riak_listbuckets_response;
+
+typedef void (*riak_response_callback)(riak_get_response*);
 void write_callback(struct bufferevent *bev, void *ptr);
 
 

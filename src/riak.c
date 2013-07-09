@@ -38,23 +38,10 @@ void write_callback(riak_bufferevent *bev, void *ptr)
     fprintf(stderr, "Ready for write with %0llx.\n", (riak_uint64_t)ptr);
 }
 
-int riak_list_buckets(riak_context *ctx) {
-    RpbListBucketsReq listbucketsreq = RPB_LIST_BUCKETS_REQ__INIT;
-    listbucketsreq.stream = RIAK_FALSE;
-    listbucketsreq.has_stream = RIAK_TRUE;
-    riak_size_t msglen = rpb_list_buckets_req__get_packed_size(&listbucketsreq);
-    riak_uint8_t *msgbuf = (riak_uint8_t*)malloc(msglen);
-    if (msgbuf == NULL) {
-        return 1;
-    }
-    rpb_list_buckets_req__pack(&listbucketsreq, msgbuf);
 
-    int result = riak_send_req(ctx, MSG_RPBLISTBUCKETSREQ, msgbuf, msglen);
-    free(msgbuf);
-    return result;
-}
 
 void riak_list_buckets_callback(riak_bufferevent *bev, void *ptr) {
+    riak_context *ctx = (riak_context*)ptr;
     uint32_t inmsglen;
     size_t buflen = bufferevent_read(bev, (void*)&inmsglen, sizeof(inmsglen));
     assert(buflen == 4);
