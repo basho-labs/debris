@@ -63,11 +63,11 @@ void riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from
 void eventcb(struct bufferevent *bev, short events, void *ptr);
 /**
  * @brief Send PB message via bufferevent
- * @param ctx Context of request
+ * @param event Event related to request
  * @param reqid Request Identifier
  * @param msgbuf Packed binary request
  * @param len Length of `msgbuf`
  */
-int riak_send_req(riak_context *ctx, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len);
+int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len);
 
 #endif

@@ -24,9 +24,7 @@
 
 extern ProtobufCAllocator protobuf_c_default_allocator;
 
-riak_context *riak_context_new(riak_event_base  *base,
-                               riak_bufferevent *bev,
-                               riak_alloc_fn     alloc,
+riak_context *riak_context_new(riak_alloc_fn     alloc,
                                riak_realloc_fn   realloc,
                                riak_free_fn      freeme,
                                riak_pb_alloc_fn  pb_alloc,
@@ -36,11 +34,6 @@ riak_context *riak_context_new(riak_event_base  *base,
     riak_free_fn    free_fn    = free;
 
 
-    if (base == NULL || bev == NULL) {
-        // TODO: Log message that these must be supplied
-        assert(base != NULL);
-        assert(bev != NULL);
-    }
     if (alloc != NULL) {
         alloc_fn = alloc;
     }
@@ -57,8 +50,6 @@ riak_context *riak_context_new(riak_event_base  *base,
     ctx->malloc_fn    = alloc_fn;
     ctx->realloc_fn   = realloc_fn;
     ctx->free_fn      = free_fn;
-    ctx->base         = base;
-    ctx->bevent       = bev;
     ctx->pb_allocator = NULL;
     if (pb_alloc != NULL && pb_free != NULL) {
         ctx->pb_allocator = &protobuf_c_default_allocator;
@@ -68,4 +59,38 @@ riak_context *riak_context_new(riak_event_base  *base,
     }
 
     return ctx;
+}
+
+void riak_context_free(riak_context **ctx) {
+    riak_free_fn freer = (*ctx)->free_fn;
+    (freer)(*ctx);
+    *ctx = NULL;
+}
+
+riak_event *riak_event_new(riak_context          *ctx,
+                           riak_event_base       *base,
+                           riak_bufferevent      *bev,
+                           riak_response_callback response_cb,
+                           void                  *cb_data) {
+    if (base == NULL || bev == NULL) {
+        // TODO: Log message that these must be supplied
+        assert(base != NULL);
+        assert(bev != NULL);
+    }
+    riak_event *ev = (riak_event*)(ctx->malloc_fn)(sizeof(riak_event));
+    // TODO: Error checking
+    assert(ev != NULL);
+    ev->base = base;
+    ev->bevent = bev;
+    ev->context = ctx;
+    ev->response_cb = response_cb;
+    ev->cb_data = cb_data;
+
+    return ev;
+}
+
+void riak_event_free(riak_event** re) {
+    riak_free_fn freer = (*re)->context->free_fn;
+    (freer)(*re);
+    *re = NULL;
 }

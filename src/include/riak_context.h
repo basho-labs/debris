@@ -48,15 +48,11 @@ typedef struct _riak_context {
     riak_realloc_fn     realloc_fn;
     riak_free_fn        free_fn;
     ProtobufCAllocator *pb_allocator;
-    riak_event_base    *base;
-    riak_bufferevent   *bevent;
 } riak_context;
 
 
 /**
  * @brief Construct a Riak Context
- * @param base Libevent event base
- * @param bev Libevent `bufferevent`
  * @param alloc Memory allocator function (optional)
  * @param realloc Memory re-allocation function (optional)
  * @param freeme Memory releasing function (optional)
@@ -64,14 +60,47 @@ typedef struct _riak_context {
  * @param pb_free Memory releasing function for protocol buffer (optional)
  * @returns Spanking new `riak_context` struct
  */
-riak_context *riak_context_new(riak_event_base *base,
-                               riak_bufferevent *bev,
-                               riak_alloc_fn alloc,
+riak_context *riak_context_new(riak_alloc_fn alloc,
                                riak_realloc_fn realloc,
                                riak_free_fn freeme,
                                riak_pb_alloc_fn pb_alloc,
                                riak_pb_free_fn pb_free);
 
-#define riak_context_new_default(base,bev) riak_context_new((base),(bev),NULL,NULL,NULL,NULL,NULL)
+// By default use system's built-in memory management utilities (malloc/free)
+#define riak_context_new_default() riak_context_new(NULL,NULL,NULL,NULL,NULL)
+
+// Generic placeholder for message-specific callbacks
+typedef void *riak_response_callback;
+
+typedef struct _riak_event {
+    riak_context          *context;
+    riak_event_base       *base;
+    riak_bufferevent      *bevent;
+    riak_response_callback response_cb;
+    void                  *cb_data;
+} riak_event;
+
+/**
+ * @brief Reclaim memory used by a `riak_context`
+ * @param ctx Context struct
+ */
+void riak_context_free(riak_context **ctx);
+
+/**
+ * @brief Construct a Riak event
+ * @param ctx Riak context for memory allocation
+ * @param base Libevent event base
+ * @param bev Libevent `bufferevent`
+ * @param response_cb Reaponse callback function (user-supplied)
+ * @param cb_data Pointer passed to `response_cb` when it is called
+ * @returns Spanking new `riak_event` struct
+ */
+riak_event *riak_event_new(riak_context          *ctx,
+                           riak_event_base       *base,
+                           riak_bufferevent      *bev,
+                           riak_response_callback response_cb,
+                           void                  *cb_data);
+
+void riak_event_free(riak_event** re);
 
 #endif /* RIAK_CONTEXT_H_ */

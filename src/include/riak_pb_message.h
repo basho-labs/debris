@@ -84,16 +84,24 @@ riak_pb_response *riak_pb_response_new(riak_context *ctx,
 void riak_pb_response_free(riak_context     *ctx,
                            riak_pb_response **pb);
 
+void riak_read_result_callback(riak_bufferevent *bev, void *ptr);
+
 // TODO: Create error structure
-int riak_decode_error_response(riak_context *ctx, riak_pb_response *pbresp);
+int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp);
 
-int riak_encode_get_request(riak_context*,
-                            riak_binary*,
-                            riak_binary*,
-                            riak_get_options*);
+int riak_encode_get_request(riak_event  *ev,
+                            riak_binary *bucket,
+                            riak_binary *key,
+                            riak_get_options *options);
 
-int riak_decode_get_response(riak_context*,
-                             riak_pb_response*,
-                             riak_get_response*);
+int riak_decode_get_response(riak_event*,
+                             riak_pb_response*);
+
+int riak_encode_listbuckets_request(riak_event *ev);
+
+int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp);
+
+//typedef void (*riak_response_callback)(void ptr*);
+
 
 #endif

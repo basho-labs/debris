@@ -25,13 +25,13 @@
 #include "riak_kv.pb-c.h"
 #include "riak_utils.h"
 
-int riak_get(riak_context *ctx,
-             riak_binary *bucket,
-             riak_binary *key,
-             riak_get_options *get_options,
-             riak_response_callback resonse_cb) {
-  return 0;
-}
+//int riak_get(riak_context *ctx,
+//             riak_binary *bucket,
+//             riak_binary *key,
+//             riak_get_options *get_options,
+//             riak_response_callback resonse_cb) {
+//  return 0;
+//}
 
 void write_callback(riak_bufferevent *bev, void *ptr)
 {
@@ -39,7 +39,7 @@ void write_callback(riak_bufferevent *bev, void *ptr)
 }
 
 
-
+// OLD - Unused
 void riak_list_buckets_callback(riak_bufferevent *bev, void *ptr) {
     riak_context *ctx = (riak_context*)ptr;
     uint32_t inmsglen;

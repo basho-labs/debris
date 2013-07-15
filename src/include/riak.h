@@ -150,12 +150,10 @@ typedef struct _riak_put_options {
 typedef struct _riak_listbuckets_response {
     riak_uint32_t  n_buckets;
     riak_binary*   buckets;
-    // TODO: Probably don't need these in the struct
-    riak_boolean_t has_done;
+    // TODO: Keep in struct or pass as argument?
     riak_boolean_t done;
 } riak_listbuckets_response;
 
-typedef void (*riak_response_callback)(riak_get_response*);
 void write_callback(struct bufferevent *bev, void *ptr);
 
 
@@ -166,11 +164,15 @@ void riak_ping(riak_context*);
 // int riak_get(riak_context*, struct riak_get_options*, riak_get_callback*);
 // and a sync version that calls the async version:
 
+typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
+
+typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *response, void *ptr);
+
 int riak_get(riak_context*,
              riak_binary *bucket,
              riak_binary *key,
              riak_get_options*,
-             riak_response_callback);
+             riak_get_response_callback);
 
 void riak_server_info(riak_context*);
 

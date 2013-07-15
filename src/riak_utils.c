@@ -125,8 +125,8 @@ void eventcb(struct bufferevent *bev, short events, void *ptr)
     }
 }
 
-int riak_send_req(riak_context *ctx, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len) {
-    riak_bufferevent *bev = ctx->bevent;
+int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len) {
+    riak_bufferevent *bev = ev->bevent;
     // Convert len to network byte order
     ev_uint32_t msglen = htonl(len+1);
     int result = bufferevent_write(bev, (void*)&msglen, sizeof(msglen));
