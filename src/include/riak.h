@@ -38,12 +38,32 @@
 
 // TOP level structures
 
-// Similar to ProtobufCBinaryData
+// Based off of ProtobufCBinaryData
 typedef struct _riak_binary {
     riak_size_t   len;
     riak_uint8_t *data;
 } riak_binary;
 
+// Based off of RpbLink
+typedef struct _riak_link
+{
+    riak_boolean_t has_bucket;
+    riak_binary    bucket;
+    riak_boolean_t has_key;
+    riak_binary    key;
+    riak_boolean_t has_tag;
+    riak_binary    tag;
+} riak_link;
+
+// Based off of RpbPair
+typedef struct _RpbPair
+{
+    riak_binary    key;
+    riak_boolean_t has_value;
+    riak_binary    value;
+} riak_pair;
+
+// Based off of RpbContent
 typedef struct _riak_object {
     riak_binary bucket;
 
@@ -74,12 +94,12 @@ typedef struct _riak_object {
     riak_binary vtag;
 
     riak_int32_t n_links;
-    //RpbLink **links;
+    riak_link **links;
 
-    riak_int32_t n_usermeta;
-    //RpbPair **usermeta;
-    riak_int32_t n_indexes;
-    //RpbPair **indexes;
+    riak_int32_t   n_usermeta;
+    riak_pair    **usermeta;
+    riak_int32_t   n_indexes;
+    riak_pair    **indexes;
 } riak_object;
 
 typedef struct _riak_get_response {
@@ -114,10 +134,19 @@ typedef struct _riak_get_options {
     riak_uint32_t  n_val;
 } riak_get_options;
 
+typedef struct _riak_put_response {
+  riak_uint32_t  n_content;
+  //RpbContent **content;
+  riak_boolean_t has_vclock;
+  riak_binary    vclock;
+  riak_boolean_t has_key;
+  riak_binary    key;
+} riak_put_response;
 
 typedef struct _riak_put_options {
-    riak_boolean_t has_key;
-    riak_binary    key;
+    // KEY is in riak_object, so is this copy needed?
+    //riak_boolean_t has_key;
+    //riak_binary    key;
     riak_boolean_t has_vclock;
     riak_binary    vclock;
     //RpbContent *content;
@@ -165,6 +194,8 @@ void riak_ping(riak_context*);
 // and a sync version that calls the async version:
 
 typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
+
+typedef void (*riak_put_response_callback)(riak_put_response *response, void *ptr);
 
 typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *response, void *ptr);
 

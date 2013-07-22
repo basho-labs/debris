@@ -49,18 +49,18 @@ void riak_pb_response_free(riak_context     *ctx,
 
 
 int riak_encode_get_request(riak_event  *ev,
-                            riak_binary *bucket,
-                            riak_binary *key,
+                            char *bucket,
+                            char *key,
                             riak_get_options *get_options) {
 
     riak_context *ctx = (riak_context*)(ev->context);
     RpbGetReq getmsg = RPB_GET_REQ__INIT;
 
-    getmsg.bucket.len = bucket->len;
-    getmsg.bucket.data = bucket->data;
+    getmsg.bucket.len = strlen(bucket);
+    getmsg.bucket.data = (riak_uint8_t*)bucket;
 
-    getmsg.key.len = key->len;
-    getmsg.key.data = key->data;
+    getmsg.key.len = strlen(key);
+    getmsg.key.data = (riak_uint8_t*)key;
 
     // process get options
     if(get_options != NULL) {
@@ -106,8 +106,15 @@ int riak_decode_get_response(riak_event        *ev,
     // decode the PB response etc
     riak_context *ctx = (riak_context*)(ev->context);
     RpbGetResp *rpbresp = rpb_get_resp__unpack(ctx->pb_allocator, pbresp->len, pbresp->data);
+    fprintf(stderr, "riak_decode_get_response len=%d/pb unpack = 0x%x\n", pbresp->len, (int)(rpbresp));
+    if (rpbresp == NULL) {
+        return 1;
+    }
     int i = 0;
     riak_get_response *response = (riak_get_response*)(ctx->malloc_fn)(sizeof(riak_get_response));
+    if (response == NULL) {
+        return 1;
+    }
     if(rpbresp->n_content > 0) {
         response->objects = (riak_object*)(ctx->malloc_fn)(sizeof(riak_object) * rpbresp->n_content);
         response->object_count = rpbresp->n_content;
@@ -121,6 +128,257 @@ int riak_decode_get_response(riak_event        *ev,
     (cb)(response, ev->cb_data);
     return 0;
 }
+
+static int riak_copy_pairs(int num_pairs, riak_context* ctx, RpbPair*** pbpair_target, riak_pair **pair) {
+    RpbPair **pbpair = (RpbPair**)(ctx->malloc_fn)(sizeof(RpbPair*) * num_pairs);
+    if (pbpair == NULL) {
+        // TODO: Error handling
+        return 1;
+    }
+    int i;
+    for(i = 0; i < num_pairs; i++) {
+        pbpair[i] = (RpbPair*)(ctx->malloc_fn)(sizeof(RpbPair));
+        if (pbpair[i] == NULL) {
+            // TODO: Error handling
+            return 1;
+        }
+        memset(pbpair[i], '\0', sizeof(RpbPair));
+        if (pair->has_value) {
+            pbpair->has_value = RIAK_TRUE;
+            riak_binary_copy(pbpair[i]->value, pair[i]->value);
+        }
+    }
+    // Finally assign the pointer to the list of pair pointers
+    *pbpair_target = pbpair;
+    return 0;
+}
+
+static void riak_free_pairs(int num_pairs, riak_context* ctx, RpbPair*** pbpair_target) {
+    RpbPair **pbpair = *pbpair_target;
+    int i;
+    for(i = 0; i < num_pairs; i++) {
+        riak_free(ctx, pbpair[i]);
+    }
+    riak_free(ctx, pbpair);
+    *pbpair_target = NULL;
+}
+
+static int riak_copy_links(int num_links, riak_context* ctx, RpbLink*** pblink_target, riak_link **link) {
+    RpbLink **pblink = (RpbLink**)(ctx->malloc_fn)(sizeof(RpbLink*) * num_links);
+    if (pblink == NULL) {
+        // TODO: Error handling
+        return 1;
+    }
+    int i;
+    for(i = 0; i < num_links; i++) {
+        pblink[i] = (RpbLink*)(ctx->malloc_fn)(sizeof(RpbLink));
+        if (pblink[i] == NULL) {
+            // TODO: Error handling
+            return 1;
+        }
+        memset(pblink[i], '\0', sizeof(RpbLink));
+        if (link->has_bucket) {
+            pblink->has_bucket = RIAK_TRUE;
+            riak_binary_copy(pblink[i]->bucket, link[i]->bucket);
+        }
+        if (link->has_key) {
+            pblink->has_key = RIAK_TRUE;
+            riak_binary_copy(pblink[i]->key, link[i]->key);
+        }
+        if (link->has_tag) {
+            pblink->has_tag = RIAK_TRUE;
+            riak_binary_copy(pblink[i]->tag, link[i]->tag);
+        }
+    }
+    // Finally assign the pointer to the list of link pointers
+    *pblink_target = pblink;
+    return 0;
+}
+
+static void riak_free_links(int num_links, riak_context* ctx, RpbLink*** pblink_target) {
+    RpbLink **pblink = *pblink_target;
+    int i;
+    for(i = 0; i < num_links; i++) {
+        riak_free(ctx, pblink[i]);
+    }
+    riak_free(ctx, pblink);
+    *pblink_target = NULL;
+}
+
+int riak_encode_put_request(riak_event *ev,
+                            riak_object *riak_obj,
+                            riak_put_options *options) {
+
+    riak_context *ctx = (riak_context*)(ev->context);
+    // TODO: Currently a temporary struct.  Needs deep copy if this function does not clean it up
+    RpbPutReq putmsg = RPB_PUT_REQ__INIT;
+
+    riak_binary_copy(&(putmsg.bucket), &(riak_obj->bucket));
+
+    // Is the Key provided?
+    if (riak_obj->has_key) {
+        putmsg.has_key   = RIAK_TRUE;
+        riak_binary_copy(putmsg.key, riak_obj->key);
+    }
+
+    // Data content payload
+    RpbContent content;
+    rpb_content__init(&content);
+    putmsg.content = &content;
+
+    riak_binary_copy(content.value, riak_obj->value);
+    if (riak_obj->has_charset) {
+        content.has_charset = RIAK_TRUE;
+        riak_binary_copy(content.charset, riak_obj->charset);
+    }
+    if (riak_obj->has_content_encoding) {
+        content.has_content_encoding = RIAK_TRUE;
+        riak_binary_copy(content.content_encoding, riak_obj->encoding);
+    }
+    if (riak_obj->has_content_type) {
+        content.has_content_type = RIAK_TRUE;
+        riak_binary_copy(content.content_type, riak_obj->content_type);
+    }
+    if (riak_obj->has_deleted) {
+        content.has_deleted = RIAK_TRUE;
+        content.deleted = riak_obj->deleted;
+    }
+    if (riak_obj->has_last_mod) {
+        content.has_last_mod = RIAK_TRUE;
+        content.last_mod = riak_obj->last_mod;
+    }
+    if (riak_obj->has_last_mod_usecs) {
+        content.has_last_mod_usecs = RIAK_TRUE;
+        content.last_mod_usecs = riak_obj->last_mod_usecs;
+    }
+    if (riak_obj->has_vtag) {
+        content.has_vtag = RIAK_TRUE;
+        riak_binary_copy(content.vtag, riak_obj->vtag);
+    }
+
+    // Indexes
+    if (riak_obj->n_indexes > 0) {
+        content.n_indexes = riak->n_indexes;
+        int idxresult = riak_copy_pairs(content.n_indexes, ctx, &content.indexes, riak_obj->indexes);
+        if (idxresult) {
+            return idxresult;
+        }
+    }
+
+    // User-Metadave
+    if (riak_obj->n_usermeta > 0) {
+        content.n_usermeta = riak->n_usermeta;
+        int uresult = riak_copy_pairs(content.n_usermeta, ctx, &content.usermeta, riak_obj->usermeta);
+        if (uresult) {
+            return uresult;
+        }
+    }
+
+    // Links
+    if (riak_obj->n_links > 0) {
+        content.n_links = riak->n_links;
+        int lresult = riak_copy_links(content.n_links, ctx, &content.links, riak_obj->links);
+        if (lresult) {
+            return lresult;
+        }
+    }
+
+    // process put options
+    if (options != NULL) {
+        if (options->has_asis) {
+            putmsg.has_asis = RIAK_TRUE;
+            putmsg.asis = options->asis;
+        }
+        if (options->has_dw) {
+            putmsg.has_dw = RIAK_TRUE;
+            putmsg.dw = options->dw;
+        }
+        if (options->has_if_none_match) {
+            putmsg.has_if_none_match = RIAK_TRUE;
+            putmsg.has_if_none_match = options->has_if_none_match;
+        }
+        if (options->has_if_not_modified) {
+            putmsg.has_if_not_modified = RIAK_TRUE;
+            putmsg.has_if_not_modified = options->has_if_not_modified;
+        }
+        if (options->has_n_val) {
+            putmsg.has_n_val = RIAK_TRUE;
+            putmsg.n_val = options->n_val;
+        }
+        if (options->has_pw) {
+            putmsg.has_pw = RIAK_TRUE;
+            putmsg.pw = options->pw;
+        }
+        if (options->has_return_body) {
+            putmsg.has_return_body = RIAK_TRUE;
+            riak_binary_copy(putmsg.return_body, options->return_body);
+        }
+        if (options->has_return_head) {
+            putmsg.has_return_head = RIAK_TRUE;
+            riak_binary_copy(putmsg.return_head, options->return_head);
+        }
+        if (options->has_sloppy_quorum) {
+            putmsg.has_sloppy_quorum = RIAK_TRUE;
+            riak_binary_copy(putmsg.sloppy_quorum, options->sloppy_quorum);
+        }
+        if (options->has_timeout) {
+            putmsg.has_timeout = RIAK_TRUE;
+            putmsg.timeout = options->timeout;
+        }
+        if (options->has_vclock) {
+            putmsg.has_vclock = RIAK_TRUE;
+            riak_binary_copy(putmsg.vclock, options->vclock);
+        }
+        if (options->has_w) {
+            putmsg.has_w = RIAK_TRUE;
+            putmsg.w = options->w;
+        }
+    }
+
+    riak_uint32_t msglen = rpb_put_req__get_packed_size (&putmsg);
+    riak_uint8_t* msgbuf = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
+    if (msgbuf == NULL) {
+        return 1;
+    }
+    rpb_put_req__pack (&putmsg, msgbuf);
+
+    riak_free_pairs(content.n_indexes, ctx, &content.indexes);
+    riak_free_pairs(content.n_usermeta, ctx, &content.usermeta);
+    riak_free_links(content.n_links, ctx, &content.links);
+
+    int result = riak_send_req(ev, MSG_RPBPUTREQ, msgbuf, msglen);
+    riak_free(ev->context, msgbuf);
+    return result;
+}
+
+int riak_decode_put_response(riak_event        *ev,
+                             riak_pb_response  *pbresp) {
+    // decode the PB response etc
+    riak_context *ctx = (riak_context*)(ev->context);
+    RpbPutResp *rpbresp = rpb_put_resp__unpack(ctx->pb_allocator, pbresp->len, pbresp->data);
+    fprintf(stderr, "riak_decode_put_response len=%d/pb unpack = 0x%x\n", pbresp->len, (int)(rpbresp));
+    if (rpbresp == NULL) {
+        return 1;
+    }
+    int i = 0;
+    riak_put_response *response = (riak_put_response*)(ctx->malloc_fn)(sizeof(riak_put_response));
+    if (response == NULL) {
+        return 1;
+    }
+    if(rpbresp->n_content > 0) {
+        response->objects = (riak_object*)(ctx->malloc_fn)(sizeof(riak_object) * rpbresp->n_content);
+        response->object_count = rpbresp->n_content;
+        for(i = 0; i < rpbresp->n_content; i++) {
+            RpbContent *c = rpbresp->content[i];
+            riak_binary_populate(ev->context, &(response->objects[i].value), c->value.len, c->value.data);
+        }
+    }
+    rpb_putt_resp__free_unpacked(rpbresp, ctx->pb_allocator);
+    riak_put_response_callback cb = (riak_put_response_callback)(ev->response_cb);
+    (cb)(response, ev->cb_data);
+    return 0;
+}
+
 
 // TODO: Should encode be separate from sending?
 int riak_encode_listbuckets_request(riak_event *ev) {

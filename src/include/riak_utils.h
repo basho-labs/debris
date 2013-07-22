@@ -57,7 +57,8 @@ void riak_binary_populate(riak_context *ctx, riak_binary *bin, riak_size_t len, 
  * @brief Free allocated memory used by `riak_binary`
  */
 void riak_binary_free(riak_context *ctx, riak_binary *bin);
-void riak_binary_copy(riak_binary* to, riak_binary* from);
+void riak_binary_copy_ptr(riak_binary* to, riak_binary* from);
+#define riak_binary_copy(A,B) riak_binary_copy_ptr(&(A),&(B))
 void riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from);
 
 void eventcb(struct bufferevent *bev, short events, void *ptr);

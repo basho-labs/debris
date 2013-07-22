@@ -73,7 +73,7 @@ void riak_binary_free(riak_context *ctx, riak_binary *b) {
       riak_free(ctx, b);
 }
 
-void riak_binary_copy(riak_binary* to, riak_binary* from) {
+void riak_binary_copy_ptr(riak_binary* to, riak_binary* from) {
     to->len  = from->len;
     to->data = from->data;
 }

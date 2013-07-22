@@ -47,13 +47,16 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     fprintf(stderr, "done = %d\n", response->done);
 }
 
+void get_cb(riak_get_response *response, void *ptr) {
+    fprintf(stderr, "get_cb\n");
+}
 
 int main (int argc, char *argv[])
 {
-    if (argc != 3) {
+    if (argc != 5) {
         printf("Trivial PBC Riak C client\n"
-               "Syntax: %s [hostname] [port]\n"
-               "Example: %s localhost 10017\n",argv[0],argv[0]);
+               "Syntax: %s [hostname] [port] [bucket] [key]\n"
+               "Example: %s localhost 10017 baz 12345\n",argv[0],argv[0]);
         return 1;
     }
 
@@ -66,10 +69,20 @@ int main (int argc, char *argv[])
     riak_context *ctx = riak_context_new_default();
     bufferevent_enable(bev, EV_READ|EV_WRITE);
 
+#ifdef LISTBUCKETS
     riak_response_callback cb = (riak_response_callback)listbucket_cb;
     riak_event *listbuckets_ev = riak_event_new(ctx, base, bev, cb, NULL);
     bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, listbuckets_ev);
     riak_encode_listbuckets_request(listbuckets_ev);
+#else
+    riak_response_callback cb = (riak_response_callback)get_cb;
+    riak_event *get_ev = riak_event_new(ctx, base, bev, cb, NULL);
+    bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, get_ev);
+    riak_encode_get_request(get_ev,
+            argv[3],
+            argv[4],
+            NULL);
+#endif
 
     bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, argv[1], atoi(argv[2]));
     event_base_dispatch(base);
