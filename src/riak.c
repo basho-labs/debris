@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * riak_types.h: Riak Opertions
+ * riak_types.h: Riak Operations
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *

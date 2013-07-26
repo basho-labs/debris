@@ -72,8 +72,8 @@
 
 
 typedef struct _riak_pb_response {
-    uint32_t      len;
-    uint8_t       msgid; // TODO: need to do something for the error state
+    riak_uint32_t len;
+    riak_uint8_t  msgid; // TODO: need to do something for the error state
     riak_uint8_t *data;
 } riak_pb_response;
 

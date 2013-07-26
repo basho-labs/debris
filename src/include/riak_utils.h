@@ -23,7 +23,7 @@
 #ifndef RIAK_UTILS_H
 #define RIAK_UTILS_H
 
-#include "riak.h"
+//#include "riak.h"
 
 // Use void** to allow reseating of pointer to NULL
 #define riak_free(ctx,p) _riak_free((ctx),(void**)&(p))
@@ -31,9 +31,6 @@ void _riak_free(riak_context *ctx, void **p);
 // helper fn's
 riak_get_response *riak_get_response_new(riak_context *ctx);
 void riak_get_response_free(riak_context *ctx, riak_get_response*);
-
-riak_object *riak_object_new(riak_context *ctx);
-void riak_object_free(riak_context *ctx, riak_object*);
 
 // TODO: NOT CHARSET SAFE, need iconv
 
@@ -60,6 +57,12 @@ void riak_binary_free(riak_context *ctx, riak_binary *bin);
 void riak_binary_copy_ptr(riak_binary* to, riak_binary* from);
 #define riak_binary_copy(A,B) riak_binary_copy_ptr(&(A),&(B))
 void riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from);
+void riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to, riak_binary* from);
+#define riak_binary_to_pb_copy(A,B) riak_binary_to_pb_copy_ptr(&(A),&(B))
+void riak_binary_to_pb_deep_copy(riak_context *ctx, ProtobufCBinaryData *to, riak_binary *from);
+void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from);
+#define riak_binary_from_pb_copy(A,B) riak_binary_from_pb_copy_ptr(&(A),&(B))
+void riak_binary_from_pb_deep_copy(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from);
 
 void eventcb(struct bufferevent *bev, short events, void *ptr);
 /**

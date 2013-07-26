@@ -31,22 +31,6 @@ void _riak_free(riak_context *ctx, void **pp) {
     }
 }
 
-// RIAK_OBJECT
-riak_object *riak_object_new(riak_context *ctx) {
-    riak_object *o = (riak_object*)(ctx->malloc_fn)(sizeof(riak_object));
-    // TODO: check malloc return status
-    // TODO: do I need bzero?
-    bzero(o, sizeof(riak_object));
-    return o;
-}
-
-void riak_object_free(riak_context *ctx, riak_object *o) {
-    if (o == NULL) {
-        return;
-    }
-    riak_free(ctx, o);
-}
-
 // RIAK_BINARY
 // be careful
 riak_binary *riak_binary_new(riak_context *ctx, riak_size_t len, riak_uint8_t *data) {
@@ -85,6 +69,29 @@ void riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from
     memcpy((void*)to->data, (void*)from->data, from->len);
 }
 
+void riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to, riak_binary* from) {
+    to->len  = from->len;
+    to->data = from->data;
+}
+
+void riak_binary_to_pb_deep_copy(riak_context *ctx, ProtobufCBinaryData *to, riak_binary *from) {
+    to->len  = from->len;
+    to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
+    // TODO: Check malloc return status
+    memcpy((void*)to->data, (void*)from->data, from->len);
+}
+
+void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from) {
+    to->len  = from->len;
+    to->data = from->data;
+}
+
+void riak_binary_from_pb_deep_copy(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from) {
+    to->len  = from->len;
+    to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
+    // TODO: Check malloc return status
+    memcpy((void*)to->data, (void*)from->data, from->len);
+}
 
 riak_get_response* riak_get_response_new(riak_context *ctx) {
     riak_get_response* r = (riak_get_response*)(ctx->malloc_fn)(sizeof(riak_get_response));
@@ -96,7 +103,7 @@ void riak_get_response_free(riak_context *ctx, riak_get_response *r) {
     if(r == 0) {
         return;
     }
-    if(r->object_count > 0) {
+    if(r->n_content > 0) {
         //for(i = 0; i < r->object_count; i++) {
         //  free_riak_object(&r->objects[i]);
         //}

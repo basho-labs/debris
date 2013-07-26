@@ -34,6 +34,7 @@
 #include <event2/event.h>
 #include "riak_types.h"
 #include "riak.pb-c.h"
+#include "riak_kv.pb-c.h"
 #include "riak_context.h"
 
 // TOP level structures
@@ -44,72 +45,15 @@ typedef struct _riak_binary {
     riak_uint8_t *data;
 } riak_binary;
 
-// Based off of RpbLink
-typedef struct _riak_link
-{
-    riak_boolean_t has_bucket;
-    riak_binary    bucket;
-    riak_boolean_t has_key;
-    riak_binary    key;
-    riak_boolean_t has_tag;
-    riak_binary    tag;
-} riak_link;
-
-// Based off of RpbPair
-typedef struct _RpbPair
-{
-    riak_binary    key;
-    riak_boolean_t has_value;
-    riak_binary    value;
-} riak_pair;
-
-// Based off of RpbContent
-typedef struct _riak_object {
-    riak_binary bucket;
-
-    riak_boolean_t has_key;
-    riak_binary key;
-
-    riak_binary value;
-
-    riak_boolean_t has_charset;
-    riak_binary charset;
-
-    riak_boolean_t has_last_mod;
-    riak_uint32_t last_mod;
-
-    riak_boolean_t has_last_mod_usecs;
-    riak_uint32_t last_mod_usecs;
-
-    riak_boolean_t has_content_type;
-    riak_binary content_type;
-
-    riak_boolean_t has_content_encoding;
-    riak_binary encoding;
-
-    riak_boolean_t has_deleted;
-    riak_boolean_t deleted;
-
-    riak_boolean_t has_vtag;
-    riak_binary vtag;
-
-    riak_int32_t n_links;
-    riak_link **links;
-
-    riak_int32_t   n_usermeta;
-    riak_pair    **usermeta;
-    riak_int32_t   n_indexes;
-    riak_pair    **indexes;
-} riak_object;
+#include "riak_object.h"
 
 typedef struct _riak_get_response {
       riak_binary   *vclock;
       riak_boolean_t unmodified;
       riak_boolean_t deleted;
-      riak_int32_t   object_count;
-      riak_object   *objects;
+      riak_int32_t   n_content;
+      riak_object   *content;
 } riak_get_response;
-
 
 typedef struct _riak_get_options {
     riak_boolean_t has_r;
@@ -135,12 +79,12 @@ typedef struct _riak_get_options {
 } riak_get_options;
 
 typedef struct _riak_put_response {
-  riak_uint32_t  n_content;
-  //RpbContent **content;
-  riak_boolean_t has_vclock;
-  riak_binary    vclock;
-  riak_boolean_t has_key;
-  riak_binary    key;
+    riak_uint32_t  n_content;
+    riak_object   *content;
+    riak_boolean_t has_vclock;
+    riak_binary    vclock;
+    riak_boolean_t has_key;
+    riak_binary    key;
 } riak_put_response;
 
 typedef struct _riak_put_options {
