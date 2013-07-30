@@ -145,6 +145,20 @@ int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak
         if (result != 0) return 1;
     }
     fprintf(stderr, "Wrote %d bytes\n", (int)len);
+    int i;
+    for(i = 0; i < len; i++) {
+        fprintf(stderr, "%02x", msgbuf[i]);
+    }
+    fprintf(stderr, "\n");
+    for(i = 0; i < len; i++) {
+        char c = '.';
+        if (msgbuf[i] > 31 && msgbuf[i] < 128) {
+            c = msgbuf[i];
+        }
+        fprintf(stderr, "%c", c);
+    }
+
+    fprintf(stderr, "\n");
     return 0;
 }
 

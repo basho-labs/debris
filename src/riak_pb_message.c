@@ -105,7 +105,7 @@ int riak_decode_get_response(riak_event        *ev,
                              riak_pb_response  *pbresp) {
     // decode the PB response etc
     riak_context *ctx = (riak_context*)(ev->context);
-    RpbGetResp *rpbresp = rpb_get_resp__unpack(ctx->pb_allocator, pbresp->len, pbresp->data);
+    RpbGetResp *rpbresp = rpb_get_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     fprintf(stderr, "riak_decode_get_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
     if (rpbresp == NULL) {
         return 1;
@@ -221,7 +221,7 @@ int riak_decode_put_response(riak_event        *ev,
                              riak_pb_response  *pbresp) {
     // decode the PB response etc
     riak_context *ctx = (riak_context*)(ev->context);
-    RpbPutResp *rpbresp = rpb_put_resp__unpack(ctx->pb_allocator, pbresp->len, pbresp->data);
+    RpbPutResp *rpbresp = rpb_put_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     fprintf(stderr, "riak_decode_put_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
     if (rpbresp == NULL) {
         return 1;

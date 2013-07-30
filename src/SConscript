@@ -4,8 +4,8 @@ env = Environment(
     ENV = {'PATH' : os.environ['PATH']},
     CCFLAGS = '-g -Wall -DUSE_DEBUG',
     # .. Required for proctoc-c full pathname
-    CPPPATH=['proto','include','/usr/local/protobuf-2.5.0/include','/usr/local/protobuf-c-0.15/include','/usr/local/Cellar/libevent/2.0.21/include','..'],
-    LIBPATH=['/usr/local/protobuf-2.5.0/lib','/usr/local/protobuf-c-0.15/lib','/usr/local/lib','.'],
+    CPPPATH=['proto','include','/usr/local/protobuf-2.5.0/include','/usr/local/protobuf-c-0.15/include','/usr/local/libevent-2.0.21/include','..'],
+    LIBPATH=['/usr/local/protobuf-2.5.0/lib','/usr/local/protobuf-c-0.15/lib','/usr/local/libevent-2.0.21/lib','.'],
     toolpath=['tools'],
     tools=['default', 'protoc'])
 riak_pb = env.Protoc(
