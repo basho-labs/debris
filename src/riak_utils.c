@@ -86,11 +86,40 @@ void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from) {
     to->data = from->data;
 }
 
-void riak_binary_from_pb_deep_copy(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from) {
+void riak_binary_from_pb_deep_copy_ptr(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from) {
     to->len  = from->len;
     to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
     // TODO: Check malloc return status
     memcpy((void*)to->data, (void*)from->data, from->len);
+}
+
+//TODO: Figure out clean way to print UTF-8 encoding
+int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) {
+    int count = 0;
+    for( ; count < bin->len && count < len-1; count++) {
+        char c = '.';
+        // Non-printable characters are replaced by a dot
+        if (bin->data >= 32) c = bin->data[count];
+        target[count] = c;
+    }
+    if (len > 0) target[count] = '\0';
+    return count;
+}
+
+int riak_binary_hex_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) {
+    int count = 0;
+    static char hex[] = "0123456789abcdef";
+    if (bin != NULL) {
+        for( ; count < bin->len && (count*2) < len-1; count++) {
+
+            int nibble = (bin->data[count] & 0xf0) >> 4;
+            target[count*2] = hex[nibble];
+            nibble = (bin->data[count] & 0x0f);
+            target[count*2+1] = hex[nibble];
+        }
+    }
+    if (len > 0) target[count*2] = '\0';
+    return count*2;
 }
 
 riak_get_response* riak_get_response_new(riak_context *ctx) {

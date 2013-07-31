@@ -62,7 +62,12 @@ void riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to, riak_binary* from);
 void riak_binary_to_pb_deep_copy(riak_context *ctx, ProtobufCBinaryData *to, riak_binary *from);
 void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from);
 #define riak_binary_from_pb_copy(A,B) riak_binary_from_pb_copy_ptr(&(A),&(B))
-void riak_binary_from_pb_deep_copy(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from);
+void riak_binary_from_pb_deep_copy_ptr(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from);
+#define riak_binary_from_pb_deep_copy(A,B,C) riak_binary_from_pb_deep_copy_ptr((A),&(B),&(C))
+int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len);
+#define riak_binary_dump(A,B,C) riak_binary_dump_ptr(&(A),(B),(C))
+int riak_binary_hex_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len);
+#define riak_binary_hex_dump(A,B,C) riak_binary_hex_dump_ptr(&(A),(B),(C))
 
 void eventcb(struct bufferevent *bev, short events, void *ptr);
 /**

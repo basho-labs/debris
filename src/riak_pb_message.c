@@ -72,7 +72,7 @@ int riak_encode_get_request(riak_event  *ev,
          getmsg.basic_quorum = get_options->basic_quorum;
          getmsg.has_notfound_ok = get_options->has_notfound_ok;
          getmsg.notfound_ok = get_options->notfound_ok;
-         if(get_options->has_if_modified) {
+         if (get_options->has_if_modified) {
             getmsg.has_if_modified = get_options->has_if_modified;
             getmsg.if_modified.len = get_options->if_modified.len;
             memcpy(&getmsg.if_modified.data, get_options->if_modified.data, get_options->if_modified.len);
@@ -115,12 +115,25 @@ int riak_decode_get_response(riak_event        *ev,
     if (response == NULL) {
         return 1;
     }
-    if(rpbresp->n_content > 0) {
+    memset(response, '\0', sizeof(riak_get_response));
+
+    if (rpbresp->has_vclock) {
+        response->has_vclock = RIAK_TRUE;
+        riak_binary_from_pb_deep_copy(ctx, response->vclock, rpbresp->vclock);
+    }
+    if (rpbresp->has_unchanged) {
+        response->has_unmodified = RIAK_TRUE;
+        response->unmodified = rpbresp->unchanged;
+    }
+    if (rpbresp->n_content > 0) {
         response->content = (riak_object*)(ctx->malloc_fn)(sizeof(riak_object) * rpbresp->n_content);
+        if (response->content == NULL) {
+            riak_free(ctx, response);
+            return 1;
+        }
         response->n_content = rpbresp->n_content;
         for(i = 0; i < rpbresp->n_content; i++) {
-            RpbContent *c = rpbresp->content[i];
-            riak_binary_populate(ev->context, &(response->content[i].value), c->value.len, c->value.data);
+            riak_object_from_pb_copy(ctx, &(response->content[i]), rpbresp->content[i]);
         }
     }
     rpb_get_resp__free_unpacked(rpbresp, ctx->pb_allocator);
@@ -231,7 +244,15 @@ int riak_decode_put_response(riak_event        *ev,
     if (response == NULL) {
         return 1;
     }
-    if(rpbresp->n_content > 0) {
+    memset(response, '\0', sizeof(riak_put_response));
+    if (rpbresp->has_vclock) {
+        response->has_vclock = RIAK_TRUE;
+        riak_binary_from_pb_copy(response->vclock, rpbresp->vclock);
+    }
+    if (rpbresp->has_key) {
+        riak_binary_from_pb_copy(response->key, rpbresp->key);
+    }
+    if (rpbresp->n_content > 0) {
         response->content = (riak_object*)(ctx->malloc_fn)(sizeof(riak_object) * rpbresp->n_content);
         response->n_content = rpbresp->n_content;
         for(i = 0; i < rpbresp->n_content; i++) {

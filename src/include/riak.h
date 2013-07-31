@@ -47,12 +47,15 @@ typedef struct _riak_binary {
 
 #include "riak_object.h"
 
+// Based on RpbGetResp
 typedef struct _riak_get_response {
-      riak_binary   *vclock;
-      riak_boolean_t unmodified;
-      riak_boolean_t deleted;
-      riak_int32_t   n_content;
-      riak_object   *content;
+    riak_boolean_t has_vclock;
+    riak_binary    vclock;
+    riak_boolean_t has_unmodified;
+    riak_boolean_t unmodified;
+    riak_boolean_t deleted;
+    riak_int32_t   n_content;
+    riak_object   *content;
 } riak_get_response;
 
 typedef struct _riak_get_options {

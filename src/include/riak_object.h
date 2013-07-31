@@ -84,6 +84,8 @@ typedef struct _riak_object {
 riak_object *riak_object_new(riak_context *ctx);
 void riak_object_free(riak_context *ctx, riak_object*);
 void riak_object_free_pb(riak_context *ctx, RpbContent* obj);
+int riak_object_dump_ptr(riak_object *obj, char *target, riak_uint32_t len);
+#define riak_object_dump(A,B,C) riak_object_dump_ptr(&(A),B,C)
 
 /**
  * @brief Copy a Riak Object to a protocol buffer

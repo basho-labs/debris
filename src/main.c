@@ -39,9 +39,7 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     int i;
     char name[1024];
     for(i = 0; i < response->n_buckets; i++) {
-        riak_binary binary = response->buckets[i];
-        memcpy(name, binary.data, binary.len);
-        name[binary.len] = '\0';
+        riak_binary_dump(response->buckets[i], name, 1024);
         fprintf(stderr, "%d - %s\n", i, name);
      }
     fprintf(stderr, "done = %d\n", response->done);
@@ -49,7 +47,36 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
 
 void get_cb(riak_get_response *response, void *ptr) {
     fprintf(stderr, "get_cb\n");
+    char output[10240];
+    char buffer[1024];
+    int len = 10240;
+    riak_binary_hex_dump(response->vclock, buffer, 1024);
+    char *target = output;
+    int wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
+    len -= wrote;
+    target += wrote;
+    wrote = snprintf(target, len, "Unmodified: %s\n", (response->unmodified) ? "true" : "false");
+    len -= wrote;
+    target += wrote;
+    wrote = snprintf(target, len, "Deleted: %s\n", (response->deleted) ? "true" : "false");
+    len -= wrote;
+    target += wrote;
+    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
+    len -= wrote;
+    target += wrote;
+    riak_uint32_t i;
+    for(i = 0; i < response->n_content; i++) {
+        wrote = riak_object_dump(response->content[i], target, len);
+    }
+    fprintf(stderr, "%s\n", output);
 }
+
+riak_binary   *vclock;
+riak_boolean_t unmodified;
+riak_boolean_t deleted;
+riak_int32_t   n_content;
+riak_object   *content;
+
 
 int main (int argc, char *argv[])
 {
