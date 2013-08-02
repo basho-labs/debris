@@ -376,4 +376,7 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
         abort();
     }
     riak_pb_response_free(ctx, &pbresp);
+
+    // TODO: Should user control the event loop?  Should we include bev in response?
+    event_base_loopexit(ev->base, NULL);
 }

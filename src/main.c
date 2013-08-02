@@ -100,6 +100,8 @@ void put_cb(riak_put_response *response, void *ptr) {
     fprintf(stderr, "%s\n", output);
 }
 
+#define GETVALUE 1
+
 int main (int argc, char *argv[])
 {
     if (argc != 5) {
