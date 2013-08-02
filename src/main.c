@@ -71,12 +71,34 @@ void get_cb(riak_get_response *response, void *ptr) {
     fprintf(stderr, "%s\n", output);
 }
 
-riak_binary   *vclock;
-riak_boolean_t unmodified;
-riak_boolean_t deleted;
-riak_int32_t   n_content;
-riak_object   *content;
-
+void put_cb(riak_put_response *response, void *ptr) {
+    fprintf(stderr, "put_cb\n");
+    char output[10240];
+    char buffer[1024];
+    int len = 10240;
+    char *target = output;
+    int wrote;
+    if (response->has_vclock) {
+        riak_binary_hex_dump(response->vclock, buffer, 1024);
+        wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
+        len -= wrote;
+        target += wrote;
+    }
+    if (response->has_key) {
+        riak_binary_dump(response->key, buffer, 1024);
+        wrote = snprintf(target, len, "Key: %s\n", buffer);
+        len -= wrote;
+        target += wrote;
+    }
+    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
+    len -= wrote;
+    target += wrote;
+    riak_uint32_t i;
+    for(i = 0; i < response->n_content; i++) {
+        wrote = riak_object_dump(response->content[i], target, len);
+    }
+    fprintf(stderr, "%s\n", output);
+}
 
 int main (int argc, char *argv[])
 {
@@ -101,7 +123,7 @@ int main (int argc, char *argv[])
     riak_event *listbuckets_ev = riak_event_new(ctx, base, bev, cb, NULL);
     bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, listbuckets_ev);
     riak_encode_listbuckets_request(listbuckets_ev);
-#else
+#elif GETVALUE
     riak_response_callback cb = (riak_response_callback)get_cb;
     riak_event *get_ev = riak_event_new(ctx, base, bev, cb, NULL);
     bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, get_ev);
@@ -109,6 +131,19 @@ int main (int argc, char *argv[])
             argv[3],
             argv[4],
             NULL);
+#else
+    riak_response_callback cb = (riak_response_callback)put_cb;
+    riak_event *put_ev = riak_event_new(ctx, base, bev, cb, NULL);
+    bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, put_ev);
+    riak_object *obj = riak_object_new(ctx);
+    if (obj == NULL) {
+        return 1;
+    }
+    obj->bucket.data = (riak_uint8_t*)argv[3]; // Not copied
+    obj->bucket.len = strlen(argv[3]);
+    obj->value.data = (riak_uint8_t*)argv[4];
+    obj->value.len = strlen(argv[4]);
+    riak_encode_put_request(put_ev, obj, NULL);
 #endif
 
     bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, argv[1], atoi(argv[2]));

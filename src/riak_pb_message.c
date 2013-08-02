@@ -148,14 +148,13 @@ int riak_encode_put_request(riak_event *ev,
                             riak_put_options *options) {
 
     riak_context *ctx = (riak_context*)(ev->context);
-    // TODO: Currently a temporary struct.  Needs deep copy if this function does not clean it up
     RpbPutReq putmsg = RPB_PUT_REQ__INIT;
 
     riak_binary_to_pb_copy(putmsg.bucket, riak_obj->bucket);
 
     // Is the Key provided?
     if (riak_obj->has_key) {
-        putmsg.has_key   = RIAK_TRUE;
+        putmsg.has_key = RIAK_TRUE;
         riak_binary_to_pb_copy(putmsg.key, riak_obj->key);
     }
 
@@ -360,6 +359,8 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
         result = riak_decode_listbuckets_response(ev, pbresp);
         break;
     case MSG_RPBPUTRESP:
+        result = riak_decode_put_response(ev, pbresp);
+        break;
     case MSG_RPBPINGRESP:
     case MSG_RPBGETCLIENTIDRESP:
     case MSG_RPBSETCLIENTIDRESP:
@@ -371,7 +372,7 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     case MSG_RPBMAPREDRESP:
     case MSG_RPBINDEXRESP:
     case MSG_RBPSEARCHQUERYRESP:
-        fprintf(stderr, "NOT IMPLEMENTED\n");
+        fprintf(stderr, "%d NOT IMPLEMENTED\n", msgid);
         abort();
     }
     riak_pb_response_free(ctx, &pbresp);

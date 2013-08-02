@@ -97,6 +97,13 @@ int riak_encode_get_request(riak_event       *ev,
 int riak_decode_get_response(riak_event*,
                              riak_pb_response*);
 
+int riak_encode_put_request(riak_event       *ev,
+                            riak_object      *riak_obj,
+                            riak_put_options *options);
+
+int riak_decode_put_response(riak_event        *ev,
+                             riak_pb_response  *pbresp);
+
 int riak_encode_listbuckets_request(riak_event *ev);
 
 int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp);
