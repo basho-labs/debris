@@ -1,11 +1,11 @@
 import os
 
 env = Environment(
-    ENV = {'PATH' : os.environ['PATH']},
+    ENV = {'PATH' : os.environ['PATH'],'INCLUDE' : os.environ['INCLUDE'],'PKG_CONFIG_PATH' : os.environ['PKG_CONFIG_PATH']},
     CCFLAGS = '-g -Wall -DUSE_DEBUG',
     # .. Required for proctoc-c full pathname
-    CPPPATH=['proto','include','/usr/local/protobuf-2.5.0/include','/usr/local/protobuf-c-0.15/include','/usr/local/libevent-2.0.21/include','..'],
-    LIBPATH=['/usr/local/protobuf-2.5.0/lib','/usr/local/protobuf-c-0.15/lib','/usr/local/libevent-2.0.21/lib','.'],
+    CPPPATH=['proto','include','..'],
+    LIBPATH=['.'],
     toolpath=['tools'],
     tools=['default', 'protoc'])
 riak_pb = env.Protoc(
@@ -14,6 +14,9 @@ riak_pb = env.Protoc(
     PROTOCPROTOPATH=['.'],
     PROTOCOUTDIR = '.', # defaults to same directory as .proto
 )
+env.ParseConfig("pkg-config --libs libevent libprotobuf-c protobuf")
+env.ParseConfig("pkg-config --cflags libevent libprotobuf-c protobuf")
+
 riak_kv_pb = env.Protoc(
     [],
     "proto/riak_kv.proto",
