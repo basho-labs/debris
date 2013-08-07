@@ -29,7 +29,7 @@ riak_search_pb = env.Protoc(
     PROTOCPROTOPATH=['.','build/proto'],
     PROTOCOUTDIR = '.', # defaults to same directory as .proto
 )
-lib_files = [riak_pb[0], riak_kv_pb[0], riak_search_pb[0], Split('riak.c riak_utils.c riak_context.c riak_pb_message.c riak_object.c')]
+lib_files = [riak_pb[0], riak_kv_pb[0], riak_search_pb[0], Split('riak.c riak_utils.c riak_context.c riak_pb_message.c riak_object.c call_backs.c')]
 
 env.Library('riak_c_client', lib_files)
 env.Program('riak_c_client','main.c', LIBS=['riak_c_client', 'event_core', 'event_extra', 'iconv', 'pthread', 'protobuf', 'protobuf-c'])

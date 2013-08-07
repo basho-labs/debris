@@ -140,26 +140,6 @@ void riak_get_response_free(riak_context *ctx, riak_get_response *r) {
     riak_free(ctx, r);
 }
 
-/* LIBEVENT CALLBACKS */
-
-void eventcb(struct bufferevent *bev, short events, void *ptr)
-{
-    if (events & BEV_EVENT_CONNECTED) {
-         fprintf(stderr, "Connect okay.\n");
-    } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
-         struct event_base *base = ptr;
-         if (events & BEV_EVENT_ERROR) {
-            int err = bufferevent_socket_get_dns_error(bev);
-            if (err)
-                 printf("DNS error: %s\n", evutil_gai_strerror(err));
-         }
-         fprintf(stderr, "Closing\n");
-         bufferevent_free(bev);
-         event_base_loopexit(base, NULL);
-    } else {
-        fprintf(stderr, "Event %d\n", events);
-    }
-}
 
 int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len) {
     riak_bufferevent *bev = ev->bevent;

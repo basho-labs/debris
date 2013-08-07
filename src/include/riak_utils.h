@@ -69,7 +69,6 @@ int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len);
 int riak_binary_hex_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len);
 #define riak_binary_hex_dump(A,B,C) riak_binary_hex_dump_ptr(&(A),(B),(C))
 
-void eventcb(struct bufferevent *bev, short events, void *ptr);
 /**
  * @brief Send PB message via bufferevent
  * @param event Event related to request

@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * riak_types.h: Riak C Client Types
+ * riak_types.h: Riak C Main
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <getopt.h>
 #include <event2/event.h>
 
 #include "riak.h"
@@ -32,84 +35,160 @@
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_pb_message.h"
+#include "call_backs.h"
 
-void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
-    fprintf(stderr, "listbucket_cb\n");
-    fprintf(stderr, "n_buckets = %d\n", response->n_buckets);
-    int i;
-    char name[1024];
-    for(i = 0; i < response->n_buckets; i++) {
-        riak_binary_dump(response->buckets[i], name, 1024);
-        fprintf(stderr, "%d - %s\n", i, name);
-     }
-    fprintf(stderr, "done = %d\n", response->done);
+void usage(FILE *fp, char *progname) {
+    fprintf(fp, "Usage:\n");
+    fprintf(fp, "%s "
+            "[--ping|--get|--put|--list-buckets|--delete|--set-clident|--get-clident|\n"
+            " --server-info|--list-keys|--get-bucket|--set-bucket|--map-reduce|--index|\n"
+            " --search] [--bucket <name>] [--key <name>] [--value <name>]\n"
+            "[--host <localhost>] [--port 10017]\n", progname);
+    exit(1);
 }
-
-void get_cb(riak_get_response *response, void *ptr) {
-    fprintf(stderr, "get_cb\n");
-    char output[10240];
-    char buffer[1024];
-    int len = 10240;
-    riak_binary_hex_dump(response->vclock, buffer, 1024);
-    char *target = output;
-    int wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Unmodified: %s\n", (response->unmodified) ? "true" : "false");
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Deleted: %s\n", (response->deleted) ? "true" : "false");
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
-    len -= wrote;
-    target += wrote;
-    riak_uint32_t i;
-    for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump(response->content[i], target, len);
-    }
-    fprintf(stderr, "%s\n", output);
-}
-
-void put_cb(riak_put_response *response, void *ptr) {
-    fprintf(stderr, "put_cb\n");
-    char output[10240];
-    char buffer[1024];
-    int len = 10240;
-    char *target = output;
-    int wrote;
-    if (response->has_vclock) {
-        riak_binary_hex_dump(response->vclock, buffer, 1024);
-        wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
-        len -= wrote;
-        target += wrote;
-    }
-    if (response->has_key) {
-        riak_binary_dump(response->key, buffer, 1024);
-        wrote = snprintf(target, len, "Key: %s\n", buffer);
-        len -= wrote;
-        target += wrote;
-    }
-    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
-    len -= wrote;
-    target += wrote;
-    riak_uint32_t i;
-    for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump(response->content[i], target, len);
-    }
-    fprintf(stderr, "%s\n", output);
-}
-
-#define GETVALUE 1
 
 int main (int argc, char *argv[])
 {
-    if (argc != 5) {
-        printf("Trivial PBC Riak C client\n"
-               "Syntax: %s [hostname] [port] [bucket] [key]\n"
-               "Example: %s localhost 10017 baz 12345\n",argv[0],argv[0]);
-        return 1;
+    static int operation;
+    char bucket[1024];
+    char host[256];
+    char key[1024];
+    char value[1024];
+    riak_int32_t   port = 10017;
+    riak_boolean_t has_bucket = RIAK_FALSE;
+    riak_boolean_t has_key    = RIAK_FALSE;
+    riak_boolean_t has_value  = RIAK_FALSE;
+    int c;
+
+    strcpy(host, "localhost");
+
+    while (1) {
+        static struct option long_options[] = {
+            /* These options set a flag. */
+            {"get",          no_argument, &operation, MSG_RPBGETREQ},
+            {"put",          no_argument, &operation, MSG_RPBPUTREQ},
+            {"list-buckets", no_argument, &operation, MSG_RPBLISTBUCKETSREQ},
+            {"ping",         no_argument, &operation, MSG_RPBPINGREQ},
+            {"get-clident",  no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
+            {"set-clident",  no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
+            {"server-info",  no_argument, &operation, MSG_RPBGETSERVERINFOREQ},
+            {"delete",       no_argument, &operation, MSG_RPBDELREQ},
+            {"list-keys",    no_argument, &operation, MSG_RPBLISTKEYSREQ},
+            {"get-bucket",   no_argument, &operation, MSG_RPBGETBUCKETREQ},
+            {"set-bucket",   no_argument, &operation, MSG_RPBSETBUCKETREQ},
+            {"map-reduce",   no_argument, &operation, MSG_RPBMAPREDREQ},
+            {"index",        no_argument, &operation, MSG_RPBINDEXRESP},
+            {"search",       no_argument, &operation, MSG_RPBSEARCHQUERYREQ},
+
+            /* These options don't set a flag.
+            We distinguish them by their indices. */
+            {"bucket",       required_argument, NULL, 'b'},
+            {"host",         required_argument, NULL, 'h'},
+            {"key",          required_argument, NULL, 'k'},
+            {"port",         required_argument, NULL, 'p'},
+            {"value",        required_argument, NULL, 'v'},
+            {NULL, 0, NULL, 0}
+        };
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+
+        c = getopt_long (argc, argv, "b:h:k:p:v:",
+                        long_options, &option_index);
+
+         /* Detect the end of the options. */
+        if (c == -1)
+            break;
+
+        switch (c) {
+            case 0:
+                /* If this option set a flag, do nothing else now. */
+                if (long_options[option_index].flag != 0) {
+                    break;
+                }
+                printf ("option %s", long_options[option_index].name);
+                if (optarg)
+                printf (" with arg %s", optarg);
+                printf ("\n");
+                break;
+
+            case 'b':
+                printf ("option -b with value `%s'\n", optarg);
+                strlcpy(bucket, optarg, 1024);
+                has_bucket = RIAK_TRUE;
+                break;
+
+            case 'h':
+                printf ("option -h with value `%s'\n", optarg);
+                strlcpy(host, optarg, 256);
+                break;
+
+            case 'k':
+                printf ("option -k with value `%s'\n", optarg);
+                strlcpy(key, optarg, 1024);
+                has_key = RIAK_TRUE;
+                break;
+
+            case 'p':
+                printf ("option -p with value `%s'\n", optarg);
+                port = atol(optarg);
+                break;
+
+            case 'v':
+                printf ("option -v with value `%s'\n", optarg);
+                strlcpy(value, optarg, 1024);
+                has_value = RIAK_TRUE;
+                break;
+
+            case '?':
+                /* getopt_long already printed an error message. */
+                usage(stderr, argv[0]);
+                break;
+
+            default:
+                abort();
+        }
     }
+    // These options require a bucket
+    switch (operation) {
+    case MSG_RPBGETREQ:
+    case MSG_RPBPUTREQ:
+    case MSG_RPBDELREQ:
+    case MSG_RPBLISTKEYSREQ:
+    case MSG_RPBGETBUCKETREQ:
+    case MSG_RPBSETBUCKETREQ:
+        if (!has_bucket) {
+            fprintf(stderr, "--bucket parameter required\n");
+            return 1;
+        }
+    }
+
+    // These operations require a key
+    switch (operation) {
+    case MSG_RPBGETREQ:
+    case MSG_RPBDELREQ:
+        if (!has_key ) {
+            fprintf(stderr, "--key parameter required\n");
+            return 1;
+        }
+    }
+
+    // These operations require a value
+    switch (operation) {
+    case MSG_RPBPUTREQ:
+    case MSG_RPBSETCLIENTIDREQ:
+    case MSG_RPBSEARCHQUERYREQ:
+        if (!has_value) {
+            fprintf(stderr, "--value parameter required\n");
+            return 1;
+        }
+    }
+
+/*
+    {"get-clident",  no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
+    {"set-clident",  no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
+    {"map-reduce",   no_argument, &operation, MSG_RPBMAPREDREQ},
+    {"index",        no_argument, &operation, MSG_RPBINDEXRESP},
+    */
 
     event_enable_debug_mode();
     struct event_base *base = event_base_new();
@@ -120,35 +199,42 @@ int main (int argc, char *argv[])
     riak_context *ctx = riak_context_new_default();
     bufferevent_enable(bev, EV_READ|EV_WRITE);
 
-#ifdef LISTBUCKETS
-    riak_response_callback cb = (riak_response_callback)listbucket_cb;
-    riak_event *listbuckets_ev = riak_event_new(ctx, base, bev, cb, NULL);
-    bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, listbuckets_ev);
-    riak_encode_listbuckets_request(listbuckets_ev);
-#elif GETVALUE
-    riak_response_callback cb = (riak_response_callback)get_cb;
-    riak_event *get_ev = riak_event_new(ctx, base, bev, cb, NULL);
-    bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, get_ev);
-    riak_encode_get_request(get_ev,
-            argv[3],
-            argv[4],
-            NULL);
-#else
-    riak_response_callback cb = (riak_response_callback)put_cb;
-    riak_event *put_ev = riak_event_new(ctx, base, bev, cb, NULL);
-    bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, put_ev);
-    riak_object *obj = riak_object_new(ctx);
-    if (obj == NULL) {
-        return 1;
-    }
-    obj->bucket.data = (riak_uint8_t*)argv[3]; // Not copied
-    obj->bucket.len = strlen(argv[3]);
-    obj->value.data = (riak_uint8_t*)argv[4];
-    obj->value.len = strlen(argv[4]);
-    riak_encode_put_request(put_ev, obj, NULL);
-#endif
+    riak_response_callback cb;
+    riak_event *rev;
+    riak_object *obj;
 
-    bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, argv[1], atoi(argv[2]));
+    switch (operation) {
+    case MSG_RPBGETREQ:
+        cb = (riak_response_callback)get_cb;
+        rev = riak_event_new(ctx, base, bev, cb, NULL);
+        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+        riak_encode_get_request(rev, bucket, key, NULL);
+        break;
+    case MSG_RPBPUTREQ:
+        cb = (riak_response_callback)put_cb;
+        rev = riak_event_new(ctx, base, bev, cb, NULL);
+        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+        obj = riak_object_new(ctx);
+        if (obj == NULL) {
+            return 1;
+        }
+        obj->bucket.data = (riak_uint8_t*)bucket; // Not copied
+        obj->bucket.len = strlen(bucket);
+        obj->value.data = (riak_uint8_t*)value;
+        obj->value.len = strlen(value);
+        riak_encode_put_request(rev, obj, NULL);
+        break;
+    case MSG_RPBLISTBUCKETSREQ:
+        cb = (riak_response_callback)listbucket_cb;
+        rev = riak_event_new(ctx, base, bev, cb, NULL);
+        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+        riak_encode_listbuckets_request(rev);
+        break;
+    default:
+        usage(stderr, argv[0]);
+    }
+
+    bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, host, port);
     event_base_dispatch(base);
 
     return 0;
