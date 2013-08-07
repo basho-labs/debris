@@ -50,11 +50,16 @@ void eventcb(struct bufferevent *bev, short events, void *ptr)
                  printf("DNS error: %s\n", evutil_gai_strerror(err));
          }
          fprintf(stderr, "Closing\n");
-         //bufferevent_free(bev);
+         bufferevent_free(bev);
          event_base_loopexit(rev->base, NULL);
     } else {
         fprintf(stderr, "Event %d\n", events);
     }
+}
+
+void ping_cb(riak_ping_response *response, void *ptr) {
+    fprintf(stderr, "ping_cb\n");
+    fprintf(stderr, "PONG\n");
 }
 
 void listbucket_cb(riak_listbuckets_response *response, void *ptr) {

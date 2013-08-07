@@ -204,6 +204,12 @@ int main (int argc, char *argv[])
     riak_object *obj;
 
     switch (operation) {
+    case MSG_RPBPINGREQ:
+        cb = (riak_response_callback)ping_cb;
+        rev = riak_event_new(ctx, base, bev, cb, NULL);
+        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+        riak_encode_ping_request(rev);
+        break;
     case MSG_RPBGETREQ:
         cb = (riak_response_callback)get_cb;
         rev = riak_event_new(ctx, base, bev, cb, NULL);

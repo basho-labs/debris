@@ -89,6 +89,8 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr);
 // TODO: Create error structure
 int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp);
 
+int riak_encode_ping_request(riak_event *ev);
+
 int riak_encode_get_request(riak_event       *ev,
                             char             *bucket,
                             char             *key,

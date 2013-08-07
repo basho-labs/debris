@@ -130,6 +130,10 @@ typedef struct _riak_listbuckets_response {
     riak_boolean_t done;
 } riak_listbuckets_response;
 
+typedef struct _riak_ping_response {
+
+} riak_ping_response;
+
 void write_callback(struct bufferevent *bev, void *ptr);
 
 
@@ -139,6 +143,8 @@ void riak_ping(riak_context*);
 // we'll provide an async version
 // int riak_get(riak_context*, struct riak_get_options*, riak_get_callback*);
 // and a sync version that calls the async version:
+
+typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);
 
 typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
 
@@ -166,7 +172,6 @@ void riak_bucket_get_props(riak_context*);
 
 //void riak_list_buckets(riak_context*);
 int riak_list_buckets(riak_context *ctx);
-void riak_list_buckets_callback(riak_bufferevent *bev, void *ptr);
 
 void riak_list_keys(riak_context*);
 

@@ -47,6 +47,21 @@ void riak_pb_response_free(riak_context     *ctx,
 //    *pb = NULL;
 }
 
+int riak_encode_ping_request(riak_event *ev) {
+    int result = riak_send_req(ev, MSG_RPBPINGREQ, NULL, 0);
+    return result;
+}
+
+int riak_decode_ping_response(riak_event        *ev,
+                              riak_pb_response  *pbresp) {
+    riak_context *ctx = (riak_context*)(ev->context);
+    riak_ping_response *response = (riak_ping_response*)(ctx->malloc_fn)(sizeof(riak_ping_response));
+    if (response == NULL) {
+        return 1;
+    }
+    riak_ping_response_callback cb = (riak_ping_response_callback)(ev->response_cb);
+    (cb)(response, ev->cb_data);
+}
 
 int riak_encode_get_request(riak_event  *ev,
                             char *bucket,
@@ -99,7 +114,6 @@ int riak_encode_get_request(riak_event  *ev,
     riak_free(ev->context, msgbuf);
     return result;
 }
-
 
 int riak_decode_get_response(riak_event        *ev,
                              riak_pb_response  *pbresp) {
@@ -294,6 +308,9 @@ int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp) {
     errmsg[binary.len] = '\0';
     fprintf(stderr, "ERR #%d - %s\n", errcode, errmsg);
     rpb_error_resp__free_unpacked(errresp, ctx->pb_allocator);
+    //TODO: Figure out how to register an error callback
+    //riak_listbuckets_response_callback cb = (riak_error_response_callback)(ev->response_cb);
+    //(cb)(response, ev->cb_data);
     exit(1);
 }
 
@@ -352,6 +369,9 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     case MSG_RPBERRORRESP:
         result = riak_decode_error_response(ev, pbresp);
         break;
+    case MSG_RPBPINGRESP:
+        result = riak_decode_ping_response(ev, pbresp);
+        break;
     case MSG_RPBGETRESP:
          result = riak_decode_get_response(ev, pbresp);
         break;
@@ -361,7 +381,6 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     case MSG_RPBPUTRESP:
         result = riak_decode_put_response(ev, pbresp);
         break;
-    case MSG_RPBPINGRESP:
     case MSG_RPBGETCLIENTIDRESP:
     case MSG_RPBSETCLIENTIDRESP:
     case MSG_RPBGETSERVERINFORESP:
