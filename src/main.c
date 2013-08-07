@@ -236,6 +236,13 @@ int main (int argc, char *argv[])
         bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
         riak_encode_listbuckets_request(rev);
         break;
+    case MSG_RPBLISTKEYSREQ:
+        cb = (riak_response_callback)listkey_cb;
+        rev = riak_event_new(ctx, base, bev, cb, NULL);
+        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+        // TODO: Configure timeout
+        riak_encode_listkeys_request(rev, bucket, 10000);
+        break;
     default:
         usage(stderr, argv[0]);
     }

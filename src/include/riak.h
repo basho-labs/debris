@@ -130,8 +130,17 @@ typedef struct _riak_listbuckets_response {
     riak_boolean_t done;
 } riak_listbuckets_response;
 
-typedef struct _riak_ping_response {
+// Based on RpbListKeysResp
+typedef struct _riak_listkeys_response {
+    riak_uint32_t  n_keys;
+    riak_binary*   keys;
+    // TODO: Keep in struct or pass as argument?
+    riak_boolean_t done;
+} riak_listkeys_response;
 
+
+typedef struct _riak_ping_response {
+// Nothing to see here
 } riak_ping_response;
 
 void write_callback(struct bufferevent *bev, void *ptr);
@@ -151,6 +160,8 @@ typedef void (*riak_get_response_callback)(riak_get_response *response, void *pt
 typedef void (*riak_put_response_callback)(riak_put_response *response, void *ptr);
 
 typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *response, void *ptr);
+
+typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response, void *ptr);
 
 int riak_get(riak_context*,
              riak_binary *bucket,

@@ -70,7 +70,19 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     for(i = 0; i < response->n_buckets; i++) {
         riak_binary_dump(response->buckets[i], name, 1024);
         fprintf(stderr, "%d - %s\n", i, name);
-     }
+    }
+    fprintf(stderr, "done = %d\n", response->done);
+}
+
+void listkey_cb(riak_listkeys_response *response, void *ptr) {
+    fprintf(stderr, "listkey_cb\n");
+    fprintf(stderr, "n_keys = %d\n", response->n_keys);
+    int i;
+    char name[1024];
+    for(i = 0; i < response->n_keys; i++) {
+        riak_binary_dump(response->keys[i], name, 1024);
+        fprintf(stderr, "%d - %s\n", i, name);
+    }
     fprintf(stderr, "done = %d\n", response->done);
 }
 

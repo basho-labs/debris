@@ -99,7 +99,7 @@ int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) {
     for( ; count < bin->len && count < len-1; count++) {
         char c = '.';
         // Non-printable characters are replaced by a dot
-        if (bin->data >= 32) c = bin->data[count];
+        if (bin->data[count] >= 32) c = bin->data[count];
         target[count] = c;
     }
     if (len > 0) target[count] = '\0';

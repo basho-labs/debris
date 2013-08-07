@@ -89,6 +89,7 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr);
 // TODO: Create error structure
 int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp);
 
+// NOTE: There is no request body
 int riak_encode_ping_request(riak_event *ev);
 
 int riak_encode_get_request(riak_event       *ev,
@@ -110,7 +111,10 @@ int riak_encode_listbuckets_request(riak_event *ev);
 
 int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp);
 
-//typedef void (*riak_response_callback)(void ptr*);
+int riak_encode_listkeys_request(riak_event *ev,
+                                 char *bucket,
+                                 riak_uint32_t timeout);
 
+int riak_decode_listkeys_response(riak_event *ev, riak_pb_response *pbresp);
 
 #endif
