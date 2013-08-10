@@ -40,18 +40,24 @@
 
 void eventcb(struct bufferevent *bev, short events, void *ptr)
 {
+    riak_event *rev = (riak_event*)ptr;
     if (events & BEV_EVENT_CONNECTED) {
          fprintf(stderr, "Connect okay.\n");
     } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
-         riak_event *rev = (riak_event*)ptr;
+         char *reason = "BEV_EVENT_ERROR";
          if (events & BEV_EVENT_ERROR) {
+            reason = "BEV_EVENT_EOF";
             int err = bufferevent_socket_get_dns_error(bev);
             if (err)
-                 printf("DNS error: %s\n", evutil_gai_strerror(err));
+                printf("DNS error: %s\n", evutil_gai_strerror(err));
          }
-         fprintf(stderr, "Closing\n");
+         fprintf(stderr, "Closing because of %s\n", reason);
          bufferevent_free(bev);
          event_base_loopexit(rev->base, NULL);
+    } if (events & BEV_EVENT_TIMEOUT) {
+        fprintf(stderr, "Timeout Event\n");
+        bufferevent_free(bev);
+        event_base_loopexit(rev->base, NULL);
     } else {
         fprintf(stderr, "Event %d\n", events);
     }

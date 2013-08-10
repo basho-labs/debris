@@ -194,14 +194,15 @@ int main (int argc, char *argv[])
     struct event_base *base = event_base_new();
     struct evdns_base *dns_base = evdns_base_new(base, 1);
 
-//    bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-    struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
     riak_context *ctx = riak_context_new_default();
-    bufferevent_enable(bev, EV_READ|EV_WRITE);
-
     riak_response_callback cb;
     riak_event *rev;
     riak_object *obj;
+    int it;
+
+    for(it = 0; it < 4; it++) {
+    struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+    bufferevent_enable(bev, EV_READ|EV_WRITE);
 
     switch (operation) {
     case MSG_RPBPINGREQ:
@@ -248,6 +249,20 @@ int main (int argc, char *argv[])
     }
 
     bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, host, port);
+
+    }
+
+    // Death Event to kill the loop
+    struct bufferevent *die_bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+//    struct bufferevent *die_bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
+    struct timeval timeout_read = { 10L, 0L };
+    struct timeval timeout_write = { 10L, 0L };
+    bufferevent_set_timeouts(die_bev, &timeout_read, &timeout_write);
+    rev = riak_event_new(ctx, base, die_bev, cb, NULL);
+    bufferevent_setcb(die_bev, NULL, NULL, eventcb, rev);
+    bufferevent_enable(die_bev, EV_READ|EV_WRITE);
+    //bufferevent_socket_connect_hostname(die_bev, dns_base, AF_UNSPEC, host, port);
+
     event_base_dispatch(base);
 
     return 0;
