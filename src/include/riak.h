@@ -143,6 +143,30 @@ typedef struct _riak_ping_response {
 // Nothing to see here
 } riak_ping_response;
 
+// Based on RpbDelReq
+typedef struct _riak_delete_options
+{
+    riak_boolean_t has_vclock;
+    riak_binary    vclock;
+    riak_boolean_t has_w;
+    riak_uint32_t  w;
+    riak_boolean_t has_dw;
+    riak_uint32_t  dw;
+    riak_boolean_t has_pw;
+    riak_uint32_t  pw;
+    riak_boolean_t has_timeout;
+    riak_uint32_t  timeout;
+    riak_boolean_t has_sloppy_quorum;
+    riak_boolean_t sloppy_quorum;
+    riak_boolean_t has_n_val;
+    riak_uint32_t  n_val;
+} riak_delete_options;
+
+typedef struct _riak_delete_response {
+// Nothing to see here
+} riak_delete_response;
+
+
 void write_callback(struct bufferevent *bev, void *ptr);
 
 
@@ -158,6 +182,8 @@ typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *
 typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
 
 typedef void (*riak_put_response_callback)(riak_put_response *response, void *ptr);
+
+typedef void (*riak_delete_response_callback)(riak_delete_response *response, void *ptr);
 
 typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *response, void *ptr);
 

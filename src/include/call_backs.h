@@ -27,6 +27,7 @@ void eventcb(struct bufferevent *bev, short events, void *ptr);
 void ping_cb(riak_ping_response *response, void *ptr);
 void get_cb(riak_get_response *response, void *ptr);
 void put_cb(riak_put_response *response, void *ptr);
+void delete_cb(riak_delete_response *response, void *ptr);
 void listbucket_cb(riak_listbuckets_response *response, void *ptr);
 void listkey_cb(riak_listkeys_response *response, void *ptr);
 

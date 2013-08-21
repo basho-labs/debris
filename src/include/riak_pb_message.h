@@ -107,6 +107,11 @@ int riak_encode_put_request(riak_event       *ev,
 int riak_decode_put_response(riak_event        *ev,
                              riak_pb_response  *pbresp);
 
+int riak_encode_delete_request(riak_event          *ev,
+                               riak_binary         *bucket,
+                               riak_binary         *key,
+                               riak_delete_options *options);
+
 int riak_encode_listbuckets_request(riak_event *ev);
 
 int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp);

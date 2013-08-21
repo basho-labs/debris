@@ -43,7 +43,7 @@ void usage(FILE *fp, char *progname) {
             "[--ping|--get|--put|--list-buckets|--delete|--set-clident|--get-clident|\n"
             " --server-info|--list-keys|--get-bucket|--set-bucket|--map-reduce|--index|\n"
             " --search] [--bucket <name>] [--key <name>] [--value <name>]\n"
-            "[--host <localhost>] [--port 10017]\n", progname);
+            "[--host <localhost>] [--port 10017] [--iterate <n>] [--timeout <secs>]\n", progname);
     exit(1);
 }
 
@@ -54,7 +54,9 @@ int main (int argc, char *argv[])
     char host[256];
     char key[1024];
     char value[1024];
-    riak_int32_t   port = 10017;
+    riak_int32_t   iterate    = 1;
+    riak_int32_t   port       = 10017;
+    riak_int32_t   timeout    = 10;
     riak_boolean_t has_bucket = RIAK_FALSE;
     riak_boolean_t has_key    = RIAK_FALSE;
     riak_boolean_t has_value  = RIAK_FALSE;
@@ -84,15 +86,17 @@ int main (int argc, char *argv[])
             We distinguish them by their indices. */
             {"bucket",       required_argument, NULL, 'b'},
             {"host",         required_argument, NULL, 'h'},
+            {"iterate",      required_argument, NULL, 'i'},
             {"key",          required_argument, NULL, 'k'},
             {"port",         required_argument, NULL, 'p'},
+            {"timeout",      required_argument, NULL, 't'},
             {"value",        required_argument, NULL, 'v'},
             {NULL, 0, NULL, 0}
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "b:h:k:p:v:",
+        c = getopt_long (argc, argv, "b:h:i:k:p:t:v:",
                         long_options, &option_index);
 
          /* Detect the end of the options. */
@@ -122,6 +126,11 @@ int main (int argc, char *argv[])
                 strlcpy(host, optarg, 256);
                 break;
 
+            case 'i':
+                printf ("option -i with value `%s'\n", optarg);
+                iterate = atol(optarg);
+                break;
+
             case 'k':
                 printf ("option -k with value `%s'\n", optarg);
                 strlcpy(key, optarg, 1024);
@@ -131,6 +140,11 @@ int main (int argc, char *argv[])
             case 'p':
                 printf ("option -p with value `%s'\n", optarg);
                 port = atol(optarg);
+                break;
+
+            case 't':
+                printf ("option -t with value `%s'\n", optarg);
+                timeout = atol(optarg);
                 break;
 
             case 'v':
@@ -200,69 +214,95 @@ int main (int argc, char *argv[])
     riak_object *obj;
     int it;
 
-    for(it = 0; it < 4; it++) {
-    struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-    bufferevent_enable(bev, EV_READ|EV_WRITE);
-
-    switch (operation) {
-    case MSG_RPBPINGREQ:
-        cb = (riak_response_callback)ping_cb;
-        rev = riak_event_new(ctx, base, bev, cb, NULL);
-        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-        riak_encode_ping_request(rev);
-        break;
-    case MSG_RPBGETREQ:
-        cb = (riak_response_callback)get_cb;
-        rev = riak_event_new(ctx, base, bev, cb, NULL);
-        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-        riak_encode_get_request(rev, bucket, key, NULL);
-        break;
-    case MSG_RPBPUTREQ:
-        cb = (riak_response_callback)put_cb;
-        rev = riak_event_new(ctx, base, bev, cb, NULL);
-        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-        obj = riak_object_new(ctx);
-        if (obj == NULL) {
-            return 1;
+    for(it = 0; it < iterate; it++) {
+        fprintf(stderr, "Loop %d\n", it);
+        struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+        int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
+        if (enabled != 0) {
+            fprintf(stderr, "Could not enable bufferevent 0x%llx\n", (riak_uint64_t)bev);
+            exit(1);
         }
-        obj->bucket.data = (riak_uint8_t*)bucket; // Not copied
-        obj->bucket.len = strlen(bucket);
-        obj->value.data = (riak_uint8_t*)value;
-        obj->value.len = strlen(value);
-        riak_encode_put_request(rev, obj, NULL);
-        break;
-    case MSG_RPBLISTBUCKETSREQ:
-        cb = (riak_response_callback)listbucket_cb;
-        rev = riak_event_new(ctx, base, bev, cb, NULL);
-        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-        riak_encode_listbuckets_request(rev);
-        break;
-    case MSG_RPBLISTKEYSREQ:
-        cb = (riak_response_callback)listkey_cb;
-        rev = riak_event_new(ctx, base, bev, cb, NULL);
-        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-        // TODO: Configure timeout
-        riak_encode_listkeys_request(rev, bucket, 10000);
-        break;
-    default:
-        usage(stderr, argv[0]);
+        riak_binary bucket_bin;
+        riak_binary key_bin;
+        bucket_bin.data = (riak_uint8_t*)bucket; // Not copied
+        bucket_bin.len = strlen(bucket);
+        key_bin.data = (riak_uint8_t*)key;
+        key_bin.len = strlen(key);
+
+        switch (operation) {
+        case MSG_RPBPINGREQ:
+            cb = (riak_response_callback)ping_cb;
+            rev = riak_event_new(ctx, base, bev, cb, NULL);
+            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            riak_encode_ping_request(rev);
+            break;
+        case MSG_RPBGETREQ:
+            cb = (riak_response_callback)get_cb;
+            rev = riak_event_new(ctx, base, bev, cb, NULL);
+            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            riak_encode_get_request(rev, bucket, key, NULL);
+            break;
+        case MSG_RPBPUTREQ:
+            cb = (riak_response_callback)put_cb;
+            rev = riak_event_new(ctx, base, bev, cb, NULL);
+            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            obj = riak_object_new(ctx);
+            if (obj == NULL) {
+                return 1;
+            }
+            obj->bucket.data = (riak_uint8_t*)bucket; // Not copied
+            obj->bucket.len = strlen(bucket);
+            obj->value.data = (riak_uint8_t*)value;
+            obj->value.len = strlen(value);
+            riak_encode_put_request(rev, obj, NULL);
+            break;
+        case MSG_RPBDELREQ:
+            cb = (riak_response_callback)delete_cb;
+            rev = riak_event_new(ctx, base, bev, cb, NULL);
+            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL);
+            break;
+        case MSG_RPBLISTBUCKETSREQ:
+            cb = (riak_response_callback)listbucket_cb;
+            rev = riak_event_new(ctx, base, bev, cb, NULL);
+            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            riak_encode_listbuckets_request(rev);
+            break;
+        case MSG_RPBLISTKEYSREQ:
+            cb = (riak_response_callback)listkey_cb;
+            rev = riak_event_new(ctx, base, bev, cb, NULL);
+            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            riak_encode_listkeys_request(rev, bucket, timeout * 1000);
+            break;
+        default:
+            usage(stderr, argv[0]);
+        }
+
+        int connected = bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, host, port);
+        if (connected != 0) {
+            fprintf(stderr, "Could not connect to %s:%d\n", host, port);
+            exit(1);
+        }
     }
 
-    bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, host, port);
-
-    }
-
-    // Death Event to kill the loop
+#if 0
+    // Death Event to kill the loop after timeout
     struct bufferevent *die_bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-//    struct bufferevent *die_bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
-    struct timeval timeout_read = { 10L, 0L };
-    struct timeval timeout_write = { 10L, 0L };
+    struct timeval timeout_read = { timeout, 0L };
+    struct timeval timeout_write = { timeout, 0L };
     bufferevent_set_timeouts(die_bev, &timeout_read, &timeout_write);
     rev = riak_event_new(ctx, base, die_bev, cb, NULL);
     bufferevent_setcb(die_bev, NULL, NULL, eventcb, rev);
     bufferevent_enable(die_bev, EV_READ|EV_WRITE);
-    //bufferevent_socket_connect_hostname(die_bev, dns_base, AF_UNSPEC, host, port);
+#endif
 
+    // Done looking up hostnames
+    evdns_base_free(dns_base, 0);
+
+    // What has been queued up
+    event_base_dump_events(base, stderr);
+
+    // Terminates only on error or timeout
     event_base_dispatch(base);
 
     return 0;

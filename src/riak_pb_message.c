@@ -42,9 +42,6 @@ void riak_pb_response_free(riak_context     *ctx,
                            riak_pb_response **pb) {
     riak_free(ctx, (*pb)->data);
     riak_free(ctx, (*pb));
-//    (ctx->free_fn)((*pb)->data);
-//    (ctx->free_fn)(*pb);
-//    *pb = NULL;
 }
 
 int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp) {
@@ -296,6 +293,73 @@ int riak_decode_put_response(riak_event        *ev,
     return 0;
 }
 
+int riak_encode_delete_request(riak_event          *ev,
+                               riak_binary         *bucket,
+                               riak_binary         *key,
+                               riak_delete_options *options) {
+
+    riak_context *ctx = (riak_context*)(ev->context);
+    RpbDelReq delmsg = RPB_DEL_REQ__INIT;
+
+    riak_binary_to_pb_copy_ptr(&delmsg.bucket, bucket);
+    riak_binary_to_pb_copy_ptr(&delmsg.key, key);
+
+    // process delete options
+    if (options != NULL) {
+        if (options->has_dw) {
+            delmsg.has_dw = RIAK_TRUE;
+            delmsg.dw = options->dw;
+        }
+        if (options->has_n_val) {
+            delmsg.has_n_val = RIAK_TRUE;
+            delmsg.n_val = options->n_val;
+        }
+        if (options->has_pw) {
+            delmsg.has_pw = RIAK_TRUE;
+            delmsg.pw = options->pw;
+        }
+
+        if (options->has_sloppy_quorum) {
+            delmsg.has_sloppy_quorum = RIAK_TRUE;
+            delmsg.sloppy_quorum = options->sloppy_quorum;
+        }
+        if (options->has_timeout) {
+            delmsg.has_timeout = RIAK_TRUE;
+            delmsg.timeout = options->timeout;
+        }
+        if (options->has_vclock) {
+            delmsg.has_vclock = RIAK_TRUE;
+            riak_binary_to_pb_copy(delmsg.vclock, options->vclock);
+        }
+        if (options->has_w) {
+            delmsg.has_w = RIAK_TRUE;
+            delmsg.w = options->w;
+        }
+    }
+
+    riak_uint32_t msglen = rpb_del_req__get_packed_size (&delmsg);
+    riak_uint8_t* msgbuf = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
+    if (msgbuf == NULL) {
+        return 1;
+    }
+    rpb_del_req__pack (&delmsg, msgbuf);
+
+    int result = riak_send_req(ev, MSG_RPBDELREQ, msgbuf, msglen);
+    riak_free(ev->context, msgbuf);
+    return result;
+}
+
+int riak_decode_delete_response(riak_event        *ev,
+                                riak_pb_response  *pbresp) {
+    riak_context *ctx = (riak_context*)(ev->context);
+    riak_delete_response *response = (riak_delete_response*)(ctx->malloc_fn)(sizeof(riak_delete_response));
+    if (response == NULL) {
+        return 1;
+    }
+    riak_delete_response_callback cb = (riak_delete_response_callback)(ev->response_cb);
+    (cb)(response, ev->cb_data);
+    return 0;
+}
 
 // TODO: Should encode be separate from sending?
 int riak_encode_listbuckets_request(riak_event *ev) {
@@ -412,6 +476,7 @@ int riak_decode_listkeys_response(riak_event       *ev,
 void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     riak_event   *ev = (riak_event*)ptr;
     riak_context *ctx = (riak_context*)(ev->context);
+    // Read the first 32-bits which are the message size
     riak_uint32_t inmsglen;
     riak_size_t buflen = bufferevent_read(bev, (void*)&inmsglen, sizeof(inmsglen));
     // TODO: Real error checking
@@ -422,6 +487,7 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     assert(buffer != 0);
     buflen = bufferevent_read(bev, (void*)buffer, msglen);
     assert(buflen == msglen);
+    // TODO: Anything else on the wire?
     riak_uint8_t msgid = buffer[0];
     riak_pb_response *pbresp = riak_pb_response_new(ctx, msgid, msglen, buffer);
     int result;
@@ -439,6 +505,9 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     case MSG_RPBPUTRESP:
         result = riak_decode_put_response(ev, pbresp);
         break;
+    case MSG_RPBDELRESP:
+        result = riak_decode_delete_response(ev, pbresp);
+        break;
     case MSG_RPBLISTBUCKETSRESP:
         result = riak_decode_listbuckets_response(ev, pbresp);
         break;
@@ -448,7 +517,6 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     case MSG_RPBGETCLIENTIDRESP:
     case MSG_RPBSETCLIENTIDRESP:
     case MSG_RPBGETSERVERINFORESP:
-    case MSG_RPBDELRESP:
     case MSG_RPBGETBUCKETRESP:
     case MSG_RPBSETBUCKETRESP:
     case MSG_RPBMAPREDRESP:
@@ -458,6 +526,10 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
         abort();
     }
     riak_pb_response_free(ctx, &pbresp);
+    bufferevent_free(bev);
+
+    // What has been queued up
+    event_base_dump_events(ev->base, stderr);
 
     // TODO: Should user control the event loop?  Should we include bev in response?
     //event_base_loopexit(ev->base, NULL);

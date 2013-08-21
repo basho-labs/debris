@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <event2/event.h>
+#include <event2/bufferevent.h>
+#include <event2/bufferevent_struct.h>
 
 #include "riak.h"
 #include "riak_utils.h"
@@ -51,10 +53,11 @@ void eventcb(struct bufferevent *bev, short events, void *ptr)
             if (err)
                 printf("DNS error: %s\n", evutil_gai_strerror(err));
          }
-         fprintf(stderr, "Closing because of %s\n", reason);
+         fprintf(stderr, "Closing because of %s [read event=0x%llx, write event=0x%llx]\n",
+                 reason, (riak_uint64_t)&(bev->ev_read), (riak_uint64_t)&(bev->ev_write));
          bufferevent_free(bev);
          event_base_loopexit(rev->base, NULL);
-    } if (events & BEV_EVENT_TIMEOUT) {
+    } else if (events & BEV_EVENT_TIMEOUT) {
         fprintf(stderr, "Timeout Event\n");
         bufferevent_free(bev);
         event_base_loopexit(rev->base, NULL);
@@ -145,4 +148,8 @@ void put_cb(riak_put_response *response, void *ptr) {
         wrote = riak_object_dump(response->content[i], target, len);
     }
     fprintf(stderr, "%s\n", output);
+}
+
+void delete_cb(riak_delete_response *response, void *ptr) {
+    fprintf(stderr, "delete_cb\n");
 }
