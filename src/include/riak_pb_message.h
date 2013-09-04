@@ -114,7 +114,7 @@ int riak_encode_delete_request(riak_event          *ev,
 
 int riak_encode_listbuckets_request(riak_event *ev);
 
-int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp);
+int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp, riak_boolean_t *done);
 
 int riak_encode_listkeys_request(riak_event *ev,
                                  char *bucket,

@@ -38,8 +38,10 @@ typedef ev_int64_t          riak_int64_t;
 typedef size_t              riak_size_t;
 
 // libevent types
-typedef struct bufferevent  riak_bufferevent;
-typedef struct event_base   riak_event_base;
+typedef struct bufferevent     riak_bufferevent;
+typedef struct event_base      riak_event_base;
+typedef struct evutil_addrinfo riak_addrinfo;
+typedef evutil_socket_t        riak_socket_t;
 
 #define RIAK_FALSE          0
 #define RIAK_TRUE           1

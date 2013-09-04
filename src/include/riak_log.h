@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * riak_errors.h: Riak Errors
+ * riak_log.h: Riak C Logging
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
@@ -20,8 +20,26 @@
  *
  *********************************************************************/
 
-#ifndef RIAK_ERRORS_H
-#define RIAK_ERRORS_H
+#ifndef RIAK_LOG_H_
+#define RIAK_LOG_H_
+
+#include <stdarg.h>
+
+// Pulled from log4c/priority.h but correspond to log levels from syslog(3)
+typedef enum {
+    /** fatal */    RIAK_LOG_FATAL = 0,
+    /** alert */    RIAK_LOG_ALERT,
+    /** crit */     RIAK_LOG_CRIT,
+    /** error */    RIAK_LOG_ERROR,
+    /** warn */     RIAK_LOG_WARN,
+    /** notice */   RIAK_LOG_NOTICE,
+    /** info */     RIAK_LOG_INFO,
+    /** debug */    RIAK_LOG_DEBUG,
+    /** trace */    RIAK_LOG_TRACE,
+    /** notset */   RIAK_LOG_NOTSET,
+    /** unknown */  RIAK_LOG_UNKNOWN
+} riak_log_level_t;
+
+void riak_log(riak_context *ctx, riak_log_level_t t, const char *format, ...);
 
 #endif
-

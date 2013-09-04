@@ -32,9 +32,11 @@
 
 #include "riak.h"
 #include "riak_utils.h"
+#include "riak_error.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_pb_message.h"
+#include "riak_network.h"
 #include "call_backs.h"
 
 void usage(FILE *fp, char *progname) {
@@ -47,11 +49,12 @@ void usage(FILE *fp, char *progname) {
     exit(1);
 }
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     static int operation;
     char bucket[1024];
     char host[256];
+    char portnum[6];
     char key[1024];
     char value[1024];
     riak_int32_t   iterate    = 1;
@@ -63,6 +66,7 @@ int main (int argc, char *argv[])
     int c;
 
     strcpy(host, "localhost");
+    strcpy(portnum, "10017");
 
     while (1) {
         static struct option long_options[] = {
@@ -123,7 +127,7 @@ int main (int argc, char *argv[])
 
             case 'h':
                 printf ("option -h with value `%s'\n", optarg);
-                strlcpy(host, optarg, 256);
+                strlcpy(host, optarg, sizeof(host));
                 break;
 
             case 'i':
@@ -133,12 +137,13 @@ int main (int argc, char *argv[])
 
             case 'k':
                 printf ("option -k with value `%s'\n", optarg);
-                strlcpy(key, optarg, 1024);
+                strlcpy(key, optarg, sizeof(key));
                 has_key = RIAK_TRUE;
                 break;
 
             case 'p':
                 printf ("option -p with value `%s'\n", optarg);
+                strlcpy(portnum, optarg, sizeof(portnum));
                 port = atol(optarg);
                 break;
 
@@ -149,7 +154,7 @@ int main (int argc, char *argv[])
 
             case 'v':
                 printf ("option -v with value `%s'\n", optarg);
-                strlcpy(value, optarg, 1024);
+                strlcpy(value, optarg, sizeof(value));
                 has_value = RIAK_TRUE;
                 break;
 
@@ -214,9 +219,20 @@ int main (int argc, char *argv[])
     riak_object *obj;
     int it;
 
+    riak_addrinfo *addrinfo;
+    riak_error err = resolve_address(ctx, host, portnum, &addrinfo);
+    if (err) exit(1);
+
+    // If there was no error, we should have at least one answer so use the 1st
+    assert(addrinfo);
+
+    riak_socket_t sock = just_open_a_socket(ctx, addrinfo);
+    if (sock < 0) exit(1);
+
     for(it = 0; it < iterate; it++) {
         fprintf(stderr, "Loop %d\n", it);
-        struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+//        struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
         int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
         if (enabled != 0) {
             fprintf(stderr, "Could not enable bufferevent 0x%llx\n", (riak_uint64_t)bev);
@@ -278,11 +294,14 @@ int main (int argc, char *argv[])
             usage(stderr, argv[0]);
         }
 
+#if UNUSED
         int connected = bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, host, port);
+//        int connected = bufferevent_socket_connect(bev, addrinfo->ai_addr, addrinfo->ai_addrlen);
         if (connected != 0) {
             fprintf(stderr, "Could not connect to %s:%d\n", host, port);
             exit(1);
         }
+#endif
     }
 
 #if 0
@@ -304,6 +323,8 @@ int main (int argc, char *argv[])
 
     // Terminates only on error or timeout
     event_base_dispatch(base);
+
+    evutil_freeaddrinfo(addrinfo);
 
     return 0;
 }

@@ -20,6 +20,7 @@
  *
  *********************************************************************/
 
+#include <log4c.h>
 #include "riak.h"
 
 extern ProtobufCAllocator protobuf_c_default_allocator;
@@ -28,7 +29,8 @@ riak_context *riak_context_new(riak_alloc_fn     alloc,
                                riak_realloc_fn   realloc,
                                riak_free_fn      freeme,
                                riak_pb_alloc_fn  pb_alloc,
-                               riak_pb_free_fn   pb_free) {
+                               riak_pb_free_fn   pb_free,
+                               const char       *logging_category) {
     riak_alloc_fn   alloc_fn   = malloc;
     riak_realloc_fn realloc_fn = realloc;
     riak_free_fn    free_fn    = free;
@@ -58,6 +60,19 @@ riak_context *riak_context_new(riak_alloc_fn     alloc,
         ctx->pb_allocator->free = pb_free;
     }
 
+    if (logging_category == NULL) {
+        strlcpy(ctx->logging_category, RIAK_LOGGING_DEFAULT_CATEGORY, RIAK_LOGGING_MAX_LEN);
+    } else {
+        strlcpy(ctx->logging_category, logging_category, RIAK_LOGGING_MAX_LEN);
+    }
+
+    // Since we will likely only have one context, set up non-threadsafe logging here
+    int result = log4c_init();
+    if (result != 0) {
+        fprintf(stderr, "Could not initialize logging\n");
+        exit(1);
+    }
+
     return ctx;
 }
 
@@ -65,6 +80,9 @@ void riak_context_free(riak_context **ctx) {
     riak_free_fn freer = (*ctx)->free_fn;
     (freer)(*ctx);
     *ctx = NULL;
+
+    // Since we will only clean up one context, let's shut down non-threadsafe logging here, too
+    log4c_fini();
 }
 
 riak_event *riak_event_new(riak_context          *ctx,
