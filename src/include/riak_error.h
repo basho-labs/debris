@@ -29,7 +29,7 @@ typedef enum riak_error_enum {
     ERIAK_LAST_ERRORNUM
 } riak_error;
 
-#ifdef RIAK_ERROR_DEFINE_MSGS
+#ifdef _RIAK_ERROR_DEFINE_MSGS
 static const char* errmsgs[] = {
     "No Error",
     "Problems resolving host name/port number",
@@ -37,6 +37,7 @@ static const char* errmsgs[] = {
 };
 #endif
 
-const char* riak_strerror(riak_error err);
+const char*
+riak_strerror(riak_error err);
 
 #endif

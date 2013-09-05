@@ -40,6 +40,16 @@ typedef enum {
     /** unknown */  RIAK_LOG_UNKNOWN
 } riak_log_level_t;
 
-void riak_log(riak_context *ctx, riak_log_level_t t, const char *format, ...);
+/**
+ * @brief Add a record to the Riak log
+ * @param ctx Riak Context
+ * @param level Logging level (see `riak_log_level_t`)
+ * @param format Printf-like formatting string
+ * @param ... Arguments to `format`
+ */
+void
+riak_log(riak_context *ctx,
+         riak_log_level_t level,
+         const char *format, ...);
 
 #endif

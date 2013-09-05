@@ -20,7 +20,7 @@
  *
  *********************************************************************/
 
-#define RIAK_ERROR_DEFINE_MSGS
+#define _RIAK_ERROR_DEFINE_MSGS
 #include "riak_error.h"
 
 

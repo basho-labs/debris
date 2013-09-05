@@ -23,10 +23,11 @@
 #include <errno.h>
 #include "riak.h"
 
-riak_error resolve_address(riak_context *ctx,
-                           const char *host,
-                           const char *portnum,
-                           riak_addrinfo **addrinfo) {
+riak_error
+riak_resolve_address(riak_context   *ctx,
+                     const char     *host,
+                     const char     *portnum,
+                     riak_addrinfo **addrinfo) {
     riak_addrinfo addrhints;
 
     // Build the hints to tell getaddrinfo how to act.
@@ -49,7 +50,11 @@ riak_error resolve_address(riak_context *ctx,
     return ERIAK_OK;
 }
 
-void print_host(riak_addrinfo *addrinfo, char* target, int len, riak_uint16_t *port) {
+void
+riak_print_host(riak_addrinfo *addrinfo,
+                char          *target,
+                int            len,
+                riak_uint16_t *port) {
     struct sockaddr_in  *ipv4;
     struct sockaddr_in6 *ipv6;
     switch (addrinfo->ai_addr->sa_family) {
@@ -69,12 +74,9 @@ void print_host(riak_addrinfo *addrinfo, char* target, int len, riak_uint16_t *p
     }
 }
 
-riak_socket_t just_open_a_socket(riak_context  *ctx,
-                                 riak_addrinfo *addrinfo) {
-
-//    int
-//    bufferevent_socket_connect(struct bufferevent *bev,
-//        struct sockaddr *sa, int socklen)
+riak_socket_t
+riak_just_open_a_socket(riak_context  *ctx,
+                        riak_addrinfo *addrinfo) {
 
     riak_socket_t sock = socket(addrinfo->ai_family,
                                 addrinfo->ai_socktype,
@@ -83,13 +85,11 @@ riak_socket_t just_open_a_socket(riak_context  *ctx,
         riak_log(ctx, RIAK_LOG_FATAL, "Could not open a socket\n");
         return -1;
     }
-#if 0
     if (evutil_make_socket_nonblocking(sock) < 0) {
         EVUTIL_CLOSESOCKET(sock);
         riak_log(ctx, RIAK_LOG_FATAL, "Could make socket non-blocking\n");
         return -1;
     }
-#endif
     int err = connect(sock, addrinfo->ai_addr, addrinfo->ai_addrlen);
     if (err) {
         // Since this is nonblocking, we'll need to treat some errors
@@ -97,7 +97,7 @@ riak_socket_t just_open_a_socket(riak_context  *ctx,
         if (errno != EINPROGRESS && errno != EAGAIN) {
             char ip[INET6_ADDRSTRLEN];
             riak_uint16_t port;
-            print_host(addrinfo, ip, sizeof(ip), &port);
+            riak_print_host(addrinfo, ip, sizeof(ip), &port);
             EVUTIL_CLOSESOCKET(sock);
             riak_log(ctx, RIAK_LOG_FATAL, "Could not connect a socket to host %s:%d [%s]\n", ip, port, strerror(errno));
             return -1;

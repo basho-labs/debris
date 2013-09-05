@@ -480,7 +480,6 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
     riak_event   *ev = (riak_event*)ptr;
     riak_context *ctx = (riak_context*)(ev->context);
     riak_boolean_t done_streaming = RIAK_FALSE;
-    for(;!done_streaming;) {
         // Read the first 32-bits which are the message size
         riak_uint32_t inmsglen;
         riak_size_t buflen = bufferevent_read(bev, (void*)&inmsglen, sizeof(inmsglen));
@@ -537,15 +536,9 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
 
         // What has been queued up
         event_base_dump_events(ev->base, stderr);
-        bufferevent_flush(bev, EV_READ|EV_WRITE, BEV_FLUSH);
-        evutil_socket_t fd = bufferevent_getfd(bev);
-        char buf[1024];
-        size_t rc = read(fd,buf,sizeof(buf));
-        riak_log(ctx, RIAK_LOG_DEBUG, "rc = %d\n", rc);
-        if (rc > 0)
-        {
-            printf("OK\n");
-        }
-    }
-    bufferevent_free(bev);
+
+        if (done_streaming)
+            bufferevent_free(bev);
+
+        //sleep(1);
 }

@@ -210,8 +210,11 @@ int main(int argc, char *argv[])
     */
 
     event_enable_debug_mode();
+    evthread_enable_lock_debugging();
+//    event_use_pthreads();
+//    event_enable_debug_logging(EVENT_DBG_ALL);
     struct event_base *base = event_base_new();
-    struct evdns_base *dns_base = evdns_base_new(base, 1);
+//    struct evdns_base *dns_base = evdns_base_new(base, 1);
 
     riak_context *ctx = riak_context_new_default();
     riak_response_callback cb;
@@ -220,22 +223,22 @@ int main(int argc, char *argv[])
     int it;
 
     riak_addrinfo *addrinfo;
-    riak_error err = resolve_address(ctx, host, portnum, &addrinfo);
+    riak_error err = riak_resolve_address(ctx, host, portnum, &addrinfo);
     if (err) exit(1);
 
     // If there was no error, we should have at least one answer so use the 1st
     assert(addrinfo);
 
-    riak_socket_t sock = just_open_a_socket(ctx, addrinfo);
+    riak_socket_t sock = riak_just_open_a_socket(ctx, addrinfo);
     if (sock < 0) exit(1);
 
     for(it = 0; it < iterate; it++) {
-        fprintf(stderr, "Loop %d\n", it);
-//        struct bufferevent *bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+        riak_log(ctx, RIAK_LOG_DEBUG, "Loop %d\n", it);
+//        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
         struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
         int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
         if (enabled != 0) {
-            fprintf(stderr, "Could not enable bufferevent 0x%llx\n", (riak_uint64_t)bev);
+            riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%llx\n", (riak_uint64_t)bev);
             exit(1);
         }
         riak_binary bucket_bin;
@@ -304,19 +307,8 @@ int main(int argc, char *argv[])
 #endif
     }
 
-#if 0
-    // Death Event to kill the loop after timeout
-    struct bufferevent *die_bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-    struct timeval timeout_read = { timeout, 0L };
-    struct timeval timeout_write = { timeout, 0L };
-    bufferevent_set_timeouts(die_bev, &timeout_read, &timeout_write);
-    rev = riak_event_new(ctx, base, die_bev, cb, NULL);
-    bufferevent_setcb(die_bev, NULL, NULL, eventcb, rev);
-    bufferevent_enable(die_bev, EV_READ|EV_WRITE);
-#endif
-
     // Done looking up hostnames
-    evdns_base_free(dns_base, 0);
+//    evdns_base_free(dns_base, 0);
 
     // What has been queued up
     event_base_dump_events(base, stderr);
