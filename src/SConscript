@@ -1,7 +1,7 @@
 import os
 
 env = Environment(
-    ENV = {'PATH' : os.environ['PATH'],'INCLUDE' : os.environ['INCLUDE'],'PKG_CONFIG_PATH' : os.environ['PKG_CONFIG_PATH']},
+    ENV = os.environ,
     CCFLAGS = '-g -Wall -DUSE_DEBUG',
     # .. Required for proctoc-c full pathname
     CPPPATH=['proto','include','..'],
@@ -53,6 +53,10 @@ if not conf.CheckLib('iconv'):
   Exit(1)
 
 if not conf.CheckLib('libevent'):
+  print 'Did not find libevent, exiting!'
+  Exit(1)
+
+if not conf.CheckLib('log4c'):
   print 'Did not find libevent, exiting!'
   Exit(1)
 

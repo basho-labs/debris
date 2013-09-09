@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <string.h>
 #include <arpa/inet.h>
 #include <event2/dns.h>
 #include <event2/bufferevent.h>
