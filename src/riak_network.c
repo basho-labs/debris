@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include "riak.h"
+#include "riak_utils.h"
 
 riak_error
 riak_resolve_address(riak_context   *ctx,

@@ -19,6 +19,7 @@
  * under the License.
  *
  *********************************************************************/
+#include <time.h>
 #include "riak.h"
 #include "riak_utils.h"
 

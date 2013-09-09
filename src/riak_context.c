@@ -22,6 +22,7 @@
 
 #include <log4c.h>
 #include "riak.h"
+#include "riak_utils.h"
 
 extern ProtobufCAllocator protobuf_c_default_allocator;
 

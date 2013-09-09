@@ -54,8 +54,8 @@ void eventcb(struct bufferevent *bev, short events, void *ptr)
             if (err)
                 printf("DNS error: %s\n", evutil_gai_strerror(err));
          }
-         fprintf(stderr, "Closing because of %s [read event=0x%llx, write event=0x%llx]\n",
-                 reason, (riak_uint64_t)&(bev->ev_read), (riak_uint64_t)&(bev->ev_write));
+         fprintf(stderr, "Closing because of %s [read event=%p, write event=%p]\n",
+                 reason, (void*)&(bev->ev_read), (void*)&(bev->ev_write));
          bufferevent_free(bev);
          event_base_loopexit(rev->base, NULL);
     } else if (events & BEV_EVENT_TIMEOUT) {

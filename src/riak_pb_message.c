@@ -540,5 +540,7 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
         if (done_streaming)
             bufferevent_free(bev);
 
+        if (result)
+            abort();
         //sleep(1);
 }
