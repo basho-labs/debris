@@ -113,6 +113,15 @@ riak_event_new(riak_context          *ctx,
                void                  *cb_data);
 
 /**
+ * @brief Set the event's callback data
+ * @param rev Riak Event
+ * @param cb_data Pointer to data used in user's callback
+ */
+inline void
+riak_event_set_cb_data(riak_event *rev,
+                       void       *cb_data);
+
+/**
  * @brief Cleanup memory used by a Riak Event
  * @param re Riak Event
  */

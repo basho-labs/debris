@@ -45,46 +45,46 @@ void riak_pb_response_free(riak_context     *ctx,
     riak_free(ctx, (*pb));
 }
 
-int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp) {
-    riak_context *ctx = (riak_context*)(ev->context);
+int riak_decode_error_response(riak_event *rev, riak_pb_response *pbresp) {
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbErrorResp *errresp= rpb_error_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     uint32_t errcode = errresp->errcode;
     ProtobufCBinaryData binary = errresp->errmsg;
     char errmsg[8192];
-    fprintf(stderr, "len = %d\n", (int)binary.len);
+    riak_log(ctx, RIAK_LOG_DEBUG, "len = %d\n", (int)binary.len);
     strncpy(errmsg, (char*)binary.data, binary.len);
     errmsg[binary.len] = '\0';
-    fprintf(stderr, "ERR #%d - %s\n", errcode, errmsg);
+    riak_log(ctx, RIAK_LOG_DEBUG, "ERR #%d - %s\n", errcode, errmsg);
     rpb_error_resp__free_unpacked(errresp, ctx->pb_allocator);
     //TODO: Figure out how to register an error callback
-    //riak_listbuckets_response_callback cb = (riak_error_response_callback)(ev->response_cb);
-    //(cb)(response, ev->cb_data);
+    //riak_listbuckets_response_callback cb = (riak_error_response_callback)(rev->response_cb);
+    //(cb)(response, rev->cb_data);
     exit(1);
 }
 
-int riak_encode_ping_request(riak_event *ev) {
-    int result = riak_send_req(ev, MSG_RPBPINGREQ, NULL, 0);
+int riak_encode_ping_request(riak_event *rev) {
+    int result = riak_send_req(rev, MSG_RPBPINGREQ, NULL, 0);
     return result;
 }
 
-int riak_decode_ping_response(riak_event        *ev,
+int riak_decode_ping_response(riak_event        *rev,
                               riak_pb_response  *pbresp) {
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     riak_ping_response *response = (riak_ping_response*)(ctx->malloc_fn)(sizeof(riak_ping_response));
     if (response == NULL) {
         return 1;
     }
-    riak_ping_response_callback cb = (riak_ping_response_callback)(ev->response_cb);
-    (cb)(response, ev->cb_data);
+    riak_ping_response_callback cb = (riak_ping_response_callback)(rev->response_cb);
+    (cb)(response, rev->cb_data);
     return 0;
 }
 
-int riak_encode_get_request(riak_event  *ev,
-                            char *bucket,
-                            char *key,
+int riak_encode_get_request(riak_event       *rev,
+                            char             *bucket,
+                            char             *key,
                             riak_get_options *get_options) {
 
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbGetReq getmsg = RPB_GET_REQ__INIT;
 
     getmsg.bucket.len = strlen(bucket);
@@ -126,17 +126,17 @@ int riak_encode_get_request(riak_event  *ev,
     }
     rpb_get_req__pack (&getmsg, msgbuf);
 
-    int result = riak_send_req(ev, MSG_RPBGETREQ, msgbuf, msglen);
-    riak_free(ev->context, msgbuf);
+    int result = riak_send_req(rev, MSG_RPBGETREQ, msgbuf, msglen);
+    riak_free(rev->context, msgbuf);
     return result;
 }
 
-int riak_decode_get_response(riak_event        *ev,
+int riak_decode_get_response(riak_event        *rev,
                              riak_pb_response  *pbresp) {
     // decode the PB response etc
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbGetResp *rpbresp = rpb_get_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
-    fprintf(stderr, "riak_decode_get_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
+    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_get_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
     if (rpbresp == NULL) {
         return 1;
     }
@@ -167,17 +167,17 @@ int riak_decode_get_response(riak_event        *ev,
         }
     }
     rpb_get_resp__free_unpacked(rpbresp, ctx->pb_allocator);
-    riak_get_response_callback cb = (riak_get_response_callback)(ev->response_cb);
-    (cb)(response, ev->cb_data);
+    riak_get_response_callback cb = (riak_get_response_callback)(rev->response_cb);
+    (cb)(response, rev->cb_data);
     return 0;
 }
 
 
-int riak_encode_put_request(riak_event *ev,
-                            riak_object *riak_obj,
+int riak_encode_put_request(riak_event       *rev,
+                            riak_object      *riak_obj,
                             riak_put_options *options) {
 
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbPutReq putmsg = RPB_PUT_REQ__INIT;
 
     riak_binary_to_pb_copy(putmsg.bucket, riak_obj->bucket);
@@ -254,17 +254,17 @@ int riak_encode_put_request(riak_event *ev,
 
     riak_object_free_pb(ctx, &content);
 
-    int result = riak_send_req(ev, MSG_RPBPUTREQ, msgbuf, msglen);
-    riak_free(ev->context, msgbuf);
+    int result = riak_send_req(rev, MSG_RPBPUTREQ, msgbuf, msglen);
+    riak_free(rev->context, msgbuf);
     return result;
 }
 
-int riak_decode_put_response(riak_event        *ev,
+int riak_decode_put_response(riak_event        *rev,
                              riak_pb_response  *pbresp) {
     // decode the PB response etc
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbPutResp *rpbresp = rpb_put_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
-    fprintf(stderr, "riak_decode_put_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
+    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_put_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
     if (rpbresp == NULL) {
         return 1;
     }
@@ -289,17 +289,17 @@ int riak_decode_put_response(riak_event        *ev,
         }
     }
     rpb_put_resp__free_unpacked(rpbresp, ctx->pb_allocator);
-    riak_put_response_callback cb = (riak_put_response_callback)(ev->response_cb);
-    (cb)(response, ev->cb_data);
+    riak_put_response_callback cb = (riak_put_response_callback)(rev->response_cb);
+    (cb)(response, rev->cb_data);
     return 0;
 }
 
-int riak_encode_delete_request(riak_event          *ev,
+int riak_encode_delete_request(riak_event          *rev,
                                riak_binary         *bucket,
                                riak_binary         *key,
                                riak_delete_options *options) {
 
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbDelReq delmsg = RPB_DEL_REQ__INIT;
 
     riak_binary_to_pb_copy_ptr(&delmsg.bucket, bucket);
@@ -345,26 +345,26 @@ int riak_encode_delete_request(riak_event          *ev,
     }
     rpb_del_req__pack (&delmsg, msgbuf);
 
-    int result = riak_send_req(ev, MSG_RPBDELREQ, msgbuf, msglen);
-    riak_free(ev->context, msgbuf);
+    int result = riak_send_req(rev, MSG_RPBDELREQ, msgbuf, msglen);
+    riak_free(rev->context, msgbuf);
     return result;
 }
 
-int riak_decode_delete_response(riak_event        *ev,
+int riak_decode_delete_response(riak_event        *rev,
                                 riak_pb_response  *pbresp) {
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     riak_delete_response *response = (riak_delete_response*)(ctx->malloc_fn)(sizeof(riak_delete_response));
     if (response == NULL) {
         return 1;
     }
-    riak_delete_response_callback cb = (riak_delete_response_callback)(ev->response_cb);
-    (cb)(response, ev->cb_data);
+    riak_delete_response_callback cb = (riak_delete_response_callback)(rev->response_cb);
+    (cb)(response, rev->cb_data);
     return 0;
 }
 
 // TODO: Should encode be separate from sending?
-int riak_encode_listbuckets_request(riak_event *ev) {
-    riak_context *ctx = (riak_context*)(ev->context);
+int riak_encode_listbuckets_request(riak_event *rev) {
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbListBucketsReq listbucketsreq = RPB_LIST_BUCKETS_REQ__INIT;
     listbucketsreq.stream = RIAK_TRUE;
     listbucketsreq.has_stream = RIAK_TRUE;
@@ -375,14 +375,14 @@ int riak_encode_listbuckets_request(riak_event *ev) {
     }
     rpb_list_buckets_req__pack(&listbucketsreq, msgbuf);
 
-    int result = riak_send_req(ev, MSG_RPBLISTBUCKETSREQ, msgbuf, msglen);
-    riak_free(ev->context, msgbuf);
+    int result = riak_send_req(rev, MSG_RPBLISTBUCKETSREQ, msgbuf, msglen);
+    riak_free(rev->context, msgbuf);
     return result;
 }
 
-int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp, riak_boolean_t *done) {
-    fprintf(stderr, "riak_decode_listbuckets_response\n");
-    riak_context *ctx = (riak_context*)(ev->context);
+int riak_decode_listbuckets_response(riak_event *rev, riak_pb_response *pbresp, riak_boolean_t *done) {
+    riak_context *ctx = rev->context;
+    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_listbuckets_response");
     RpbListBucketsResp *listbucketresp = rpb_list_buckets_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     int i;
     riak_listbuckets_response *response = (ctx->malloc_fn)(sizeof(riak_listbuckets_response));
@@ -403,22 +403,21 @@ int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp, r
     }
     response->done = RIAK_FALSE;
     if (listbucketresp->has_done == RIAK_TRUE) {
-        fprintf(stderr, "HAS DONE\n");
+        riak_log(ctx, RIAK_LOG_DEBUG, "HAS DONE");
         response->done = listbucketresp->done;
     }
     *done = response->done;
-    fprintf(stderr, "pb done = %d\n", listbucketresp->done);
     rpb_list_buckets_resp__free_unpacked(listbucketresp, ctx->pb_allocator);
-    riak_listbuckets_response_callback cb = (riak_listbuckets_response_callback)(ev->response_cb);
-    (cb)(response, ev->cb_data);
+    riak_listbuckets_response_callback cb = (riak_listbuckets_response_callback)(rev->response_cb);
+    (cb)(response, rev->cb_data);
     return 0;
 }
 
 
-int riak_encode_listkeys_request(riak_event *ev,
+int riak_encode_listkeys_request(riak_event *rev,
                                  char *bucket,
                                  riak_uint32_t timeout) {
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = (riak_context*)(rev->context);
     RpbListKeysReq listkeysreq = RPB_LIST_KEYS_REQ__INIT;
     riak_binary binbucket;
     binbucket.data = (riak_uint8_t*)bucket;
@@ -435,15 +434,15 @@ int riak_encode_listkeys_request(riak_event *ev,
     }
     rpb_list_keys_req__pack(&listkeysreq, msgbuf);
 
-    int result = riak_send_req(ev, MSG_RPBLISTKEYSREQ, msgbuf, msglen);
-    riak_free(ev->context, msgbuf);
+    int result = riak_send_req(rev, MSG_RPBLISTKEYSREQ, msgbuf, msglen);
+    riak_free(rev->context, msgbuf);
     return result;
 }
 
-int riak_decode_listkeys_response(riak_event       *ev,
+int riak_decode_listkeys_response(riak_event       *rev,
                                   riak_pb_response *pbresp) {
-    fprintf(stderr, "riak_decode_listkeys_response\n");
-    riak_context *ctx = (riak_context*)(ev->context);
+    riak_context *ctx = rev->context;
+    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_listkeys_response");
     RpbListKeysResp *listkeyresp = rpb_list_keys_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     int i;
     riak_listkeys_response *response = (ctx->malloc_fn)(sizeof(riak_listkeys_response));
@@ -464,28 +463,33 @@ int riak_decode_listkeys_response(riak_event       *ev,
     }
     response->done = RIAK_FALSE;
     if (listkeyresp->has_done) {
-        fprintf(stderr, "HAS DONE\n");
+        riak_log(ctx, RIAK_LOG_DEBUG, "HAS DONE");
         response->done = listkeyresp->done;
 
     }
-    fprintf(stderr, "pb done = %d\n", listkeyresp->done);
+    riak_log(ctx, RIAK_LOG_DEBUG, "pb done = %d", listkeyresp->done);
     rpb_list_keys_resp__free_unpacked(listkeyresp, ctx->pb_allocator);
-    riak_listkeys_response_callback cb = (riak_listkeys_response_callback)(ev->response_cb);
-    (cb)(response, ev->cb_data);
+    riak_listkeys_response_callback cb = (riak_listkeys_response_callback)(rev->response_cb);
+    (cb)(response, rev->cb_data);
     return 0;
 }
 
 // MAIN RESULT CALLBACK
-void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
-    riak_event   *ev = (riak_event*)ptr;
-    riak_context *ctx = (riak_context*)(ev->context);
+void
+riak_read_result_callback(riak_bufferevent *bev,
+                          void             *ptr) {
+    riak_event   *rev = (riak_event*)ptr;
+    riak_context *ctx = (riak_context*)(rev->context);
     riak_boolean_t done_streaming = RIAK_FALSE;
+    for(;;) {
         // Read the first 32-bits which are the message size
         riak_uint32_t inmsglen;
         riak_size_t buflen = bufferevent_read(bev, (void*)&inmsglen, sizeof(inmsglen));
-        // TODO: Real error checking
-        assert(buflen == 4);
+        // If we can't ready any more bytes stop trying
+        if (buflen != sizeof(inmsglen)) break;
+
         riak_uint32_t msglen = ntohl(inmsglen);
+        // TODO: Need to malloc new buffer each time?
         riak_uint8_t *buffer = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
         // TODO: Real error checking
         assert(buffer != 0);
@@ -500,25 +504,25 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
         done_streaming = RIAK_TRUE;
         switch (msgid) {
         case MSG_RPBERRORRESP:
-            result = riak_decode_error_response(ev, pbresp);
+            result = riak_decode_error_response(rev, pbresp);
             break;
         case MSG_RPBPINGRESP:
-            result = riak_decode_ping_response(ev, pbresp);
+            result = riak_decode_ping_response(rev, pbresp);
             break;
         case MSG_RPBGETRESP:
-             result = riak_decode_get_response(ev, pbresp);
+             result = riak_decode_get_response(rev, pbresp);
             break;
         case MSG_RPBPUTRESP:
-            result = riak_decode_put_response(ev, pbresp);
+            result = riak_decode_put_response(rev, pbresp);
             break;
         case MSG_RPBDELRESP:
-            result = riak_decode_delete_response(ev, pbresp);
+            result = riak_decode_delete_response(rev, pbresp);
             break;
         case MSG_RPBLISTBUCKETSRESP:
-            result = riak_decode_listbuckets_response(ev, pbresp, &done_streaming);
+            result = riak_decode_listbuckets_response(rev, pbresp, &done_streaming);
             break;
         case MSG_RPBLISTKEYSRESP:
-            result = riak_decode_listkeys_response(ev, pbresp);
+            result = riak_decode_listkeys_response(rev, pbresp);
             break;
         case MSG_RPBGETCLIENTIDRESP:
         case MSG_RPBSETCLIENTIDRESP:
@@ -528,19 +532,23 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr) {
         case MSG_RPBMAPREDRESP:
         case MSG_RPBINDEXRESP:
         case MSG_RBPSEARCHQUERYRESP:
-            fprintf(stderr, "%d NOT IMPLEMENTED\n", msgid);
+            riak_log(ctx, RIAK_LOG_FATAL, "%d NOT IMPLEMENTED", msgid);
             abort();
         }
+
         // NOTE: Also frees the local buffer
         riak_pb_response_free(ctx, &pbresp);
 
-        // What has been queued up
-        event_base_dump_events(ev->base, stderr);
-
-        if (done_streaming)
-            bufferevent_free(bev);
-
+        // Something is amiss
         if (result)
             abort();
-        //sleep(1);
+    }
+
+    // What has been queued up
+    event_base_dump_events(rev->base, stdout);
+
+    if (done_streaming)
+        bufferevent_free(bev);
+
+    //sleep(1);
 }

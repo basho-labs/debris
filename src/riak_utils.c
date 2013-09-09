@@ -47,8 +47,7 @@ riak_strlcat(char       *dst,
 
     size_t len;
     // Walk to the end of the first string
-    for(len = 0; (len < size) && (*dst != '\0'); len++, dst++) {
-    }
+    for(len = 0; (len < size) && (*dst != '\0'); len++, dst++) {}
     for(; (len < size) && (*src != '\0'); len++) {
         *dst++ = *src++;
     }
@@ -95,31 +94,44 @@ void riak_binary_copy_ptr(riak_binary* to, riak_binary* from) {
     to->data = from->data;
 }
 
-void riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from) {
+void
+riak_binary_deep_copy(riak_context *ctx,
+                      riak_binary *to,
+				      riak_binary *from) {
     to->len  = from->len;
     to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
     // TODO: Check malloc return status
     memcpy((void*)to->data, (void*)from->data, from->len);
 }
 
-void riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to, riak_binary* from) {
+void
+riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to,
+                           riak_binary* from) {
     to->len  = from->len;
     to->data = from->data;
 }
 
-void riak_binary_to_pb_deep_copy(riak_context *ctx, ProtobufCBinaryData *to, riak_binary *from) {
+void
+riak_binary_to_pb_deep_copy(riak_context        *ctx,
+                            ProtobufCBinaryData *to,
+                            riak_binary         *from) {
     to->len  = from->len;
     to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
     // TODO: Check malloc return status
     memcpy((void*)to->data, (void*)from->data, from->len);
 }
 
-void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from) {
+void
+riak_binary_from_pb_copy_ptr(riak_binary         *to,
+                             ProtobufCBinaryData *from) {
     to->len  = from->len;
     to->data = from->data;
 }
 
-void riak_binary_from_pb_deep_copy_ptr(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from) {
+void
+riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
+                                  riak_binary         *to,
+                                  ProtobufCBinaryData *from) {
     to->len  = from->len;
     to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
     // TODO: Check malloc return status
@@ -127,7 +139,10 @@ void riak_binary_from_pb_deep_copy_ptr(riak_context *ctx, riak_binary *to, Proto
 }
 
 //TODO: Figure out clean way to print UTF-8 encoding
-int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) {
+int
+riak_binary_dump_ptr(riak_binary *bin,
+                     char* target,
+                     riak_uint32_t len) {
     int count = 0;
     for( ; count < bin->len && count < len-1; count++) {
         char c = '.';
@@ -139,7 +154,10 @@ int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) {
     return count;
 }
 
-int riak_binary_hex_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) {
+int
+riak_binary_hex_dump_ptr(riak_binary *bin,
+                         char* target,
+                         riak_uint32_t len) {
     int count = 0;
     static char hex[] = "0123456789abcdef";
     if (bin != NULL) {
@@ -155,13 +173,16 @@ int riak_binary_hex_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len) 
     return count*2;
 }
 
-riak_get_response* riak_get_response_new(riak_context *ctx) {
+riak_get_response*
+riak_get_response_new(riak_context *ctx) {
     riak_get_response* r = (riak_get_response*)(ctx->malloc_fn)(sizeof(riak_get_response));
     bzero(r, sizeof(riak_get_response));
     return r;
 }
 
-void riak_get_response_free(riak_context *ctx, riak_get_response *r) {
+void
+riak_get_response_free(riak_context *ctx,
+                       riak_get_response *r) {
     if(r == 0) {
         return;
     }
@@ -174,8 +195,13 @@ void riak_get_response_free(riak_context *ctx, riak_get_response *r) {
 }
 
 
-int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len) {
-    riak_bufferevent *bev = ev->bevent;
+int
+riak_send_req(riak_event   *rev,
+              riak_uint8_t  reqid,
+              riak_uint8_t *msgbuf,
+              riak_size_t   len) {
+    riak_context     *ctx = rev->context;
+    riak_bufferevent *bev = rev->bevent;
     // Convert len to network byte order
     ev_uint32_t msglen = htonl(len+1);
     int result = bufferevent_write(bev, (void*)&msglen, sizeof(msglen));
@@ -186,21 +212,21 @@ int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak
         result = bufferevent_write(bev, (void*)msgbuf, len);
         if (result != 0) return 1;
     }
-    fprintf(stderr, "Wrote %d bytes\n", (int)len);
+    riak_log(ctx, RIAK_LOG_DEBUG, "Wrote %d bytes\n", (int)len);
     int i;
     for(i = 0; i < len; i++) {
-        fprintf(stderr, "%02x", msgbuf[i]);
+        fprintf(stdout, "%02x", msgbuf[i]);
     }
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
     for(i = 0; i < len; i++) {
         char c = '.';
         if (msgbuf[i] > 31 && msgbuf[i] < 128) {
             c = msgbuf[i];
         }
-        fprintf(stderr, "%c", c);
+        fprintf(stdout, "%c", c);
     }
 
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
     return 0;
 }
 

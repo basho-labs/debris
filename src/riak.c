@@ -36,6 +36,7 @@
 
 void write_callback(riak_bufferevent *bev, void *ptr)
 {
-    fprintf(stderr, "Ready for write with event %p.\n", (void*)&(bev->ev_write));
+    riak_event   *rev = (riak_event*)ptr;
+    riak_context *ctx = rev->context;
+    riak_log(ctx, RIAK_LOG_DEBUG, "Ready for write with event %p.\n", (void*)&(bev->ev_write));
 }
-

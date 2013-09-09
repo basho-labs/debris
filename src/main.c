@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
     if (sock < 0) exit(1);
 
     for(it = 0; it < iterate; it++) {
-        riak_log(ctx, RIAK_LOG_DEBUG, "Loop %d\n", it);
+        riak_log(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
 //        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
         struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
         bufferevent_setwatermark(bev, EV_READ, 0, 0);
@@ -256,18 +256,24 @@ int main(int argc, char *argv[])
         case MSG_RPBPINGREQ:
             cb = (riak_response_callback)ping_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
+            // For convenience have user callback know about it's riak_event
+            riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_ping_request(rev);
             break;
         case MSG_RPBGETREQ:
             cb = (riak_response_callback)get_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
+            // For convenience have user callback know about it's riak_event
+            riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_get_request(rev, bucket, key, NULL);
             break;
         case MSG_RPBPUTREQ:
             cb = (riak_response_callback)put_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
+            // For convenience have user callback know about it's riak_event
+            riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             obj = riak_object_new(ctx);
             if (obj == NULL) {
@@ -282,18 +288,24 @@ int main(int argc, char *argv[])
         case MSG_RPBDELREQ:
             cb = (riak_response_callback)delete_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
+            // For convenience have user callback know about it's riak_event
+            riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL);
             break;
         case MSG_RPBLISTBUCKETSREQ:
             cb = (riak_response_callback)listbucket_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
+            // For convenience have user callback know about it's riak_event
+            riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_listbuckets_request(rev);
             break;
         case MSG_RPBLISTKEYSREQ:
             cb = (riak_response_callback)listkey_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
+            // For convenience have user callback know about it's riak_event
+            riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_listkeys_request(rev, bucket, timeout * 1000);
             break;

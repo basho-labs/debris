@@ -67,7 +67,8 @@ riak_context *riak_context_new(riak_alloc_fn     alloc,
         riak_strlcpy(ctx->logging_category, logging_category, RIAK_LOGGING_MAX_LEN);
     }
 
-    // Since we will likely only have one context, set up non-threadsafe logging here
+    // Since we will likely only have one context, set up non-thread-safe logging here
+    // TODO: Make logging thread-safe
     int result = log4c_init();
     if (result != 0) {
         fprintf(stderr, "Could not initialize logging\n");
@@ -106,6 +107,12 @@ riak_event *riak_event_new(riak_context          *ctx,
     ev->cb_data = cb_data;
 
     return ev;
+}
+
+void
+riak_event_set_cb_data(riak_event *rev,
+                       void       *cb_data) {
+    rev->cb_data = cb_data;
 }
 
 void riak_event_free(riak_event** re) {
