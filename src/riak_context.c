@@ -61,9 +61,9 @@ riak_context *riak_context_new(riak_alloc_fn     alloc,
     }
 
     if (logging_category == NULL) {
-        strlcpy(ctx->logging_category, RIAK_LOGGING_DEFAULT_CATEGORY, RIAK_LOGGING_MAX_LEN);
+        riak_strlcpy(ctx->logging_category, RIAK_LOGGING_DEFAULT_CATEGORY, RIAK_LOGGING_MAX_LEN);
     } else {
-        strlcpy(ctx->logging_category, logging_category, RIAK_LOGGING_MAX_LEN);
+        riak_strlcpy(ctx->logging_category, logging_category, RIAK_LOGGING_MAX_LEN);
     }
 
     // Since we will likely only have one context, set up non-threadsafe logging here

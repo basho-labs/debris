@@ -121,13 +121,13 @@ int main(int argc, char *argv[])
 
             case 'b':
                 printf ("option -b with value `%s'\n", optarg);
-                strlcpy(bucket, optarg, 1024);
+                riak_strlcpy(bucket, optarg, 1024);
                 has_bucket = RIAK_TRUE;
                 break;
 
             case 'h':
                 printf ("option -h with value `%s'\n", optarg);
-                strlcpy(host, optarg, sizeof(host));
+                riak_strlcpy(host, optarg, sizeof(host));
                 break;
 
             case 'i':
@@ -137,13 +137,13 @@ int main(int argc, char *argv[])
 
             case 'k':
                 printf ("option -k with value `%s'\n", optarg);
-                strlcpy(key, optarg, sizeof(key));
+                riak_strlcpy(key, optarg, sizeof(key));
                 has_key = RIAK_TRUE;
                 break;
 
             case 'p':
                 printf ("option -p with value `%s'\n", optarg);
-                strlcpy(portnum, optarg, sizeof(portnum));
+                riak_strlcpy(portnum, optarg, sizeof(portnum));
                 port = atol(optarg);
                 break;
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 
             case 'v':
                 printf ("option -v with value `%s'\n", optarg);
-                strlcpy(value, optarg, sizeof(value));
+                riak_strlcpy(value, optarg, sizeof(value));
                 has_value = RIAK_TRUE;
                 break;
 
@@ -210,7 +210,6 @@ int main(int argc, char *argv[])
     */
 
     event_enable_debug_mode();
-    evthread_enable_lock_debugging();
 //    event_use_pthreads();
 //    event_enable_debug_logging(EVENT_DBG_ALL);
     struct event_base *base = event_base_new();
@@ -236,11 +235,16 @@ int main(int argc, char *argv[])
         riak_log(ctx, RIAK_LOG_DEBUG, "Loop %d\n", it);
 //        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
         struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+        bufferevent_setwatermark(bev, EV_READ, 0, 0);
         int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
         if (enabled != 0) {
             riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%llx\n", (riak_uint64_t)bev);
             exit(1);
         }
+        ev_ssize_t limit = bufferevent_get_read_limit(bev);
+        riak_log(ctx, RIAK_LOG_DEBUG, "Bufferevent Read Limit = %d\n", limit);
+        limit = bufferevent_get_write_limit(bev);
+        riak_log(ctx, RIAK_LOG_DEBUG, "Bufferevent Write Limit = %d\n", limit);
         riak_binary bucket_bin;
         riak_binary key_bin;
         bucket_bin.data = (riak_uint8_t*)bucket; // Not copied

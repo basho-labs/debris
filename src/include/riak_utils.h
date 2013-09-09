@@ -23,7 +23,28 @@
 #ifndef RIAK_UTILS_H
 #define RIAK_UTILS_H
 
-//#include "riak.h"
+/**
+ * @brief Since strlcpy is not standard everywhere, write our own
+ * @param dst Destination
+ * @param src Source
+ * @param size number of bytes including null terminator
+ */
+size_t
+riak_strlcpy(char       *dst,
+             const char *src,
+             size_t      size);
+
+/**
+ * @brief Since strlcat is not standard everywhere, write our own
+ * @param dst Destination
+ * @param src Source
+ * @param size number of bytes including null terminator
+ */
+size_t
+riak_strlcat(char       *dst,
+             const char *src,
+             size_t      size);
+
 
 // Use void** to allow reseating of pointer to NULL
 #define riak_free(ctx,p) _riak_free((ctx),(void**)&(p))

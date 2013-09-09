@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <stdint.h>
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 #include <event2/bufferevent_struct.h>
@@ -53,7 +54,7 @@ void eventcb(struct bufferevent *bev, short events, void *ptr)
             if (err)
                 printf("DNS error: %s\n", evutil_gai_strerror(err));
          }
-         fprintf(stderr, "Closing because of %s [read event=0x%lx, write event=0x%lx]\n",
+         fprintf(stderr, "Closing because of %s [read event=0x%llx, write event=0x%llx]\n",
                  reason, (riak_uint64_t)&(bev->ev_read), (riak_uint64_t)&(bev->ev_write));
          bufferevent_free(bev);
          event_base_loopexit(rev->base, NULL);

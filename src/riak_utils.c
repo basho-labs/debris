@@ -24,6 +24,39 @@
 #include "riak_utils.h"
 #include "riak_pb_message.h"
 
+size_t
+riak_strlcpy(char       *dst,
+             const char *src,
+             size_t      size) {
+    if (size <= 0) return 0;
+
+    size_t len;
+    for(len = 0; (len < size) && (*src != '\0'); len++) {
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+
+    return len;
+}
+
+size_t
+riak_strlcat(char       *dst,
+             const char *src,
+             size_t      size) {
+    if (size <= 0) return 0;
+
+    size_t len;
+    // Walk to the end of the first string
+    for(len = 0; (len < size) && (*dst != '\0'); len++, dst++) {
+    }
+    for(; (len < size) && (*src != '\0'); len++) {
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+
+    return len;
+}
+
 void _riak_free(riak_context *ctx, void **pp) {
     if(pp != NULL && *pp != NULL) {
         (ctx->free_fn)(*pp);
