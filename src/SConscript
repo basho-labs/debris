@@ -57,7 +57,7 @@ if not conf.CheckLib('libevent'):
   Exit(1)
 
 if not conf.CheckLib('log4c'):
-  print 'Did not find libevent, exiting!'
+  print 'Did not find log4c, exiting!'
   Exit(1)
 
 
