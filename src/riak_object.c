@@ -22,6 +22,7 @@
 #include <time.h>
 #include "riak.h"
 #include "riak_utils.h"
+#include "riak_binary.h"
 
 //
 // P A I R S

@@ -35,6 +35,7 @@
 
 #include "riak.h"
 #include "riak_utils.h"
+#include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_pb_message.h"

@@ -33,6 +33,7 @@
 #include "riak.h"
 #include "riak_utils.h"
 #include "riak_error.h"
+#include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_pb_message.h"
@@ -49,28 +50,49 @@ void usage(FILE *fp, char *progname) {
     exit(1);
 }
 
-int main(int argc, char *argv[])
-{
-    static int operation;
+typedef struct {
+    riak_int32_t   iterate;
+    riak_int32_t   port;
+    riak_int32_t   timeout;
+    riak_boolean_t has_bucket;
+    riak_boolean_t has_key;
+    riak_boolean_t has_value;
     char bucket[1024];
     char host[256];
     char portnum[6];
     char key[1024];
     char value[1024];
-    riak_int32_t   iterate    = 1;
-    riak_int32_t   port       = 10017;
-    riak_int32_t   timeout    = 10;
-    riak_boolean_t has_bucket = RIAK_FALSE;
-    riak_boolean_t has_key    = RIAK_FALSE;
-    riak_boolean_t has_value  = RIAK_FALSE;
-    int c;
+} riak_args;
 
-    strcpy(host, "localhost");
-    strcpy(portnum, "10017");
+/**
+ * @brief Parse the command-line arguments
+ * @param argc Number of arguments
+ * @param argv Value of arguments
+ * @param args Return value of parsed arguments
+ * @return -1 on failure; > 0 on success
+ */
+int
+riak_parse_args(int        argc,
+                char      *argv[],
+                riak_args *args) {
+    static int operation;  // static required for getopt
+    int  c;
 
+    bzero((void*)args, sizeof(riak_args));
+    args->iterate    = 1;
+    args->port       = 10017;
+    args->timeout    = 10;
+    args->has_bucket = RIAK_FALSE;
+    args->has_key    = RIAK_FALSE;
+    args->has_value  = RIAK_FALSE;
+
+    strcpy(args->host, "localhost");
+    strcpy(args->portnum, "10017");
+
+    // Keep parsing args as long as we can
     while (1) {
         static struct option long_options[] = {
-            /* These options set a flag. */
+            // These options set a flag.
             {"get",          no_argument, &operation, MSG_RPBGETREQ},
             {"put",          no_argument, &operation, MSG_RPBPUTREQ},
             {"list-buckets", no_argument, &operation, MSG_RPBLISTBUCKETSREQ},
@@ -86,8 +108,8 @@ int main(int argc, char *argv[])
             {"index",        no_argument, &operation, MSG_RPBINDEXRESP},
             {"search",       no_argument, &operation, MSG_RPBSEARCHQUERYREQ},
 
-            /* These options don't set a flag.
-            We distinguish them by their indices. */
+            // These options don't set a flag.
+            // We distinguish them by their indices.
             {"bucket",       required_argument, NULL, 'b'},
             {"host",         required_argument, NULL, 'h'},
             {"iterate",      required_argument, NULL, 'i'},
@@ -103,7 +125,7 @@ int main(int argc, char *argv[])
         c = getopt_long (argc, argv, "b:h:i:k:p:t:v:",
                         long_options, &option_index);
 
-         /* Detect the end of the options. */
+         // Detect the end of the options.
         if (c == -1)
             break;
 
@@ -121,41 +143,41 @@ int main(int argc, char *argv[])
 
             case 'b':
                 printf ("option -b with value `%s'\n", optarg);
-                riak_strlcpy(bucket, optarg, 1024);
-                has_bucket = RIAK_TRUE;
+                riak_strlcpy(args->bucket, optarg, sizeof(args->bucket));
+                args->has_bucket = RIAK_TRUE;
                 break;
 
             case 'h':
                 printf ("option -h with value `%s'\n", optarg);
-                riak_strlcpy(host, optarg, sizeof(host));
+                riak_strlcpy(args->host, optarg, sizeof(args->host));
                 break;
 
             case 'i':
                 printf ("option -i with value `%s'\n", optarg);
-                iterate = atol(optarg);
+                args->iterate = atol(optarg);
                 break;
 
             case 'k':
                 printf ("option -k with value `%s'\n", optarg);
-                riak_strlcpy(key, optarg, sizeof(key));
-                has_key = RIAK_TRUE;
+                riak_strlcpy(args->key, optarg, sizeof(args->key));
+                args->has_key = RIAK_TRUE;
                 break;
 
             case 'p':
                 printf ("option -p with value `%s'\n", optarg);
-                riak_strlcpy(portnum, optarg, sizeof(portnum));
-                port = atol(optarg);
+                riak_strlcpy(args->portnum, optarg, sizeof(args->portnum));
+                args->port = atol(optarg);
                 break;
 
             case 't':
                 printf ("option -t with value `%s'\n", optarg);
-                timeout = atol(optarg);
+                args->timeout = atol(optarg);
                 break;
 
             case 'v':
                 printf ("option -v with value `%s'\n", optarg);
-                riak_strlcpy(value, optarg, sizeof(value));
-                has_value = RIAK_TRUE;
+                riak_strlcpy(args->value, optarg, sizeof(args->value));
+                args->has_value = RIAK_TRUE;
                 break;
 
             case '?':
@@ -164,9 +186,20 @@ int main(int argc, char *argv[])
                 break;
 
             default:
-                abort();
+                return -1;
         }
     }
+    return operation;
+}
+
+
+int
+main(int   argc,
+     char *argv[])
+{
+    riak_args args;
+    int operation = riak_parse_args(argc, argv, &args);
+
     // These options require a bucket
     switch (operation) {
     case MSG_RPBGETREQ:
@@ -175,7 +208,7 @@ int main(int argc, char *argv[])
     case MSG_RPBLISTKEYSREQ:
     case MSG_RPBGETBUCKETREQ:
     case MSG_RPBSETBUCKETREQ:
-        if (!has_bucket) {
+        if (!args.has_bucket) {
             fprintf(stderr, "--bucket parameter required\n");
             return 1;
         }
@@ -185,7 +218,7 @@ int main(int argc, char *argv[])
     switch (operation) {
     case MSG_RPBGETREQ:
     case MSG_RPBDELREQ:
-        if (!has_key ) {
+        if (!args.has_key ) {
             fprintf(stderr, "--key parameter required\n");
             return 1;
         }
@@ -196,24 +229,15 @@ int main(int argc, char *argv[])
     case MSG_RPBPUTREQ:
     case MSG_RPBSETCLIENTIDREQ:
     case MSG_RPBSEARCHQUERYREQ:
-        if (!has_value) {
+        if (!args.has_value) {
             fprintf(stderr, "--value parameter required\n");
             return 1;
         }
     }
 
-/*
-    {"get-clident",  no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
-    {"set-clident",  no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
-    {"map-reduce",   no_argument, &operation, MSG_RPBMAPREDREQ},
-    {"index",        no_argument, &operation, MSG_RPBINDEXRESP},
-    */
-
     event_enable_debug_mode();
 //    event_use_pthreads();
-//    event_enable_debug_logging(EVENT_DBG_ALL);
     struct event_base *base = event_base_new();
-//    struct evdns_base *dns_base = evdns_base_new(base, 1);
 
     riak_context *ctx = riak_context_new_default();
     riak_response_callback cb;
@@ -222,7 +246,7 @@ int main(int argc, char *argv[])
     int it;
 
     riak_addrinfo *addrinfo;
-    riak_error err = riak_resolve_address(ctx, host, portnum, &addrinfo);
+    riak_error err = riak_resolve_address(ctx, args.host, args.portnum, &addrinfo);
     if (err) exit(1);
 
     // If there was no error, we should have at least one answer so use the 1st
@@ -231,32 +255,25 @@ int main(int argc, char *argv[])
     riak_socket_t sock = riak_just_open_a_socket(ctx, addrinfo);
     if (sock < 0) exit(1);
 
-    for(it = 0; it < iterate; it++) {
+    for(it = 0; it < args.iterate; it++) {
         riak_log(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
 //        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
         struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-        bufferevent_setwatermark(bev, EV_READ, 0, 0);
         int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
         if (enabled != 0) {
-            riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%llx\n", (riak_uint64_t)bev);
+            riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%p\n", (riak_uint64_t)bev);
             exit(1);
         }
-        ev_ssize_t limit = bufferevent_get_read_limit(bev);
-        riak_log(ctx, RIAK_LOG_DEBUG, "Bufferevent Read Limit = %d\n", limit);
-        limit = bufferevent_get_write_limit(bev);
-        riak_log(ctx, RIAK_LOG_DEBUG, "Bufferevent Write Limit = %d\n", limit);
         riak_binary bucket_bin;
         riak_binary key_bin;
-        bucket_bin.data = (riak_uint8_t*)bucket; // Not copied
-        bucket_bin.len = strlen(bucket);
-        key_bin.data = (riak_uint8_t*)key;
-        key_bin.len = strlen(key);
+        riak_binary_from_string(bucket_bin, args.bucket); // Not copied
+        riak_binary_from_string(key_bin, args.key); // Not copied
 
         switch (operation) {
         case MSG_RPBPINGREQ:
             cb = (riak_response_callback)ping_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about it's riak_event
+            // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_ping_request(rev);
@@ -264,31 +281,29 @@ int main(int argc, char *argv[])
         case MSG_RPBGETREQ:
             cb = (riak_response_callback)get_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about it's riak_event
+            // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_get_request(rev, bucket, key, NULL);
+            riak_encode_get_request(rev, args.bucket, args.key, NULL);
             break;
         case MSG_RPBPUTREQ:
             cb = (riak_response_callback)put_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about it's riak_event
+            // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             obj = riak_object_new(ctx);
             if (obj == NULL) {
                 return 1;
             }
-            obj->bucket.data = (riak_uint8_t*)bucket; // Not copied
-            obj->bucket.len = strlen(bucket);
-            obj->value.data = (riak_uint8_t*)value;
-            obj->value.len = strlen(value);
+            riak_binary_from_string(obj->bucket, args.bucket); // Not copied
+            riak_binary_from_string(obj->value, args.value); // Not copied
             riak_encode_put_request(rev, obj, NULL);
             break;
         case MSG_RPBDELREQ:
             cb = (riak_response_callback)delete_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about it's riak_event
+            // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL);
@@ -296,7 +311,7 @@ int main(int argc, char *argv[])
         case MSG_RPBLISTBUCKETSREQ:
             cb = (riak_response_callback)listbucket_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about it's riak_event
+            // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
             riak_encode_listbuckets_request(rev);
@@ -304,10 +319,10 @@ int main(int argc, char *argv[])
         case MSG_RPBLISTKEYSREQ:
             cb = (riak_response_callback)listkey_cb;
             rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about it's riak_event
+            // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
             bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_listkeys_request(rev, bucket, timeout * 1000);
+            riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000);
             break;
         default:
             usage(stderr, argv[0]);

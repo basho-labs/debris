@@ -63,116 +63,6 @@ void _riak_free(riak_context *ctx, void **pp) {
     }
 }
 
-// RIAK_BINARY
-// be careful
-riak_binary *riak_binary_new(riak_context *ctx, riak_size_t len, riak_uint8_t *data) {
-      riak_binary *b = (riak_binary*)malloc(sizeof(riak_binary));
-      b->len  = len;
-      b->data = (riak_uint8_t*)(ctx->malloc_fn)(len);
-      // TODO: Check malloc return status
-      memcpy((void*)b->data, (void*)data, len);
-      return b;
-}
-
-void riak_binary_populate(riak_context *ctx, riak_binary *b, riak_size_t len, riak_uint8_t *data) {
-      b->len  = len;
-      b->data = (uint8_t*)(ctx->malloc_fn)(len);
-      // TODO: Check malloc return status
-      memcpy((void*)b->data, (void*)data, len);
-}
-
-void riak_binary_free(riak_context *ctx, riak_binary *b) {
-      if (b == NULL) {
-          return;
-      }
-      riak_free(ctx, b->data);
-      riak_free(ctx, b);
-}
-
-void riak_binary_copy_ptr(riak_binary* to, riak_binary* from) {
-    to->len  = from->len;
-    to->data = from->data;
-}
-
-void
-riak_binary_deep_copy(riak_context *ctx,
-                      riak_binary *to,
-				      riak_binary *from) {
-    to->len  = from->len;
-    to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
-    // TODO: Check malloc return status
-    memcpy((void*)to->data, (void*)from->data, from->len);
-}
-
-void
-riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to,
-                           riak_binary* from) {
-    to->len  = from->len;
-    to->data = from->data;
-}
-
-void
-riak_binary_to_pb_deep_copy(riak_context        *ctx,
-                            ProtobufCBinaryData *to,
-                            riak_binary         *from) {
-    to->len  = from->len;
-    to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
-    // TODO: Check malloc return status
-    memcpy((void*)to->data, (void*)from->data, from->len);
-}
-
-void
-riak_binary_from_pb_copy_ptr(riak_binary         *to,
-                             ProtobufCBinaryData *from) {
-    to->len  = from->len;
-    to->data = from->data;
-}
-
-void
-riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
-                                  riak_binary         *to,
-                                  ProtobufCBinaryData *from) {
-    to->len  = from->len;
-    to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
-    // TODO: Check malloc return status
-    memcpy((void*)to->data, (void*)from->data, from->len);
-}
-
-//TODO: Figure out clean way to print UTF-8 encoding
-int
-riak_binary_dump_ptr(riak_binary *bin,
-                     char* target,
-                     riak_uint32_t len) {
-    int count = 0;
-    for( ; count < bin->len && count < len-1; count++) {
-        char c = '.';
-        // Non-printable characters are replaced by a dot
-        if (bin->data[count] >= 32) c = bin->data[count];
-        target[count] = c;
-    }
-    if (len > 0) target[count] = '\0';
-    return count;
-}
-
-int
-riak_binary_hex_dump_ptr(riak_binary *bin,
-                         char* target,
-                         riak_uint32_t len) {
-    int count = 0;
-    static char hex[] = "0123456789abcdef";
-    if (bin != NULL) {
-        for( ; count < bin->len && (count*2) < len-1; count++) {
-
-            int nibble = (bin->data[count] & 0xf0) >> 4;
-            target[count*2] = hex[nibble];
-            nibble = (bin->data[count] & 0x0f);
-            target[count*2+1] = hex[nibble];
-        }
-    }
-    if (len > 0) target[count*2] = '\0';
-    return count*2;
-}
-
 riak_get_response*
 riak_get_response_new(riak_context *ctx) {
     riak_get_response* r = (riak_get_response*)(ctx->malloc_fn)(sizeof(riak_get_response));
@@ -181,7 +71,7 @@ riak_get_response_new(riak_context *ctx) {
 }
 
 void
-riak_get_response_free(riak_context *ctx,
+riak_get_response_free(riak_context      *ctx,
                        riak_get_response *r) {
     if(r == 0) {
         return;

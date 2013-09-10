@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include "riak_pb_message.h"
 #include "riak_utils.h"
+#include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 
@@ -414,15 +415,13 @@ int riak_decode_listbuckets_response(riak_event *rev, riak_pb_response *pbresp, 
 }
 
 
-int riak_encode_listkeys_request(riak_event *rev,
-                                 char *bucket,
+int riak_encode_listkeys_request(riak_event    *rev,
+                                 riak_binary   *bucket,
                                  riak_uint32_t timeout) {
     riak_context *ctx = (riak_context*)(rev->context);
     RpbListKeysReq listkeysreq = RPB_LIST_KEYS_REQ__INIT;
-    riak_binary binbucket;
-    binbucket.data = (riak_uint8_t*)bucket;
-    binbucket.len = strlen(bucket);
-    riak_binary_to_pb_copy(listkeysreq.bucket, binbucket);
+
+    riak_binary_to_pb_copy_ptr(&(listkeysreq.bucket), bucket);
     if (timeout > 0) {
         listkeysreq.has_timeout = RIAK_TRUE;
         listkeysreq.timeout = timeout;

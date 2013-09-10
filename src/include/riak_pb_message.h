@@ -77,10 +77,11 @@ typedef struct _riak_pb_response {
     riak_uint8_t *data;
 } riak_pb_response;
 
-riak_pb_response *riak_pb_response_new(riak_context *ctx,
-                                       riak_uint8_t msgtype,
-                                       riak_size_t msglen,
-                                       riak_uint8_t *buffer);
+riak_pb_response*
+riak_pb_response_new(riak_context *ctx,
+                     riak_uint8_t msgtype,
+                     riak_size_t msglen,
+                     riak_uint8_t *buffer);
 void riak_pb_response_free(riak_context     *ctx,
                            riak_pb_response **pb);
 
@@ -117,7 +118,8 @@ int riak_encode_listbuckets_request(riak_event *ev);
 int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp, riak_boolean_t *done);
 
 int riak_encode_listkeys_request(riak_event *ev,
-                                 char *bucket,
+                                 riak_binary *bucket,
+
                                  riak_uint32_t timeout);
 
 int riak_decode_listkeys_response(riak_event *ev, riak_pb_response *pbresp);
