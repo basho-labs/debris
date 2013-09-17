@@ -71,57 +71,248 @@
 #define MSG_RBPSEARCHQUERYRESP      28
 
 
-typedef struct _riak_pb_response {
+typedef struct _riak_pb_message {
     riak_uint32_t len;
-    riak_uint8_t  msgid; // TODO: need to do something for the error state
+    riak_uint8_t  msgid;
     riak_uint8_t *data;
-} riak_pb_response;
+} riak_pb_message;
 
-riak_pb_response*
-riak_pb_response_new(riak_context *ctx,
-                     riak_uint8_t msgtype,
-                     riak_size_t msglen,
-                     riak_uint8_t *buffer);
-void riak_pb_response_free(riak_context     *ctx,
-                           riak_pb_response **pb);
+riak_pb_message*
+riak_pb_message_new(riak_context *ctx,
+                    riak_uint8_t  msgtype,
+                    riak_size_t   msglen,
+                    riak_uint8_t *buffer);
+void
+riak_pb_message_free(riak_context     *ctx,
+                     riak_pb_message **pb);
 
 void riak_read_result_callback(riak_bufferevent *bev, void *ptr);
 
 // TODO: Create error structure
-int riak_decode_error_response(riak_event *ev, riak_pb_response *pbresp);
+/**
+ * @brief Convert PBC error response into user-readable data type
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer response from Riak
+ * @param resp Returned error structure
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_error_response(riak_event           *rev,
+                           riak_pb_message     *pbresp,
+                           riak_error_response **resp,
+                           riak_boolean_t       *done);
+/**
+ * @brief Free memory used by an error response
+ * @param rev Riak Event
+ * @param resp Error structure to be freed
+ */
+void
+riak_free_error_response(riak_event           *rev,
+                         riak_error_response **resp);
 
-// NOTE: There is no request body
-int riak_encode_ping_request(riak_event *ev);
+/**
+ * @brief Build a ping request
+ * @param rev Riak Event
+ * @param req Created PB message
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_ping_request(riak_event       *rev,
+                         riak_pb_message **req);
 
-int riak_encode_get_request(riak_event       *ev,
-                            char             *bucket,
-                            char             *key,
-                            riak_get_options *options);
+/**
+ * @brief Free memory from response
+ * @param rev Riak Event
+ * @param resp Ping PBC Response
+ */
+void
+riak_free_ping_response(riak_event           *rev,
+                        riak_ping_response **resp);
 
-int riak_decode_get_response(riak_event*,
-                             riak_pb_response*);
+/**
+ * @brief Create a get/fetch Request
+ * @param rev Riak Event
+ * @param bucket Name of Riak bucket
+ * @param key Name of Riak key
+ * @param options Get request parameters
+ * @param req Returned PBC request
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_get_request(riak_event       *rev,
+                        riak_binary      *bucket,
+                        riak_binary      *key,
+                        riak_get_options *options,
+                        riak_pb_message **req);
 
-int riak_encode_put_request(riak_event       *ev,
-                            riak_object      *riak_obj,
-                            riak_put_options *options);
+/**
+ * @brief Translate PBC message to Riak message
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer message
+ * @param done Returned flag set to true if finished streaming
+ * @param resp Returned Get message
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_get_response(riak_event         *rev,
+                         riak_pb_message    *pbresp,
+                         riak_get_response **resp,
+                         riak_boolean_t     *done);
 
-int riak_decode_put_response(riak_event        *ev,
-                             riak_pb_response  *pbresp);
+/**
+ * @brief Free get response
+ * @param rev Riak Event
+ * @param resp Get response
+ */
+void
+riak_free_get_response(riak_event         *rev,
+                       riak_get_response **resp);
 
-int riak_encode_delete_request(riak_event          *ev,
-                               riak_binary         *bucket,
-                               riak_binary         *key,
-                               riak_delete_options *options);
+/**
+ * @brief Create Put Request
+ * @param rev Riak Event
+ * @param riak_obj Riak object to be put
+ * @param options Options to the put request
+ * @param req Returned request message
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_put_request(riak_event       *rev,
+                        riak_object      *riak_obj,
+                        riak_put_options *options,
+                        riak_pb_message **req);
 
-int riak_encode_listbuckets_request(riak_event *ev);
+/**
+ * @brief Translate PBC put message to a Riak response
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer message
+ * @param resp Returned Put message
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_put_response(riak_event         *rev,
+                         riak_pb_message    *pbresp,
+                         riak_put_response **resp,
+                         riak_boolean_t     *done);
 
-int riak_decode_listbuckets_response(riak_event *ev, riak_pb_response *pbresp, riak_boolean_t *done);
+/**
+ * @brief Free put response
+ * @param rev Riak Event
+ * @param resp Put message to be cleaned up
+ */
+void
+riak_free_put_response(riak_event         *rev,
+                       riak_put_response **resp);
 
-int riak_encode_listkeys_request(riak_event *ev,
-                                 riak_binary *bucket,
+/**
+ * @brief Create a deletion request
+ * @param bucket Name of Riak bucket
+ * @param key Name of Riak key
+ * @param options Delete request parameters
+ * @param req Returned PBC request
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_delete_request(riak_event          *rev,
+                           riak_binary         *bucket,
+                           riak_binary         *key,
+                           riak_delete_options *options,
+                           riak_pb_message    **req);
 
-                                 riak_uint32_t timeout);
 
-int riak_decode_listkeys_response(riak_event *ev, riak_pb_response *pbresp);
+/**
+ * @brief Translate PBC delete message to a Riak response
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer message
+ * @param resp Returned Delete message
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_delete_response(riak_event            *rev,
+                            riak_pb_message       *pbresp,
+                            riak_delete_response **resp,
+                            riak_boolean_t        *done);
+
+/**
+ * @brief Free memory from response
+ * @param rev Riak Event
+ * @param resp Delete PBC Response
+ */
+void
+riak_free_delete_response(riak_event            *rev,
+                          riak_delete_response **resp);
+
+/**
+ * @brief Create a request to find all buckets
+ * @param rev Riak Event
+ * @param req Returned listbuckets request
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_listbuckets_request(riak_event       *rev,
+                                riak_pb_message **req);
+
+/**
+ * @brief Translate PBC listbuckets response into Riak strucuture
+ * @param rev Riak Event
+ * @param pbresp PBC response message
+ * @param resp Returned Riak response structure
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_listbuckets_response(riak_event                 *rev,
+                                 riak_pb_message            *pbresp,
+                                 riak_listbuckets_response **resp,
+                                 riak_boolean_t             *done);
+
+/**
+ * @brief Free listbuckets response
+ * @param rev Riak Event
+ * @param resp List buckets message to be cleaned up
+ */
+void
+riak_free_listbuckets_response(riak_event                 *rev,
+                               riak_listbuckets_response **resp);
+
+/**
+ * @brief Create a request to find all keys in a bucket
+ * @param rev Riak Event
+ * @param bucket Name of Riak bucket
+ * @paran timeout How long to wait for a response
+ * @param req Returned listbuckets request
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_listkeys_request(riak_event       *rev,
+                                 riak_binary  *bucket,
+                                 riak_uint32_t timeout,
+                                 riak_pb_message **req);
+
+/**
+ * @brief Translate PBC listbuckets response into Riak strucuture
+ * @param rev Riak Event
+ * @param pbresp PBC response message
+ * @param resp Returned Riak response structure
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_listkeys_response(riak_event              *rev,
+                              riak_pb_message         *pbresp,
+                              riak_listkeys_response **resp,
+                              riak_boolean_t          *done);
+
+/**
+ * @brief Free listkeys response
+ * @param rev Riak Event
+ * @param resp List keys message to be cleaned up
+ */
+void
+riak_free_listkeys_response(riak_event              *rev,
+                            riak_listkeys_response **resp);
 
 #endif

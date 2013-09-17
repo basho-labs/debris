@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include "riak.h"
+#include "riak_pb_message.h"
 #include "riak_utils.h"
 
 riak_error

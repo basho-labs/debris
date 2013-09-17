@@ -21,8 +21,8 @@
  *********************************************************************/
 
 #include "riak.h"
-#include "riak_utils.h"
 #include "riak_pb_message.h"
+#include "riak_utils.h"
 
 size_t
 riak_strlcpy(char       *dst,
@@ -56,7 +56,7 @@ riak_strlcat(char       *dst,
     return len;
 }
 
-void _riak_free(riak_context *ctx, void **pp) {
+void riak_free_internal(riak_context *ctx, void **pp) {
     if(pp != NULL && *pp != NULL) {
         (ctx->free_fn)(*pp);
         *pp = NULL;
@@ -85,22 +85,23 @@ riak_get_response_free(riak_context      *ctx,
 }
 
 
-int
-riak_send_req(riak_event   *rev,
-              riak_uint8_t  reqid,
-              riak_uint8_t *msgbuf,
-              riak_size_t   len) {
-    riak_context     *ctx = rev->context;
-    riak_bufferevent *bev = rev->bevent;
+riak_error
+riak_send_req(riak_event      *rev,
+              riak_pb_message *req) {
+    riak_context     *ctx    = rev->context;
+    riak_bufferevent *bev    = rev->bevent;
+    riak_uint8_t      reqid  = req->msgid;
+    riak_uint8_t     *msgbuf = req->data;
+    riak_size_t       len    = req->len;
     // Convert len to network byte order
     ev_uint32_t msglen = htonl(len+1);
     int result = bufferevent_write(bev, (void*)&msglen, sizeof(msglen));
-    if (result != 0) return 1;
+    if (result != 0) return ERIAK_WRITE;
     result = bufferevent_write(bev, (void*)&reqid, sizeof(reqid));
-    if (result != 0) return 1;
+    if (result != 0) return ERIAK_WRITE;
     if (msglen > 0) {
         result = bufferevent_write(bev, (void*)msgbuf, len);
-        if (result != 0) return 1;
+        if (result != 0) return ERIAK_WRITE;
     }
     riak_log(ctx, RIAK_LOG_DEBUG, "Wrote %d bytes\n", (int)len);
     int i;
@@ -117,6 +118,6 @@ riak_send_req(riak_event   *rev,
     }
 
     fprintf(stdout, "\n");
-    return 0;
+    return ERIAK_OK;
 }
 

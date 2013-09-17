@@ -34,11 +34,11 @@
 #include <event2/bufferevent_struct.h>
 
 #include "riak.h"
+#include "riak_pb_message.h"
 #include "riak_utils.h"
 #include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
-#include "riak_pb_message.h"
 
 /* LIBEVENT CALLBACKS */
 
@@ -84,7 +84,7 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     int i;
     char name[1024];
     for(i = 0; i < response->n_buckets; i++) {
-        riak_binary_dump(response->buckets[i], name, 1024);
+        riak_binary_dump_ptr(response->buckets[i], name, 1024);
         riak_log(ctx, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
     riak_log(ctx, RIAK_LOG_DEBUG, "done = %d", response->done);
@@ -98,7 +98,7 @@ void listkey_cb(riak_listkeys_response *response, void *ptr) {
     int i;
     char name[1024];
     for(i = 0; i < response->n_keys; i++) {
-        riak_binary_dump(response->keys[i], name, 1024);
+        riak_binary_dump_ptr(response->keys[i], name, 1024);
         riak_log(ctx, RIAK_LOG_DEBUG, "%d - %s\n", i, name);
     }
     riak_log(ctx, RIAK_LOG_DEBUG, "done = %d\n", response->done);
@@ -127,7 +127,7 @@ void get_cb(riak_get_response *response, void *ptr) {
     target += wrote;
     riak_uint32_t i;
     for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump(response->content[i], target, len);
+        wrote = riak_object_dump_ptr(response->content[i], target, len);
     }
     riak_log(ctx, RIAK_LOG_DEBUG, "%s\n", output);
 }
@@ -158,7 +158,7 @@ void put_cb(riak_put_response *response, void *ptr) {
     target += wrote;
     riak_uint32_t i;
     for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump(response->content[i], target, len);
+        wrote = riak_object_dump_ptr(response->content[i], target, len);
     }
     riak_log(ctx, RIAK_LOG_DEBUG, "%s\n", output);
 }

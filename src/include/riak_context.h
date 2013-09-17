@@ -78,7 +78,7 @@ riak_context_new(riak_alloc_fn alloc,
 #define riak_context_new_default() riak_context_new(NULL,NULL,NULL,NULL,NULL,NULL)
 
 // Generic placeholder for message-specific callbacks
-typedef void *riak_response_callback;
+typedef void (*riak_response_callback)(void *response, void *ptr);
 
 /**
  * @brief Reclaim memory used by a `riak_context`
@@ -93,6 +93,7 @@ typedef struct _riak_event {
     riak_event_base       *base;
     riak_bufferevent      *bevent;
     riak_response_callback response_cb;
+    riak_response_callback error_cb;
     void                  *cb_data;
 } riak_event;
 
@@ -110,6 +111,7 @@ riak_event_new(riak_context          *ctx,
                riak_event_base       *base,
                riak_bufferevent      *bev,
                riak_response_callback response_cb,
+               riak_response_callback error_cb,
                void                  *cb_data);
 
 /**
@@ -117,9 +119,27 @@ riak_event_new(riak_context          *ctx,
  * @param rev Riak Event
  * @param cb_data Pointer to data used in user's callback
  */
-inline void
+void
 riak_event_set_cb_data(riak_event *rev,
                        void       *cb_data);
+
+/**
+ * @brief Set the event's response callback
+ * @param rev Riak Event
+ * @param cb Function pointer to response callback
+ */
+void
+riak_event_set_response_cb(riak_event             *rev,
+                           riak_response_callback  cb);
+
+/**
+ * @brief Set the event's error callback
+ * @param rev Riak Event
+ * @param cb Function pointer to error callback
+ */
+void
+riak_event_set_error_cb(riak_event             *rev,
+                        riak_response_callback  cb);
 
 /**
  * @brief Cleanup memory used by a Riak Event

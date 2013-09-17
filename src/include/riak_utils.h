@@ -46,9 +46,10 @@ riak_strlcat(char       *dst,
              size_t      size);
 
 
-// Use void** to allow reseating of pointer to NULL
-#define riak_free(ctx,p) _riak_free((ctx),(void**)&(p))
-void _riak_free(riak_context *ctx, void **p);
+// Use void** to allow reassigning pointer to NULL
+#define riak_free(ctx,p) riak_free_internal((ctx),(void**)&(p))
+#define riak_free_ptr(ctx,p) riak_free_internal((ctx),(void**)(p))
+void riak_free_internal(riak_context *ctx, void **p);
 // helper fn's
 riak_get_response *riak_get_response_new(riak_context *ctx);
 void riak_get_response_free(riak_context *ctx, riak_get_response*);
@@ -58,10 +59,11 @@ void riak_get_response_free(riak_context *ctx, riak_get_response*);
 /**
  * @brief Send PB message via bufferevent
  * @param event Event related to request
- * @param reqid Request Identifier
- * @param msgbuf Packed binary request
- * @param len Length of `msgbuf`
+ * @param req Riak PBC message wrapper
+ * @return Error code
  */
-int riak_send_req(riak_event *ev, riak_uint8_t reqid, riak_uint8_t *msgbuf, riak_size_t len);
+riak_error
+riak_send_req(riak_event      *ev,
+              riak_pb_message *req);
 
 #endif

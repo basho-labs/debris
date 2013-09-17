@@ -93,17 +93,42 @@ int riak_object_dump_ptr(riak_object *obj, char *target, riak_uint32_t len);
  * @param to Protocol buffer target
  * @param from User-supplied `riak_object`
  *
- * @returns Error code (0 == OK)
+ * @returns Error code
  */
 int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from);
+
 /**
- * @brief Copy a Riak Object from a protocol buffer
+ * @brief Allocate an array of `riak_object` pointers
  * @param ctx Riak Context
- * @param to User returned `riak_object`
+ * @param array Returned array of pointers to `riak_object`s
+ * @param len Number of elements to allocate
+ *
+ * @returns Error Code
+ */
+riak_error
+riak_object_new_array(riak_context  *ctx,
+                      riak_object ***array,
+                      riak_size_t    len);
+
+/**
+ * @brief Clean up memory allocated for an array of `riak_objects`
+ * @param ctx Riak Context
+ * @param array Target of destruction
+ * @param len Number of elements to allocate
+ */
+void
+riak_object_free_array(riak_context  *ctx,
+                       riak_object ***array,
+                       riak_size_t    len);
+/**
+ * @brief Shallow copy a Riak Object from a protocol buffer
+ * @param ctx Riak Context
+ * @param to Allocated `riak_object` returned to caller
  * @param from Riak-supplied Protocol buffer source
  *
- * @returns Error code (0 == OK)
+ * @returns Error code
  */
-int riak_object_from_pb_copy(riak_context *ctx, riak_object* to, RpbContent* from);
+riak_error
+riak_object_new_from_pb(riak_context *ctx, riak_object** to, RpbContent* from);
 
 #endif /* RIAK_OBJECT_H_ */

@@ -21,13 +21,14 @@
  *********************************************************************/
 #include <time.h>
 #include "riak.h"
+#include "riak_pb_message.h"
 #include "riak_utils.h"
 #include "riak_binary.h"
 
 //
 // P A I R S
 //
-static int riak_pairs_copy_to_pb(int num_pairs, riak_context* ctx, RpbPair*** pbpair_target, riak_pair **pair) {
+static int riak_pairs_copy_to_pb(riak_context* ctx, RpbPair*** pbpair_target, riak_pair **pair, int num_pairs) {
     RpbPair **pbpair = (RpbPair**)(ctx->malloc_fn)(sizeof(RpbPair*) * num_pairs);
     if (pbpair == NULL) {
         // TODO: Error handling
@@ -40,7 +41,7 @@ static int riak_pairs_copy_to_pb(int num_pairs, riak_context* ctx, RpbPair*** pb
             // TODO: Error handling
             return 1;
         }
-        memset(pbpair[i], '\0', sizeof(RpbPair));
+        bzero(pbpair[i], sizeof(RpbPair));
         if (pair[i]->has_value) {
             pbpair[i]->has_value = RIAK_TRUE;
             riak_binary_to_pb_copy(pbpair[i]->value, pair[i]->value);
@@ -51,7 +52,7 @@ static int riak_pairs_copy_to_pb(int num_pairs, riak_context* ctx, RpbPair*** pb
     return 0;
 }
 
-static void riak_pairs_free_pb(int num_pairs, riak_context* ctx, RpbPair*** pbpair_target) {
+static void riak_pairs_free_pb(riak_context* ctx, RpbPair*** pbpair_target, int num_pairs) {
     RpbPair **pbpair = *pbpair_target;
     int i;
     for(i = 0; i < num_pairs; i++) {
@@ -61,7 +62,7 @@ static void riak_pairs_free_pb(int num_pairs, riak_context* ctx, RpbPair*** pbpa
     *pbpair_target = NULL;
 }
 
-static int riak_pairs_copy_from_pb(int num_pairs, riak_context* ctx, riak_pair*** pair_target, RpbPair **pbpair) {
+static int riak_pairs_copy_from_pb(riak_context* ctx, riak_pair*** pair_target, RpbPair **pbpair, int num_pairs) {
     riak_pair **pair = (riak_pair**)(ctx->malloc_fn)(sizeof(riak_pair*) * num_pairs);
     if (pair == NULL) {
         // TODO: Error handling
@@ -74,10 +75,10 @@ static int riak_pairs_copy_from_pb(int num_pairs, riak_context* ctx, riak_pair**
             // TODO: Error handling
             return 1;
         }
-        memset(pair[i], '\0', sizeof(riak_pair));
+        bzero(pair[i], sizeof(riak_pair));
         if (pbpair[i]->has_value) {
             pair[i]->has_value = RIAK_TRUE;
-            riak_binary_from_pb_deep_copy(ctx, pair[i]->value, pbpair[i]->value);
+            riak_binary_from_pb_copy(pair[i]->value, pbpair[i]->value);
         }
     }
     // Finally assign the pointer to the list of pair pointers
@@ -85,7 +86,7 @@ static int riak_pairs_copy_from_pb(int num_pairs, riak_context* ctx, riak_pair**
     return 0;
 }
 
-static void riak_pairs_free(int num_pairs, riak_context* ctx, riak_pair*** pair_target) {
+static void riak_pairs_free(riak_context* ctx, riak_pair*** pair_target, int num_pairs) {
     riak_pair **pair = *pair_target;
     int i;
     for(i = 0; i < num_pairs; i++) {
@@ -100,7 +101,7 @@ static void riak_pairs_free(int num_pairs, riak_context* ctx, riak_pair*** pair_
 //
 // L I N K S
 //
-static int riak_links_copy_to_pb(int num_links, riak_context* ctx, RpbLink*** pblink_target, riak_link **link) {
+static int riak_links_copy_to_pb(riak_context* ctx, RpbLink*** pblink_target, riak_link **link, int num_links) {
     RpbLink **pblink = (RpbLink**)(ctx->malloc_fn)(sizeof(RpbLink*) * num_links);
     if (pblink == NULL) {
         // TODO: Error handling
@@ -113,7 +114,7 @@ static int riak_links_copy_to_pb(int num_links, riak_context* ctx, RpbLink*** pb
             // TODO: Error handling
             return 1;
         }
-        memset(pblink[i], '\0', sizeof(RpbLink));
+        bzero(pblink[i], sizeof(RpbLink));
         if (link[i]->has_bucket) {
             pblink[i]->has_bucket = RIAK_TRUE;
             riak_binary_to_pb_copy(pblink[i]->bucket, link[i]->bucket);
@@ -132,7 +133,7 @@ static int riak_links_copy_to_pb(int num_links, riak_context* ctx, RpbLink*** pb
     return 0;
 }
 
-static void riak_links_free_pb(int num_links, riak_context* ctx, RpbLink*** pblink_target) {
+static void riak_links_free_pb(riak_context* ctx, RpbLink*** pblink_target, int num_links) {
     RpbLink **pblink = *pblink_target;
     int i;
     for(i = 0; i < num_links; i++) {
@@ -142,7 +143,7 @@ static void riak_links_free_pb(int num_links, riak_context* ctx, RpbLink*** pbli
     *pblink_target = NULL;
 }
 
-static int riak_links_copy_from_pb(int num_links, riak_context* ctx, riak_link*** link_target, RpbLink **pblink) {
+static int riak_links_copy_from_pb(riak_context* ctx, riak_link*** link_target, RpbLink **pblink, int num_links) {
     riak_link **link = (riak_link**)(ctx->malloc_fn)(sizeof(riak_link*) * num_links);
     if (pblink == NULL) {
         // TODO: Error handling
@@ -155,18 +156,18 @@ static int riak_links_copy_from_pb(int num_links, riak_context* ctx, riak_link**
             // TODO: Error handling
             return 1;
         }
-        memset(link[i], '\0', sizeof(riak_link));
+        bzero(link[i], sizeof(riak_link));
         if (pblink[i]->has_bucket) {
             link[i]->has_bucket = RIAK_TRUE;
-            riak_binary_from_pb_deep_copy(ctx, link[i]->bucket, pblink[i]->bucket);
+            riak_binary_from_pb_copy(link[i]->bucket, pblink[i]->bucket);
         }
         if (pblink[i]->has_key) {
             pblink[i]->has_key = RIAK_TRUE;
-            riak_binary_from_pb_deep_copy(ctx, link[i]->key, pblink[i]->key);
+            riak_binary_from_pb_copy(link[i]->key, pblink[i]->key);
         }
         if (pblink[i]->has_tag) {
             pblink[i]->has_tag = RIAK_TRUE;
-            riak_binary_from_pb_deep_copy(ctx, link[i]->tag, pblink[i]->tag);
+            riak_binary_from_pb_copy(link[i]->tag, pblink[i]->tag);
         }
     }
     // Finally assign the pointer to the list of link pointers
@@ -174,7 +175,7 @@ static int riak_links_copy_from_pb(int num_links, riak_context* ctx, riak_link**
     return 0;
 }
 
-static void riak_links_free(int num_links, riak_context* ctx, riak_link*** link_target) {
+static void riak_links_free(riak_context* ctx, riak_link*** link_target, int num_links) {
     riak_link **link = *link_target;
     int i;
     for(i = 0; i < num_links; i++) {
@@ -220,10 +221,37 @@ static int riak_links_dump(riak_link *link, char *target, riak_uint32_t len) {
 //
 riak_object *riak_object_new(riak_context *ctx) {
     riak_object *o = (riak_object*)(ctx->malloc_fn)(sizeof(riak_object));
-    // TODO: check malloc return status
-    // TODO: do I need bzero?
-    bzero(o, sizeof(riak_object));
+    if (o) bzero(o, sizeof(riak_object));
     return o;
+}
+
+riak_error
+riak_object_new_array(riak_context  *ctx,
+                      riak_object ***array,
+                      riak_size_t    len) {
+    riak_object **result = (riak_object**)(ctx->malloc_fn)(sizeof(riak_object)*len);
+    if (result == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    bzero((void*)array, sizeof(riak_object)*len);
+    *array = result;
+
+    return ERIAK_OK;
+}
+
+void
+riak_object_free_array(riak_context  *ctx,
+                       riak_object ***array,
+                       riak_size_t    len) {
+    int i;
+    for(i = 0; i < len; i++) {
+        riak_object *obj = (*array)[i];
+        if (obj->n_indexes > 0) riak_pairs_free(ctx, &(obj->indexes), obj->n_indexes);
+        if (obj->n_usermeta > 0) riak_pairs_free(ctx, &(obj->usermeta), obj->n_usermeta);
+        if (obj->n_links > 0) riak_links_free(ctx, &(obj->links), obj->n_links);
+        riak_free_ptr(ctx, (*array)[i]);
+    }
+    riak_free_ptr(ctx, array);
 }
 
 int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from) {
@@ -263,7 +291,7 @@ int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from)
     // Indexes
     if (from->n_indexes > 0) {
         to->n_indexes = from->n_indexes;
-        int idxresult = riak_pairs_copy_to_pb(to->n_indexes, ctx, &(to->indexes), from->indexes);
+        int idxresult = riak_pairs_copy_to_pb(ctx, &(to->indexes), from->indexes, to->n_indexes);
         if (idxresult) {
             return idxresult;
         }
@@ -272,7 +300,7 @@ int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from)
     // User-Metadave
     if (from->n_usermeta > 0) {
         to->n_usermeta = from->n_usermeta;
-        int uresult = riak_pairs_copy_to_pb(to->n_usermeta, ctx, &(to->usermeta), from->usermeta);
+        int uresult = riak_pairs_copy_to_pb(ctx, &(to->usermeta), from->usermeta, to->n_usermeta);
         if (uresult) {
             return uresult;
         }
@@ -281,7 +309,7 @@ int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from)
     // Links
     if (from->n_links > 0) {
         to->n_links = from->n_links;
-        int lresult = riak_links_copy_to_pb(to->n_links, ctx, &(to->links), from->links);
+        int lresult = riak_links_copy_to_pb(ctx, &(to->links), from->links, to->n_links);
         if (lresult) {
             return lresult;
         }
@@ -290,21 +318,29 @@ int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from)
     return 0;
 }
 
-int riak_object_from_pb_copy(riak_context *ctx, riak_object* to, RpbContent* from) {
-    memset((void*)to, '\0', sizeof(riak_object));
 
-    riak_binary_from_pb_deep_copy(ctx, to->value, from->value);
+riak_error
+riak_object_new_from_pb(riak_context *ctx,
+                        riak_object **target,
+                        RpbContent   *from) {
+    *target = riak_object_new(ctx);
+    if (*target == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    riak_object *to = *target;
+
+    riak_binary_from_pb_copy(to->value, from->value);
     if (from->has_charset) {
         to->has_charset = RIAK_TRUE;
-        riak_binary_from_pb_deep_copy(ctx, to->charset, from->charset);
+        riak_binary_from_pb_copy(to->charset, from->charset);
     }
     if (from->has_content_encoding) {
         to->has_content_encoding = RIAK_TRUE;
-        riak_binary_from_pb_deep_copy(ctx, to->encoding, from->content_encoding);
+        riak_binary_from_pb_copy(to->encoding, from->content_encoding);
     }
     if (from->has_content_type) {
         to->has_content_type = RIAK_TRUE;
-        riak_binary_from_pb_deep_copy(ctx, to->content_type, from->content_type);
+        riak_binary_from_pb_copy(to->content_type, from->content_type);
     }
     if (from->has_deleted) {
         to->has_deleted = RIAK_TRUE;
@@ -320,13 +356,13 @@ int riak_object_from_pb_copy(riak_context *ctx, riak_object* to, RpbContent* fro
     }
     if (from->has_vtag) {
         to->has_vtag = RIAK_TRUE;
-        riak_binary_from_pb_deep_copy(ctx, to->vtag, from->vtag);
+        riak_binary_from_pb_copy(to->vtag, from->vtag);
     }
 
     // Indexes
     if (from->n_indexes > 0) {
         to->n_indexes = from->n_indexes;
-        int idxresult = riak_pairs_copy_from_pb(to->n_indexes, ctx, &(to->indexes), from->indexes);
+        int idxresult = riak_pairs_copy_from_pb(ctx, &(to->indexes), from->indexes, to->n_indexes);
         if (idxresult) {
             return idxresult;
         }
@@ -335,7 +371,7 @@ int riak_object_from_pb_copy(riak_context *ctx, riak_object* to, RpbContent* fro
     // User-Metadave
     if (from->n_usermeta > 0) {
         to->n_usermeta = from->n_usermeta;
-        int uresult = riak_pairs_copy_from_pb(to->n_usermeta, ctx, &(to->usermeta), from->usermeta);
+        int uresult = riak_pairs_copy_from_pb(ctx, &(to->usermeta), from->usermeta, to->n_usermeta);
         if (uresult) {
             return uresult;
         }
@@ -344,12 +380,12 @@ int riak_object_from_pb_copy(riak_context *ctx, riak_object* to, RpbContent* fro
     // Links
     if (from->n_links > 0) {
         to->n_links = from->n_links;
-        int lresult = riak_links_copy_from_pb(to->n_links, ctx, &(to->links), from->links);
+        int lresult = riak_links_copy_from_pb(ctx, &(to->links), from->links, to->n_links);
         if (lresult) {
             return lresult;
         }
     }
-    return 0;
+    return ERIAK_OK;
 }
 
 int riak_object_dump_ptr(riak_object *obj, char *target, riak_uint32_t len) {
@@ -433,13 +469,13 @@ int riak_object_dump_ptr(riak_object *obj, char *target, riak_uint32_t len) {
 }
 
 void riak_object_free(riak_context *ctx, riak_object* obj) {
-    riak_pairs_free(obj->n_indexes, ctx, &(obj->indexes));
-    riak_pairs_free(obj->n_usermeta, ctx, &(obj->usermeta));
-    riak_links_free(obj->n_links, ctx, &(obj->links));
+    riak_pairs_free(ctx, &(obj->indexes), obj->n_indexes);
+    riak_pairs_free(ctx, &(obj->usermeta), obj->n_usermeta);
+    riak_links_free(ctx, &(obj->links), obj->n_links);
 }
 
 void riak_object_free_pb(riak_context *ctx, RpbContent* obj) {
-    riak_pairs_free_pb(obj->n_indexes, ctx, &(obj->indexes));
-    riak_pairs_free_pb(obj->n_usermeta, ctx, &(obj->usermeta));
-    riak_links_free_pb(obj->n_links, ctx, &(obj->links));
+    riak_pairs_free_pb(ctx, &(obj->indexes), obj->n_indexes);
+    riak_pairs_free_pb(ctx, &(obj->usermeta), obj->n_usermeta);
+    riak_links_free_pb(ctx, &(obj->links), obj->n_links);
 }

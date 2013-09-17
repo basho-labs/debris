@@ -58,9 +58,12 @@ typedef struct _riak_get_response {
     riak_boolean_t unmodified;
     riak_boolean_t deleted;
     riak_int32_t   n_content;
-    riak_object   *content;
+    riak_object  **content; // Array of pointers to allow expansion
+
+    RpbGetResp    *_internal;
 } riak_get_response;
 
+// Based on RpbGetReq
 typedef struct _riak_get_options {
     riak_boolean_t has_r;
     riak_uint32_t  r;
@@ -84,15 +87,19 @@ typedef struct _riak_get_options {
     riak_uint32_t  n_val;
 } riak_get_options;
 
+// Based on RpbPutResp
 typedef struct _riak_put_response {
     riak_uint32_t  n_content;
-    riak_object   *content;
+    riak_object  **content; // Array of pointers to match Get
     riak_boolean_t has_vclock;
     riak_binary    vclock;
     riak_boolean_t has_key;
     riak_binary    key;
+
+    RpbPutResp   *_internal;
 } riak_put_response;
 
+// Based on RpbPutReq
 typedef struct _riak_put_options {
     // KEY is in riak_object, so is this copy needed?
     //riak_boolean_t has_key;
@@ -126,21 +133,31 @@ typedef struct _riak_put_options {
 } riak_put_options;
 
 
+// Based on RpbListBucketsResp
 typedef struct _riak_listbuckets_response {
-    riak_uint32_t  n_buckets;
-    riak_binary*   buckets;
-    // TODO: Keep in struct or pass as argument?
-    riak_boolean_t done;
+    riak_uint32_t       n_buckets;
+    riak_binary       **buckets; // Array of pointers to allow growth
+    riak_boolean_t      done;
+
+    RpbListBucketsResp *_internal;
 } riak_listbuckets_response;
 
 // Based on RpbListKeysResp
 typedef struct _riak_listkeys_response {
-    riak_uint32_t  n_keys;
-    riak_binary*   keys;
-    // TODO: Keep in struct or pass as argument?
-    riak_boolean_t done;
+    riak_uint32_t    n_keys;
+    riak_binary    **keys; // Array of pointers to allow growth
+    riak_boolean_t   done;
+
+    RpbListKeysResp *_internal;
 } riak_listkeys_response;
 
+// Based on RpbErrorResp
+typedef struct _riak_error_response {
+    riak_uint32_t errcode;
+    riak_binary  *errmsg;
+
+    RpbErrorResp *_internal;
+} riak_error_response;
 
 typedef struct _riak_ping_response {
 // Nothing to see here

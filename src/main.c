@@ -31,12 +31,12 @@
 #include <event2/event.h>
 
 #include "riak.h"
+#include "riak_pb_message.h"
 #include "riak_utils.h"
 #include "riak_error.h"
 #include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
-#include "riak_pb_message.h"
 #include "riak_network.h"
 #include "call_backs.h"
 
@@ -240,7 +240,6 @@ main(int   argc,
     struct event_base *base = event_base_new();
 
     riak_context *ctx = riak_context_new_default();
-    riak_response_callback cb;
     riak_event *rev;
     riak_object *obj;
     int it;
@@ -261,7 +260,7 @@ main(int   argc,
         struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
         int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
         if (enabled != 0) {
-            riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%p\n", (riak_uint64_t)bev);
+            riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%p", (riak_uint64_t)bev);
             exit(1);
         }
         riak_binary bucket_bin;
@@ -269,78 +268,54 @@ main(int   argc,
         riak_binary_from_string(bucket_bin, args.bucket); // Not copied
         riak_binary_from_string(key_bin, args.key); // Not copied
 
+        rev = riak_event_new(ctx, base, bev, NULL, NULL, NULL);
+        // For convenience have user callback know about its riak_event
+        riak_event_set_cb_data(rev, rev);
+        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+        riak_pb_message *request = NULL;
+
         switch (operation) {
         case MSG_RPBPINGREQ:
-            cb = (riak_response_callback)ping_cb;
-            rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about its riak_event
-            riak_event_set_cb_data(rev, rev);
-            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_ping_request(rev);
+            riak_event_set_response_cb(rev, (riak_response_callback)ping_cb);
+            riak_encode_ping_request(rev, &request);
             break;
         case MSG_RPBGETREQ:
-            cb = (riak_response_callback)get_cb;
-            rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about its riak_event
-            riak_event_set_cb_data(rev, rev);
-            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_get_request(rev, args.bucket, args.key, NULL);
+            riak_event_set_response_cb(rev, (riak_response_callback)get_cb);
+            riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &request);
             break;
         case MSG_RPBPUTREQ:
-            cb = (riak_response_callback)put_cb;
-            rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about its riak_event
-            riak_event_set_cb_data(rev, rev);
-            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
+            riak_event_set_response_cb(rev, (riak_response_callback)put_cb);
             obj = riak_object_new(ctx);
             if (obj == NULL) {
+                riak_log(ctx, RIAK_LOG_FATAL, "Could not allocate a Riak Object");
                 return 1;
             }
             riak_binary_from_string(obj->bucket, args.bucket); // Not copied
             riak_binary_from_string(obj->value, args.value); // Not copied
-            riak_encode_put_request(rev, obj, NULL);
+            riak_encode_put_request(rev, obj, NULL, &request);
             break;
         case MSG_RPBDELREQ:
-            cb = (riak_response_callback)delete_cb;
-            rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about its riak_event
-            riak_event_set_cb_data(rev, rev);
-            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL);
+            riak_event_set_response_cb(rev, (riak_response_callback)delete_cb);
+            riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &request);
             break;
         case MSG_RPBLISTBUCKETSREQ:
-            cb = (riak_response_callback)listbucket_cb;
-            rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about its riak_event
-            riak_event_set_cb_data(rev, rev);
-            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_listbuckets_request(rev);
+            riak_event_set_response_cb(rev, (riak_response_callback)listbucket_cb);
+            riak_encode_listbuckets_request(rev, &request);
             break;
         case MSG_RPBLISTKEYSREQ:
-            cb = (riak_response_callback)listkey_cb;
-            rev = riak_event_new(ctx, base, bev, cb, NULL);
-            // For convenience have user callback know about its riak_event
-            riak_event_set_cb_data(rev, rev);
-            bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
-            riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000);
+            riak_event_set_response_cb(rev, (riak_response_callback)listkey_cb);
+            riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &request);
             break;
         default:
             usage(stderr, argv[0]);
         }
 
-#if UNUSED
-        int connected = bufferevent_socket_connect_hostname(bev, dns_base, AF_UNSPEC, host, port);
-//        int connected = bufferevent_socket_connect(bev, addrinfo->ai_addr, addrinfo->ai_addrlen);
-        if (connected != 0) {
-            fprintf(stderr, "Could not connect to %s:%d\n", host, port);
+        err = riak_send_req(rev, request);
+        if (err) {
+            riak_log(ctx, RIAK_LOG_FATAL, "Could not send request");
             exit(1);
         }
-#endif
     }
-
-    // Done looking up hostnames
-//    evdns_base_free(dns_base, 0);
-
     // What has been queued up
     event_base_dump_events(base, stderr);
 
