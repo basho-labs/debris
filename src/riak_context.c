@@ -92,6 +92,7 @@ riak_event*
 riak_event_new(riak_context          *ctx,
                riak_event_base       *base,
                riak_bufferevent      *bev,
+               riak_response_decoder  decoder,
                riak_response_callback response_cb,
                riak_response_callback error_cb,
                void                  *cb_data) {
@@ -106,6 +107,7 @@ riak_event_new(riak_context          *ctx,
     ev->base = base;
     ev->bevent = bev;
     ev->context = ctx;
+    ev->decoder = decoder;
     ev->response_cb = response_cb;
     ev->error_cb = error_cb;
     ev->cb_data = cb_data;
@@ -130,6 +132,11 @@ riak_event_set_error_cb(riak_event             *rev,
     rev->error_cb = cb;
 }
 
+void
+riak_event_set_response_decoder(riak_event             *rev,
+                                riak_response_decoder   decoder) {
+    rev->decoder = decoder;
+}
 
 void riak_event_free(riak_event** re) {
     riak_free_fn freer = (*re)->context->free_fn;

@@ -36,8 +36,8 @@
 #include "riak_types.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
-#include "riak_context.h"
 #include "riak_error.h"
+#include "riak_context.h"
 #include "riak_log.h"
 
 // TOP level structures

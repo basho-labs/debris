@@ -99,7 +99,7 @@ void riak_read_result_callback(riak_bufferevent *bev, void *ptr);
  */
 riak_error
 riak_decode_error_response(riak_event           *rev,
-                           riak_pb_message     *pbresp,
+                           riak_pb_message      *pbresp,
                            riak_error_response **resp,
                            riak_boolean_t       *done);
 /**

@@ -34,9 +34,9 @@ riak_pb_message_new(riak_context *ctx,
                     riak_uint8_t *buffer) {
     riak_pb_message *pb = (riak_pb_message*)(ctx->malloc_fn)(sizeof(riak_pb_message));
     if (pb != NULL) {
-        pb->msgid = msgtype;
-        pb->len   = msglen;
-        pb->data  = buffer;
+        pb->msgid   = msgtype;
+        pb->len     = msglen;
+        pb->data    = buffer;
     }
     return pb;
 }
@@ -83,18 +83,6 @@ riak_free_error_response(riak_event           *rev,
     riak_free_ptr(ctx, resp);
 }
 
-riak_error
-riak_encode_ping_request(riak_event      *rev,
-                        riak_pb_message **req) {
-    riak_context *ctx = (riak_context*)(rev->context);
-    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBPINGREQ, 0, NULL);
-    if (request == NULL) {
-        return ERIAK_OUT_OF_MEMORY;
-    }
-    *req = request;
-
-    return ERIAK_OK;
-}
 
 riak_error
 riak_decode_ping_response(riak_event          *rev,
@@ -111,6 +99,21 @@ riak_decode_ping_response(riak_event          *rev,
 
     return ERIAK_OK;
 }
+
+riak_error
+riak_encode_ping_request(riak_event      *rev,
+                        riak_pb_message **req) {
+    riak_context *ctx = (riak_context*)(rev->context);
+    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBPINGREQ, 0, NULL);
+    if (request == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_ping_response);
+
+    return ERIAK_OK;
+}
+
 
 void
 riak_free_ping_response(riak_event           *rev,
@@ -169,6 +172,7 @@ riak_encode_get_request(riak_event       *rev,
         return ERIAK_OUT_OF_MEMORY;
     }
     *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_get_response);
 
     return ERIAK_OK;
 }
@@ -323,6 +327,7 @@ riak_encode_put_request(riak_event       *rev,
         return ERIAK_OUT_OF_MEMORY;
     }
     *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_put_response);
 
     return ERIAK_OK;
 }
@@ -454,6 +459,7 @@ riak_encode_delete_request(riak_event          *rev,
         return ERIAK_OUT_OF_MEMORY;
     }
     *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_delete_response);
 
     return ERIAK_OK;
 }
@@ -501,6 +507,7 @@ riak_encode_listbuckets_request(riak_event       *rev,
         return ERIAK_OUT_OF_MEMORY;
     }
     *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_listbuckets_response);
 
     return ERIAK_OK;
 }
@@ -588,6 +595,7 @@ riak_encode_listkeys_request(riak_event       *rev,
         return ERIAK_OUT_OF_MEMORY;
     }
     *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_listkeys_response);
 
     return ERIAK_OK;
 
@@ -669,6 +677,7 @@ riak_read_result_callback(riak_bufferevent *bev,
         // TODO: Real error checking
         assert(buffer != 0);
         buflen = bufferevent_read(bev, (void*)buffer, msglen);
+        riak_log(ctx, RIAK_LOG_DEBUG, "buflen = %d vs msglen = %d", buflen, msglen);
         assert(buflen == msglen);
         // TODO: Anything else on the wire?
         riak_uint8_t msgid = buffer[0];
@@ -680,42 +689,18 @@ riak_read_result_callback(riak_bufferevent *bev,
         riak_error_response *err_response = NULL;
         // Assume we are doing a single loop, unless told otherwise
         done_streaming = RIAK_TRUE;
-        switch (msgid) {
-        case MSG_RPBERRORRESP:
+        if (rev->decoder == NULL) {
+            riak_log(ctx, RIAK_LOG_FATAL, "%d NOT IMPLEMENTED", msgid);
+            abort();
+        }
+        if (msgid == MSG_RPBERRORRESP) {
             result = riak_decode_error_response(rev, pbresp, &err_response, &done_streaming);
             riak_log(ctx, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, err_response->errmsg->data);
             if (rev->error_cb) (rev->error_cb)(err_response, rev->cb_data);
             exit(1);
-            break;
-        case MSG_RPBPINGRESP:
-            result = riak_decode_ping_response(rev, pbresp, (riak_ping_response**)&response, &done_streaming);
-            break;
-        case MSG_RPBGETRESP:
-            result = riak_decode_get_response(rev, pbresp, (riak_get_response**)&response, &done_streaming);
-            break;
-        case MSG_RPBPUTRESP:
-            result = riak_decode_put_response(rev, pbresp, (riak_put_response**)&response, &done_streaming);
-            break;
-        case MSG_RPBDELRESP:
-            result = riak_decode_delete_response(rev, pbresp, (riak_delete_response**)&response, &done_streaming);
-            break;
-        case MSG_RPBLISTBUCKETSRESP:
-            result = riak_decode_listbuckets_response(rev, pbresp, (riak_listbuckets_response**)(&response), &done_streaming);
-            break;
-        case MSG_RPBLISTKEYSRESP:
-            result = riak_decode_listkeys_response(rev, pbresp, (riak_listkeys_response**)&response, &done_streaming);
-            break;
-        case MSG_RPBGETCLIENTIDRESP:
-        case MSG_RPBSETCLIENTIDRESP:
-        case MSG_RPBGETSERVERINFORESP:
-        case MSG_RPBGETBUCKETRESP:
-        case MSG_RPBSETBUCKETRESP:
-        case MSG_RPBMAPREDRESP:
-        case MSG_RPBINDEXRESP:
-        case MSG_RBPSEARCHQUERYRESP:
-            riak_log(ctx, RIAK_LOG_FATAL, "%d NOT IMPLEMENTED", msgid);
-            abort();
         }
+        result = (rev->decoder)(rev, pbresp, &response, &done_streaming);
+
         if (rev->response_cb) (rev->response_cb)(response, rev->cb_data);
 
         // NOTE: Also frees the local buffer

@@ -80,6 +80,16 @@ riak_context_new(riak_alloc_fn alloc,
 // Generic placeholder for message-specific callbacks
 typedef void (*riak_response_callback)(void *response, void *ptr);
 
+// Forward declarations
+struct _riak_event;
+struct _riak_pb_message;
+
+// Template for message-specific decoder
+typedef riak_error (*riak_response_decoder)(struct _riak_event      *rev,
+                                            struct _riak_pb_message *pbresp,
+                                            void                   **response,
+                                            riak_boolean_t          *done);
+
 /**
  * @brief Reclaim memory used by a `riak_context`
  * @param ctx Context struct
@@ -92,6 +102,7 @@ typedef struct _riak_event {
     riak_context          *context;
     riak_event_base       *base;
     riak_bufferevent      *bevent;
+    riak_response_decoder  decoder;
     riak_response_callback response_cb;
     riak_response_callback error_cb;
     void                  *cb_data;
@@ -102,6 +113,7 @@ typedef struct _riak_event {
  * @param ctx Riak context for memory allocation
  * @param base Libevent event base
  * @param bev Libevent `bufferevent`
+ * @param decoder Pointer to function to decode response
  * @param response_cb Reaponse callback function (user-supplied)
  * @param cb_data Pointer passed to `response_cb` when it is called
  * @returns Spanking new `riak_event` struct
@@ -110,6 +122,7 @@ riak_event*
 riak_event_new(riak_context          *ctx,
                riak_event_base       *base,
                riak_bufferevent      *bev,
+               riak_response_decoder  decoder,
                riak_response_callback response_cb,
                riak_response_callback error_cb,
                void                  *cb_data);
@@ -140,6 +153,15 @@ riak_event_set_response_cb(riak_event             *rev,
 void
 riak_event_set_error_cb(riak_event             *rev,
                         riak_response_callback  cb);
+
+/**
+ * @brief Set the event's message decoding function
+ * @param rev Riak Event
+ * @param decoder Function pointer to message translator
+ */
+void
+riak_event_set_response_decoder(riak_event             *rev,
+                                riak_response_decoder   decoder);
 
 /**
  * @brief Cleanup memory used by a Riak Event

@@ -268,7 +268,7 @@ main(int   argc,
         riak_binary_from_string(bucket_bin, args.bucket); // Not copied
         riak_binary_from_string(key_bin, args.key); // Not copied
 
-        rev = riak_event_new(ctx, base, bev, NULL, NULL, NULL);
+        rev = riak_event_new(ctx, base, bev, NULL, NULL, NULL, NULL);
         // For convenience have user callback know about its riak_event
         riak_event_set_cb_data(rev, rev);
         bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
