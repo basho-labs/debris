@@ -42,14 +42,27 @@ typedef enum {
 
 /**
  * @brief Add a record to the Riak log
+ * @param rev Riak Event
+ * @param level Logging level (see `riak_log_level_t`)
+ * @param format Printf-like formatting string
+ * @param ... Arguments to `format`
+ */
+
+void
+riak_log(riak_event *rev,
+         riak_log_level_t level,
+         const char *format, ...);
+
+/**
+ * @brief Add a record to the Riak log
  * @param ctx Riak Context
  * @param level Logging level (see `riak_log_level_t`)
  * @param format Printf-like formatting string
  * @param ... Arguments to `format`
  */
 void
-riak_log(riak_context *ctx,
-         riak_log_level_t level,
-         const char *format, ...);
+riak_log_context(riak_context *ctx,
+                 riak_log_level_t level,
+                 const char *format, ...);
 
 #endif

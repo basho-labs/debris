@@ -45,69 +45,64 @@
 void eventcb(struct bufferevent *bev, short events, void *ptr)
 {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
     if (events & BEV_EVENT_CONNECTED) {
-         riak_log(ctx, RIAK_LOG_DEBUG, "Connect okay.\n");
+         riak_log(rev, RIAK_LOG_DEBUG, "Connect okay.");
     } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
          char *reason = "BEV_EVENT_ERROR";
          if (events & BEV_EVENT_ERROR) {
             reason = "BEV_EVENT_EOF";
             int err = bufferevent_socket_get_dns_error(bev);
             if (err)
-                printf("DNS error: %s\n", evutil_gai_strerror(err));
+                riak_log(rev, RIAK_LOG_ERROR, "DNS error: %s", evutil_gai_strerror(err));
          }
-         riak_log(ctx, RIAK_LOG_DEBUG, "Closing because of %s [read event=%p, write event=%p]\n",
+         riak_log(rev, RIAK_LOG_DEBUG, "Closing because of %s [read event=%p, write event=%p]",
                  reason, (void*)&(bev->ev_read), (void*)&(bev->ev_write));
          bufferevent_free(bev);
          event_base_loopexit(rev->base, NULL);
     } else if (events & BEV_EVENT_TIMEOUT) {
-        riak_log(ctx, RIAK_LOG_DEBUG, "Timeout Event\n");
+        riak_log(rev, RIAK_LOG_DEBUG, "Timeout Event");
         bufferevent_free(bev);
         event_base_loopexit(rev->base, NULL);
     } else {
-        riak_log(ctx, RIAK_LOG_DEBUG, "Event %d\n", events);
+        riak_log(rev, RIAK_LOG_DEBUG, "Event %d", events);
     }
 }
 
 void ping_cb(riak_ping_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "ping_cb\n");
-    riak_log(ctx, RIAK_LOG_DEBUG, "PONG\n");
+    riak_log(rev, RIAK_LOG_DEBUG, "ping_cb");
+    riak_log(rev, RIAK_LOG_DEBUG, "PONG");
 }
 
 void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "listbucket_cb");
-    riak_log(ctx, RIAK_LOG_DEBUG, "n_buckets = %d", response->n_buckets);
+    riak_log(rev, RIAK_LOG_DEBUG, "listbucket_cb");
+    riak_log(rev, RIAK_LOG_DEBUG, "n_buckets = %d", response->n_buckets);
     int i;
     char name[1024];
     for(i = 0; i < response->n_buckets; i++) {
         riak_binary_dump_ptr(response->buckets[i], name, 1024);
-        riak_log(ctx, RIAK_LOG_DEBUG, "%d - %s", i, name);
+        riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
-    riak_log(ctx, RIAK_LOG_DEBUG, "done = %d", response->done);
+    riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
 }
 
 void listkey_cb(riak_listkeys_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "listkey_cb\n");
-    riak_log(ctx, RIAK_LOG_DEBUG, "n_keys = %d\n", response->n_keys);
+    riak_log(rev, RIAK_LOG_DEBUG, "listkey_cb");
+    riak_log(rev, RIAK_LOG_DEBUG, "n_keys = %d", response->n_keys);
     int i;
     char name[1024];
     for(i = 0; i < response->n_keys; i++) {
         riak_binary_dump_ptr(response->keys[i], name, 1024);
-        riak_log(ctx, RIAK_LOG_DEBUG, "%d - %s\n", i, name);
+        riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
-    riak_log(ctx, RIAK_LOG_DEBUG, "done = %d\n", response->done);
+    riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
 }
 
 void get_cb(riak_get_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "get_cb\n");
+    riak_log(rev, RIAK_LOG_DEBUG, "get_cb");
     char output[10240];
     char buffer[1024];
     int len = 10240;
@@ -129,13 +124,12 @@ void get_cb(riak_get_response *response, void *ptr) {
     for(i = 0; i < response->n_content; i++) {
         wrote = riak_object_dump_ptr(response->content[i], target, len);
     }
-    riak_log(ctx, RIAK_LOG_DEBUG, "%s\n", output);
+    riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
 }
 
 void put_cb(riak_put_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "put_cb\n");
+    riak_log(rev, RIAK_LOG_DEBUG, "put_cb\n");
     char output[10240];
     char buffer[1024];
     int len = 10240;
@@ -160,11 +154,10 @@ void put_cb(riak_put_response *response, void *ptr) {
     for(i = 0; i < response->n_content; i++) {
         wrote = riak_object_dump_ptr(response->content[i], target, len);
     }
-    riak_log(ctx, RIAK_LOG_DEBUG, "%s\n", output);
+    riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
 }
 
 void delete_cb(riak_delete_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = rev->context;
-   riak_log(ctx, RIAK_LOG_DEBUG, "delete_cb\n");
+    riak_log(rev, RIAK_LOG_DEBUG, "delete_cb");
 }

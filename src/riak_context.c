@@ -97,22 +97,27 @@ riak_event_new(riak_context          *ctx,
                riak_response_callback error_cb,
                void                  *cb_data) {
     if (base == NULL || bev == NULL) {
-        riak_log(ctx, RIAK_LOG_FATAL, "Both riak_event_base and riak_bufferevent must be supplied to riak_event_new");
+        riak_log_context(ctx, RIAK_LOG_FATAL, "Both riak_event_base and riak_bufferevent must be supplied to riak_event_new");
         assert(base != NULL);
         assert(bev != NULL);
     }
-    riak_event *ev = (riak_event*)(ctx->malloc_fn)(sizeof(riak_event));
+    riak_event *rev = (riak_event*)(ctx->malloc_fn)(sizeof(riak_event));
     // TODO: Error checking
-    assert(ev != NULL);
-    ev->base = base;
-    ev->bevent = bev;
-    ev->context = ctx;
-    ev->decoder = decoder;
-    ev->response_cb = response_cb;
-    ev->error_cb = error_cb;
-    ev->cb_data = cb_data;
+    assert(rev != NULL);
+    rev->base = base;
+    rev->bevent = bev;
+    rev->context = ctx;
+    rev->decoder = decoder;
+    rev->response_cb = response_cb;
+    rev->error_cb = error_cb;
+    rev->cb_data = cb_data;
+    rev->position = 0;
+    rev->msglen = 0;
+    rev->msgbuf = NULL;
+    rev->fd = bufferevent_getfd(bev);
+    rev->msglen_complete = RIAK_FALSE;
 
-    return ev;
+    return rev;
 }
 
 void

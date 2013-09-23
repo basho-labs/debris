@@ -63,7 +63,7 @@ riak_decode_error_response(riak_event           *rev,
     }
     response->_internal = errresp;
     response->errcode = errresp->errcode;
-    riak_binary_from_pb_copy_ptr(response->errmsg, &(errresp->errmsg));
+    riak_binary_from_pb_copy(response->errmsg, errresp->errmsg);
     // Call user's error callback, if present
     if (rev->error_cb) {
         riak_response_callback cb = rev->error_cb;
@@ -185,7 +185,7 @@ riak_decode_get_response(riak_event         *rev,
     // decode the PB response etc
     riak_context *ctx = (riak_context*)(rev->context);
     RpbGetResp *rpbresp = rpb_get_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
-    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_get_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_get_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
     *done = RIAK_TRUE;
     if (rpbresp == NULL) {
         return ERIAK_OUT_OF_MEMORY;
@@ -350,7 +350,7 @@ riak_decode_put_response(riak_event         *rev,
     riak_context *ctx = (riak_context*)(rev->context);
     RpbPutResp *rpbresp = rpb_put_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     *done = RIAK_TRUE;
-    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_put_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_put_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
     if (rpbresp == NULL) {
         return ERIAK_OUT_OF_MEMORY;
     }
@@ -519,7 +519,7 @@ riak_decode_listbuckets_response(riak_event                 *rev,
                                  riak_listbuckets_response **resp,
                                  riak_boolean_t             *done) {
     riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_listbuckets_response");
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_listbuckets_response");
     RpbListBucketsResp *listbucketresp = rpb_list_buckets_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     int i;
     riak_listbuckets_response *response = (ctx->malloc_fn)(sizeof(riak_listbuckets_response));
@@ -544,7 +544,7 @@ riak_decode_listbuckets_response(riak_event                 *rev,
     }
     response->done = RIAK_FALSE;
     if (listbucketresp->has_done == RIAK_TRUE) {
-        riak_log(ctx, RIAK_LOG_DEBUG, "HAS DONE");
+        riak_log(rev, RIAK_LOG_DEBUG, "HAS DONE");
         response->done = listbucketresp->done;
     }
     response->_internal = listbucketresp;
@@ -607,7 +607,7 @@ riak_decode_listkeys_response(riak_event              *rev,
                               riak_listkeys_response **resp,
                               riak_boolean_t          *done) {
     riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "riak_decode_listkeys_response");
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_listkeys_response");
     RpbListKeysResp *listkeyresp = rpb_list_keys_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     int i;
     riak_listkeys_response *response = (ctx->malloc_fn)(sizeof(riak_listkeys_response));
@@ -633,7 +633,7 @@ riak_decode_listkeys_response(riak_event              *rev,
     }
     response->done = RIAK_FALSE;
     if (listkeyresp->has_done) {
-        riak_log(ctx, RIAK_LOG_DEBUG, "HAS DONE");
+        riak_log(rev, RIAK_LOG_DEBUG, "HAS DONE");
         response->done = listkeyresp->done;
     }
     *done = response->done;
@@ -661,28 +661,69 @@ riak_free_listkeys_response(riak_event                 *rev,
 void
 riak_read_result_callback(riak_bufferevent *bev,
                           void             *ptr) {
-    riak_event   *rev = (riak_event*)ptr;
-    riak_context *ctx = (riak_context*)(rev->context);
+    riak_event    *rev = (riak_event*)ptr;
+    riak_context  *ctx = (riak_context*)(rev->context);
     riak_boolean_t done_streaming = RIAK_FALSE;
-    for(;;) {
-        // Read the first 32-bits which are the message size
-        riak_uint32_t inmsglen;
-        riak_size_t buflen = bufferevent_read(bev, (void*)&inmsglen, sizeof(inmsglen));
-        // If we can't ready any more bytes stop trying
-        if (buflen != sizeof(inmsglen)) break;
+    riak_size_t    buflen;
+    while(RIAK_TRUE) {
+        // Are we in the middle of a message already?
+        if (rev->msglen_complete == RIAK_FALSE) {
+            riak_uint32_t  inmsglen = rev->msglen;
+            // Read the first 32-bits which are the message size
+            // However, if a few bytes were included during the last read add them in
+            riak_size_t remaining_msg_len = sizeof(inmsglen) - rev->position;
+            riak_uint8_t *target = (riak_uint8_t*)(&inmsglen);
+            riak_log(rev, RIAK_LOG_DEBUG, "Before Network bytes %02x:%02x:%02x:%02x", target[0], target[1], target[2], target[3]);
+            target += rev->position;
+            buflen = bufferevent_read(bev, target, remaining_msg_len);
+            riak_log(rev, RIAK_LOG_DEBUG, "Sizebytes read %d", buflen);
+            target = (riak_uint8_t*)(&inmsglen);
+            riak_log(rev, RIAK_LOG_DEBUG, "Network bytes %02x:%02x:%02x:%02x", target[0], target[1], target[2], target[3]);
+            // If we can't ready any more bytes stop trying
+            if (buflen != remaining_msg_len) {
+                riak_log(rev, RIAK_LOG_DEBUG, "Posn = %d Expected %d bytes but received bytes = %d", rev->position, remaining_msg_len, buflen);
+                if (buflen == 0) break;
+                // A few bytes of next message were in this buffer
+                if (buflen < sizeof(inmsglen)) {
+                    rev->position = buflen;
+                    rev->msglen = inmsglen;
+                    return;
+                }
+                abort();  // Something is hosed here
+            }
 
-        riak_uint32_t msglen = ntohl(inmsglen);
-        // TODO: Need to malloc new buffer each time?
-        riak_uint8_t *buffer = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
-        // TODO: Real error checking
-        assert(buffer != 0);
-        buflen = bufferevent_read(bev, (void*)buffer, msglen);
-        riak_log(ctx, RIAK_LOG_DEBUG, "buflen = %d vs msglen = %d", buflen, msglen);
-        assert(buflen == msglen);
-        // TODO: Anything else on the wire?
-        riak_uint8_t msgid = buffer[0];
-        riak_pb_message *pbresp = riak_pb_message_new(ctx, msgid, msglen, buffer);
+            rev->msglen_complete = RIAK_TRUE;
+            rev->msglen = ntohl(inmsglen);
+            riak_log(rev, RIAK_LOG_DEBUG, "Read msglen = %d", rev->msglen);
+
+            // TODO: Need to malloc new buffer each time?
+            rev->msgbuf = (riak_uint8_t*)(ctx->malloc_fn)(rev->msglen);
+            if (rev->msgbuf == NULL) {
+                riak_log(rev, RIAK_LOG_FATAL, "Could not allocate buffer in riak_read_result_callback");
+                abort();
+            }
+        } else {
+            riak_log(rev, RIAK_LOG_DEBUG, "Continuation of partial message");
+        }
+
+        riak_uint8_t *current_position = rev->msgbuf;
+        current_position += rev->position;
+        buflen = bufferevent_read(bev, (void*)current_position, rev->msglen - rev->position);
+        riak_log(rev, RIAK_LOG_DEBUG, "read %d bytes at position %d, msglen = %d", buflen, rev->position, rev->msglen);
+        rev->position += buflen;
+        // Are we done yet? If not, break out and wait for the next callback
+        if (rev->position < rev->msglen) {
+            riak_log(rev, RIAK_LOG_DEBUG, "Partial message received");
+            return;
+        }
+        assert(rev->position == rev->msglen);
+
+        riak_uint8_t msgid = (rev->msgbuf)[0];
+        riak_pb_message *pbresp = riak_pb_message_new(ctx, msgid, rev->msglen, rev->msgbuf);
         riak_error result;
+        rev->position = 0;  // Reset on success
+        rev->msglen = 0;
+        rev->msglen_complete = RIAK_FALSE;
 
         // Response varies by data type
         void *response = NULL;
@@ -690,17 +731,19 @@ riak_read_result_callback(riak_bufferevent *bev,
         // Assume we are doing a single loop, unless told otherwise
         done_streaming = RIAK_TRUE;
         if (rev->decoder == NULL) {
-            riak_log(ctx, RIAK_LOG_FATAL, "%d NOT IMPLEMENTED", msgid);
+            riak_log(rev, RIAK_LOG_FATAL, "%d NOT IMPLEMENTED", msgid);
             abort();
         }
         if (msgid == MSG_RPBERRORRESP) {
             result = riak_decode_error_response(rev, pbresp, &err_response, &done_streaming);
-            riak_log(ctx, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, err_response->errmsg->data);
+            riak_log(rev, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, err_response->errmsg.data);
             if (rev->error_cb) (rev->error_cb)(err_response, rev->cb_data);
             exit(1);
         }
+        // Decode the message from Protocol Buffers
         result = (rev->decoder)(rev, pbresp, &response, &done_streaming);
 
+        // Call the user-defined callback for this message
         if (rev->response_cb) (rev->response_cb)(response, rev->cb_data);
 
         // NOTE: Also frees the local buffer
@@ -712,6 +755,7 @@ riak_read_result_callback(riak_bufferevent *bev,
     }
 
     // What has been queued up
+    fflush(stdout);
     event_base_dump_events(rev->base, stdout);
 
     if (done_streaming)

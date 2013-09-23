@@ -39,9 +39,25 @@ const log4c_priority_level_t map_level_to_priority[] = {
     LOG4C_PRIORITY_UNKNOWN
 };
 
+// TODO: Create an async queue of log messages to make threadsafe(r)
+void riak_log(riak_event *rev, riak_log_level_t level, const char *format, ...) {
+    if (level < RIAK_LOG_FATAL || level > RIAK_LOG_UNKNOWN) level = RIAK_LOG_UNKNOWN;
+    // Map to underlying log4c priorities
+    log4c_priority_level_t priority = map_level_to_priority[(int)level];
+    log4c_category_t *category = log4c_category_get(rev->context->logging_category);
+    // Prefix with the file descriptor
+    // TODO: Get rid of copying format string
+    char formatted[256];
+    snprintf(formatted, sizeof(formatted), "[%d] %s", rev->fd, format);
+
+    va_list va;
+    va_start(va, format);
+    log4c_category_vlog(category, priority, formatted, va);
+    va_end(va);
+}
 
 // TODO: Create an async queue of log messages to make threadsafe(r)
-void riak_log(riak_context *ctx, riak_log_level_t level, const char *format, ...) {
+void riak_log_context(riak_context *ctx, riak_log_level_t level, const char *format, ...) {
     if (level < RIAK_LOG_FATAL || level > RIAK_LOG_UNKNOWN) level = RIAK_LOG_UNKNOWN;
     // Map to underlying log4c priorities
     log4c_priority_level_t priority = map_level_to_priority[(int)level];

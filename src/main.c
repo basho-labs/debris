@@ -192,6 +192,7 @@ riak_parse_args(int        argc,
     return operation;
 }
 
+#define RIAK_MAX_SOCKETS 100
 
 int
 main(int   argc,
@@ -251,16 +252,31 @@ main(int   argc,
     // If there was no error, we should have at least one answer so use the 1st
     assert(addrinfo);
 
-    riak_socket_t sock = riak_just_open_a_socket(ctx, addrinfo);
-    if (sock < 0) exit(1);
+    if (args.iterate > RIAK_MAX_SOCKETS) {
+        fprintf(stderr, "Cannot currently iterate more than %d times", RIAK_MAX_SOCKETS);
+        exit(1);
+    }
+    // Simple socket "pool"
+    riak_socket_t *sockets = (ctx->malloc_fn)(sizeof(riak_socket_t)*RIAK_MAX_SOCKETS);
+    if (sockets == NULL) {
+        riak_log_context(ctx, RIAK_LOG_FATAL, "Could not allocate an array of sockets");
+        exit(1);
+    }
 
     for(it = 0; it < args.iterate; it++) {
-        riak_log(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
-//        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
-        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
+        riak_log_context(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
+
+        sockets[it] = riak_just_open_a_socket(ctx, addrinfo);
+        if (sockets[it] < 0) {
+            riak_log_context(ctx, RIAK_LOG_FATAL, "Could not just open a socket");
+            exit(1);
+        }
+
+        //        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
+        struct bufferevent *bev = bufferevent_socket_new(base, sockets[it], BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
         int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
         if (enabled != 0) {
-            riak_log(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%p", (riak_uint64_t)bev);
+            riak_log_context(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%p", (riak_uint64_t)bev);
             exit(1);
         }
         riak_binary bucket_bin;
@@ -287,7 +303,7 @@ main(int   argc,
             riak_event_set_response_cb(rev, (riak_response_callback)put_cb);
             obj = riak_object_new(ctx);
             if (obj == NULL) {
-                riak_log(ctx, RIAK_LOG_FATAL, "Could not allocate a Riak Object");
+                riak_log(rev, RIAK_LOG_FATAL, "Could not allocate a Riak Object");
                 return 1;
             }
             riak_binary_from_string(obj->bucket, args.bucket); // Not copied
@@ -312,17 +328,22 @@ main(int   argc,
 
         err = riak_send_req(rev, request);
         if (err) {
-            riak_log(ctx, RIAK_LOG_FATAL, "Could not send request");
+            riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
             exit(1);
         }
     }
     // What has been queued up
-    event_base_dump_events(base, stderr);
+    fflush(stdout);
+    event_base_dump_events(base, stdout);
 
     // Terminates only on error or timeout
     event_base_dispatch(base);
 
     evutil_freeaddrinfo(addrinfo);
 
+    // Clean up all of the socket connections
+    for(it = 0; it < args.iterate; it++) {
+        close(sockets[it]);
+    }
     return 0;
 }

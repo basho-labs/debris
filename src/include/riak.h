@@ -154,7 +154,7 @@ typedef struct _riak_listkeys_response {
 // Based on RpbErrorResp
 typedef struct _riak_error_response {
     riak_uint32_t errcode;
-    riak_binary  *errmsg;
+    riak_binary   errmsg;
 
     RpbErrorResp *_internal;
 } riak_error_response;

@@ -106,6 +106,13 @@ typedef struct _riak_event {
     riak_response_callback response_cb;
     riak_response_callback error_cb;
     void                  *cb_data;
+    riak_socket_t          fd;
+
+    // Current message being decoded
+    riak_uint32_t          position;
+    riak_uint32_t          msglen;
+    riak_uint8_t          *msgbuf;
+    riak_boolean_t         msglen_complete;
 } riak_event;
 
 /**
