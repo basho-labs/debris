@@ -38,6 +38,7 @@
 #include "riak_kv.pb-c.h"
 #include "riak_error.h"
 #include "riak_context.h"
+#include "riak_event.h"
 #include "riak_log.h"
 
 // TOP level structures
@@ -187,7 +188,7 @@ typedef struct _riak_delete_response {
 } riak_delete_response;
 
 
-void write_callback(struct bufferevent *bev, void *ptr);
+void riak_write_callback(struct bufferevent *bev, void *ptr);
 
 
 // basic ops
@@ -209,11 +210,12 @@ typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *re
 
 typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response, void *ptr);
 
-int riak_get(riak_context*,
-             riak_binary *bucket,
-             riak_binary *key,
-             riak_get_options*,
-             riak_get_response_callback);
+riak_error
+riak_get(riak_context*,
+         riak_binary *bucket,
+         riak_binary *key,
+         riak_get_options*,
+         riak_get_response_callback);
 
 void riak_server_info(riak_context*);
 

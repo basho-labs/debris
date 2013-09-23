@@ -656,6 +656,39 @@ riak_free_listkeys_response(riak_event                 *rev,
     riak_free_ptr(ctx, resp);
 }
 
+/* LIBEVENT CALLBACKS */
+
+void
+riak_event_callback(riak_bufferevent *bev,
+                    short             events,
+                    void             *ptr)
+{
+    riak_event   *rev = (riak_event*)ptr;
+    if (events & BEV_EVENT_CONNECTED) {
+         riak_log(rev, RIAK_LOG_DEBUG, "Connect okay.");
+    } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
+         char *reason = "BEV_EVENT_ERROR";
+         if (events & BEV_EVENT_ERROR) {
+            reason = "BEV_EVENT_EOF";
+            int err = bufferevent_socket_get_dns_error(bev);
+            if (err)
+                riak_log(rev, RIAK_LOG_ERROR, "DNS error: %s", evutil_gai_strerror(err));
+         }
+         struct evbuffer *ev_read  = bufferevent_get_input(bev);
+         struct evbuffer *ev_write = bufferevent_get_output(bev);
+         riak_log(rev, RIAK_LOG_DEBUG, "Closing because of %s [read event=%p, write event=%p]",
+                 reason, (void*)ev_read, (void*)ev_write);
+         bufferevent_free(bev);
+         event_base_loopexit(rev->base, NULL);
+    } else if (events & BEV_EVENT_TIMEOUT) {
+        riak_log(rev, RIAK_LOG_DEBUG, "Timeout Event");
+        bufferevent_free(bev);
+        event_base_loopexit(rev->base, NULL);
+    } else {
+        riak_log(rev, RIAK_LOG_DEBUG, "Event %d", events);
+    }
+}
+
 
 // MAIN RESULT CALLBACK
 void
@@ -668,22 +701,20 @@ riak_read_result_callback(riak_bufferevent *bev,
     while(RIAK_TRUE) {
         // Are we in the middle of a message already?
         if (rev->msglen_complete == RIAK_FALSE) {
-            riak_uint32_t  inmsglen = rev->msglen;
             // Read the first 32-bits which are the message size
-            // However, if a few bytes were included during the last read add them in
+            // However, if a few size bytes were included during the last read, add them in
+            riak_uint32_t  inmsglen = rev->msglen;
             riak_size_t remaining_msg_len = sizeof(inmsglen) - rev->position;
             riak_uint8_t *target = (riak_uint8_t*)(&inmsglen);
-            riak_log(rev, RIAK_LOG_DEBUG, "Before Network bytes %02x:%02x:%02x:%02x", target[0], target[1], target[2], target[3]);
             target += rev->position;
             buflen = bufferevent_read(bev, target, remaining_msg_len);
-            riak_log(rev, RIAK_LOG_DEBUG, "Sizebytes read %d", buflen);
             target = (riak_uint8_t*)(&inmsglen);
-            riak_log(rev, RIAK_LOG_DEBUG, "Network bytes %02x:%02x:%02x:%02x", target[0], target[1], target[2], target[3]);
-            // If we can't ready any more bytes stop trying
+            // If we can't ready any more bytes, stop trying
             if (buflen != remaining_msg_len) {
-                riak_log(rev, RIAK_LOG_DEBUG, "Posn = %d Expected %d bytes but received bytes = %d", rev->position, remaining_msg_len, buflen);
+                riak_log(rev, RIAK_LOG_DEBUG, "Expected %d bytes but received bytes = %d", remaining_msg_len, buflen);
                 if (buflen == 0) break;
-                // A few bytes of next message were in this buffer
+                // A few message size bytes of next message were in this buffer
+                // Stuff the partial size into rev->msglen and note the position
                 if (buflen < sizeof(inmsglen)) {
                     rev->position = buflen;
                     rev->msglen = inmsglen;

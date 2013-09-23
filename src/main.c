@@ -38,7 +38,7 @@
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_network.h"
-#include "call_backs.h"
+#include "user_call_backs.h"
 
 void usage(FILE *fp, char *progname) {
     fprintf(fp, "Usage:\n");
@@ -192,8 +192,6 @@ riak_parse_args(int        argc,
     return operation;
 }
 
-#define RIAK_MAX_SOCKETS 100
-
 int
 main(int   argc,
      char *argv[])
@@ -238,7 +236,6 @@ main(int   argc,
 
     event_enable_debug_mode();
 //    event_use_pthreads();
-    struct event_base *base = event_base_new();
 
     riak_context *ctx = riak_context_new_default();
     riak_event *rev;
@@ -252,42 +249,20 @@ main(int   argc,
     // If there was no error, we should have at least one answer so use the 1st
     assert(addrinfo);
 
-    if (args.iterate > RIAK_MAX_SOCKETS) {
-        fprintf(stderr, "Cannot currently iterate more than %d times", RIAK_MAX_SOCKETS);
-        exit(1);
-    }
-    // Simple socket "pool"
-    riak_socket_t *sockets = (ctx->malloc_fn)(sizeof(riak_socket_t)*RIAK_MAX_SOCKETS);
-    if (sockets == NULL) {
-        riak_log_context(ctx, RIAK_LOG_FATAL, "Could not allocate an array of sockets");
-        exit(1);
-    }
-
     for(it = 0; it < args.iterate; it++) {
         riak_log_context(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
 
-        sockets[it] = riak_just_open_a_socket(ctx, addrinfo);
-        if (sockets[it] < 0) {
-            riak_log_context(ctx, RIAK_LOG_FATAL, "Could not just open a socket");
-            exit(1);
-        }
-
-        //        struct bufferevent *bev = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
-        struct bufferevent *bev = bufferevent_socket_new(base, sockets[it], BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
-        int enabled = bufferevent_enable(bev, EV_READ|EV_WRITE);
-        if (enabled != 0) {
-            riak_log_context(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent 0x%p", (riak_uint64_t)bev);
-            exit(1);
-        }
         riak_binary bucket_bin;
         riak_binary key_bin;
         riak_binary_from_string(bucket_bin, args.bucket); // Not copied
         riak_binary_from_string(key_bin, args.key); // Not copied
 
-        rev = riak_event_new(ctx, base, bev, NULL, NULL, NULL, NULL);
+        rev = riak_event_new(ctx, addrinfo, NULL, NULL, NULL, NULL);
+        if (rev == NULL) {
+            return 1;
+        }
         // For convenience have user callback know about its riak_event
         riak_event_set_cb_data(rev, rev);
-        bufferevent_setcb(bev, riak_read_result_callback, write_callback, eventcb, rev);
         riak_pb_message *request = NULL;
 
         switch (operation) {
@@ -334,16 +309,11 @@ main(int   argc,
     }
     // What has been queued up
     fflush(stdout);
-    event_base_dump_events(base, stdout);
 
     // Terminates only on error or timeout
-    event_base_dispatch(base);
+    event_base_dispatch(riak_context_get_base(ctx));
 
     evutil_freeaddrinfo(addrinfo);
 
-    // Clean up all of the socket connections
-    for(it = 0; it < args.iterate; it++) {
-        close(sockets[it]);
-    }
     return 0;
 }

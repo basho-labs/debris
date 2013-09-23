@@ -86,9 +86,25 @@ void
 riak_pb_message_free(riak_context     *ctx,
                      riak_pb_message **pb);
 
-void riak_read_result_callback(riak_bufferevent *bev, void *ptr);
+/**
+ * @brief Called by libevent when event posts
+ * @param bev Riak Bufferevent (libevent)
+ * @param ptr User-supplied pointer (Riak Event)
+ */
+void
+riak_event_callback(riak_bufferevent *bev,
+                    short             events,
+                    void             *ptr);
 
-// TODO: Create error structure
+/**
+ * @brief Called by libevent on a read event
+ * @param bev Riak Bufferevent (libevent)
+ * @param ptr User-supplied pointer (Riak Event)
+ */
+void
+riak_read_result_callback(riak_bufferevent *bev,
+                          void             *ptr);
+
 /**
  * @brief Convert PBC error response into user-readable data type
  * @param rev Riak Event

@@ -24,7 +24,6 @@
 #include "riak_pb_message.h"
 #include "riak_kv.pb-c.h"
 #include "riak_utils.h"
-#include <event2/bufferevent_struct.h>
 
 //int riak_get(riak_context *ctx,
 //             riak_binary *bucket,
@@ -34,9 +33,10 @@
 //  return 0;
 //}
 
-void write_callback(riak_bufferevent *bev, void *ptr)
+void riak_write_callback(riak_bufferevent *bev, void *ptr)
 {
     riak_event   *rev = (riak_event*)ptr;
     riak_context *ctx = rev->context;
-    riak_log(ctx, RIAK_LOG_DEBUG, "Ready for write with event %p.\n", (void*)&(bev->ev_write));
+    struct evbuffer *buf = bufferevent_get_output(bev);
+    riak_log(ctx, RIAK_LOG_DEBUG, "Ready for write with event %p.\n", (void*)buf);
 }

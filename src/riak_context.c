@@ -27,12 +27,13 @@
 
 extern ProtobufCAllocator protobuf_c_default_allocator;
 
-riak_context *riak_context_new(riak_alloc_fn     alloc,
-                               riak_realloc_fn   realloc,
-                               riak_free_fn      freeme,
-                               riak_pb_alloc_fn  pb_alloc,
-                               riak_pb_free_fn   pb_free,
-                               const char       *logging_category) {
+riak_context*
+riak_context_new(riak_alloc_fn     alloc,
+                 riak_realloc_fn   realloc,
+                 riak_free_fn      freeme,
+                 riak_pb_alloc_fn  pb_alloc,
+                 riak_pb_free_fn   pb_free,
+                 const char       *logging_category) {
     riak_alloc_fn   alloc_fn   = malloc;
     riak_realloc_fn realloc_fn = realloc;
     riak_free_fn    free_fn    = free;
@@ -75,8 +76,18 @@ riak_context *riak_context_new(riak_alloc_fn     alloc,
         fprintf(stderr, "Could not initialize logging\n");
         exit(1);
     }
+    ctx->base = event_base_new();
+    if (ctx->base == NULL) {
+        riak_log_context(ctx, RIAK_LOG_FATAL, "Could not construct an event base");
+        exit(1);
+    }
 
     return ctx;
+}
+
+riak_event_base*
+riak_context_get_base(riak_context *ctx) {
+    return ctx->base;
 }
 
 void riak_context_free(riak_context **ctx) {
@@ -86,65 +97,4 @@ void riak_context_free(riak_context **ctx) {
 
     // Since we will only clean up one context, let's shut down non-threadsafe logging here, too
     log4c_fini();
-}
-
-riak_event*
-riak_event_new(riak_context          *ctx,
-               riak_event_base       *base,
-               riak_bufferevent      *bev,
-               riak_response_decoder  decoder,
-               riak_response_callback response_cb,
-               riak_response_callback error_cb,
-               void                  *cb_data) {
-    if (base == NULL || bev == NULL) {
-        riak_log_context(ctx, RIAK_LOG_FATAL, "Both riak_event_base and riak_bufferevent must be supplied to riak_event_new");
-        assert(base != NULL);
-        assert(bev != NULL);
-    }
-    riak_event *rev = (riak_event*)(ctx->malloc_fn)(sizeof(riak_event));
-    // TODO: Error checking
-    assert(rev != NULL);
-    rev->base = base;
-    rev->bevent = bev;
-    rev->context = ctx;
-    rev->decoder = decoder;
-    rev->response_cb = response_cb;
-    rev->error_cb = error_cb;
-    rev->cb_data = cb_data;
-    rev->position = 0;
-    rev->msglen = 0;
-    rev->msgbuf = NULL;
-    rev->fd = bufferevent_getfd(bev);
-    rev->msglen_complete = RIAK_FALSE;
-
-    return rev;
-}
-
-void
-riak_event_set_cb_data(riak_event *rev,
-                       void       *cb_data) {
-    rev->cb_data = cb_data;
-}
-void
-riak_event_set_response_cb(riak_event             *rev,
-                           riak_response_callback  cb) {
-    rev->response_cb = cb;
-}
-
-void
-riak_event_set_error_cb(riak_event             *rev,
-                        riak_response_callback  cb) {
-    rev->error_cb = cb;
-}
-
-void
-riak_event_set_response_decoder(riak_event             *rev,
-                                riak_response_decoder   decoder) {
-    rev->decoder = decoder;
-}
-
-void riak_event_free(riak_event** re) {
-    riak_free_fn freer = (*re)->context->free_fn;
-    (freer)(*re);
-    *re = NULL;
 }

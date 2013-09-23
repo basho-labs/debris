@@ -24,10 +24,6 @@
 #define CALL_BACKS_H_
 
 void
-eventcb(struct bufferevent *bev,
-        short events,
-        void *ptr);
-void
 ping_cb(riak_ping_response *response,
         void *ptr);
 void

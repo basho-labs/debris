@@ -31,7 +31,6 @@
 #include <stdint.h>
 #include <event2/event.h>
 #include <event2/bufferevent.h>
-#include <event2/bufferevent_struct.h>
 
 #include "riak.h"
 #include "riak_pb_message.h"
@@ -39,34 +38,6 @@
 #include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
-
-/* LIBEVENT CALLBACKS */
-
-void eventcb(struct bufferevent *bev, short events, void *ptr)
-{
-    riak_event   *rev = (riak_event*)ptr;
-    if (events & BEV_EVENT_CONNECTED) {
-         riak_log(rev, RIAK_LOG_DEBUG, "Connect okay.");
-    } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
-         char *reason = "BEV_EVENT_ERROR";
-         if (events & BEV_EVENT_ERROR) {
-            reason = "BEV_EVENT_EOF";
-            int err = bufferevent_socket_get_dns_error(bev);
-            if (err)
-                riak_log(rev, RIAK_LOG_ERROR, "DNS error: %s", evutil_gai_strerror(err));
-         }
-         riak_log(rev, RIAK_LOG_DEBUG, "Closing because of %s [read event=%p, write event=%p]",
-                 reason, (void*)&(bev->ev_read), (void*)&(bev->ev_write));
-         bufferevent_free(bev);
-         event_base_loopexit(rev->base, NULL);
-    } else if (events & BEV_EVENT_TIMEOUT) {
-        riak_log(rev, RIAK_LOG_DEBUG, "Timeout Event");
-        bufferevent_free(bev);
-        event_base_loopexit(rev->base, NULL);
-    } else {
-        riak_log(rev, RIAK_LOG_DEBUG, "Event %d", events);
-    }
-}
 
 void ping_cb(riak_ping_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
