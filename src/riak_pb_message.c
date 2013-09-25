@@ -234,7 +234,7 @@ riak_print_get_response(riak_get_response *response,
                         char              *target,
                         riak_size_t        len) {
     char buffer[1024];
-    riak_binary_hex_dump(response->vclock, buffer, sizeof(buffer));
+    riak_binary_hex_print(response->vclock, buffer, sizeof(buffer));
     int wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
     len -= wrote;
     target += wrote;
@@ -249,7 +249,7 @@ riak_print_get_response(riak_get_response *response,
     target += wrote;
     riak_uint32_t i;
     for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump_ptr(response->content[i], target, len);
+        wrote = riak_object_print(response->content[i], target, len);
     }
 }
 
@@ -423,13 +423,13 @@ riak_print_put_response(riak_put_response *response,
     char buffer[1024];
     int wrote;
     if (response->has_vclock) {
-        riak_binary_hex_dump(response->vclock, buffer, sizeof(buffer));
+        riak_binary_hex_print(response->vclock, buffer, sizeof(buffer));
         wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
         len -= wrote;
         target += wrote;
     }
     if (response->has_key) {
-        riak_binary_dump(response->key, buffer, sizeof(buffer));
+        riak_binary_print(response->key, buffer, sizeof(buffer));
         wrote = snprintf(target, len, "Key: %s\n", buffer);
         len -= wrote;
         target += wrote;
@@ -439,7 +439,7 @@ riak_print_put_response(riak_put_response *response,
     target += wrote;
     riak_uint32_t i;
     for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump_ptr(response->content[i], target, len);
+        wrote = riak_object_print(response->content[i], target, len);
     }
 }
 
@@ -832,7 +832,7 @@ riak_read_result_callback(riak_bufferevent *bev,
             // Convert error response to a null-terminated string
             char errmsg[2048];
             size_t len = (err_response->errmsg.len > sizeof(errmsg)-1) ? sizeof(errmsg)-1 : err_response->errmsg.len;
-            riak_strlcpy(errmsg, err_response->errmsg.data, len);
+            riak_strlcpy(errmsg, (const char*)err_response->errmsg.data, len);
             riak_log(rev, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, errmsg);
             if (rev->error_cb) (rev->error_cb)(err_response, rev->cb_data);
             exit(1);

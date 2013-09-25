@@ -56,7 +56,7 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     int i;
     char name[1024];
     for(i = 0; i < response->n_buckets; i++) {
-        riak_binary_dump_ptr(response->buckets[i], name, 1024);
+        riak_binary_print_ptr(response->buckets[i], name, 1024);
         riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
     riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
@@ -69,7 +69,7 @@ void listkey_cb(riak_listkeys_response *response, void *ptr) {
     int i;
     char name[1024];
     for(i = 0; i < response->n_keys; i++) {
-        riak_binary_dump_ptr(response->keys[i], name, 1024);
+        riak_binary_print_ptr(response->keys[i], name, 1024);
         riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
     riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);

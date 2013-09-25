@@ -116,7 +116,7 @@ riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
 
 //TODO: Figure out clean way to print UTF-8 encoding
 int
-riak_binary_dump_ptr(riak_binary  *bin,
+riak_binary_print_ptr(riak_binary  *bin,
                      char         *target,
                      riak_uint32_t len) {
     int count = 0;
@@ -131,9 +131,9 @@ riak_binary_dump_ptr(riak_binary  *bin,
 }
 
 int
-riak_binary_hex_dump_ptr(riak_binary  *bin,
-                         char         *target,
-                         riak_uint32_t len) {
+riak_binary_hex_print_ptr(riak_binary  *bin,
+                          char         *target,
+                          riak_uint32_t len) {
     int count = 0;
     static char hex[] = "0123456789abcdef";
     if (bin != NULL) {

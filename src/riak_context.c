@@ -105,7 +105,8 @@ riak_context_get_base(riak_context *ctx) {
     return ctx->base;
 }
 
-void riak_context_free(riak_context **ctx) {
+void
+riak_context_free(riak_context **ctx) {
     riak_free_fn freer = (*ctx)->free_fn;
     (freer)(*ctx);
     *ctx = NULL;

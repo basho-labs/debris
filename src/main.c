@@ -79,7 +79,7 @@ riak_parse_args(int        argc,
     static int operation;  // static required for getopt
     int  c;
 
-    bzero((void*)args, sizeof(riak_args));
+    memset((void*)args, '\0', sizeof(riak_args));
     args->async      = RIAK_FALSE;
     args->iterate    = 1;
     args->port       = 10017;

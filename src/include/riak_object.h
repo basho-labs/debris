@@ -81,11 +81,43 @@ typedef struct _riak_object {
     riak_pair    **indexes;
 } riak_object;
 
-riak_object *riak_object_new(riak_context *ctx);
-void riak_object_free(riak_context *ctx, riak_object*);
-void riak_object_free_pb(riak_context *ctx, RpbContent* obj);
-int riak_object_dump_ptr(riak_object *obj, char *target, riak_uint32_t len);
-#define riak_object_dump(A,B,C) riak_object_dump_ptr(&(A),B,C)
+/**
+ * @brief Construct a new Riak Object
+ * @param ctx Riak Context
+ * @return Riak Object
+ */
+riak_object*
+riak_object_new(riak_context *ctx);
+
+/**
+ * @brief Release claimed memory used by a Riak Object
+ * @param ctx Riak Context
+ * @param obj Riak Object to be freed
+ */
+void
+riak_object_free(riak_context *ctx,
+                 riak_object  *obj);
+
+/**
+ * @brief Release claimed memory used by PB Riak Object
+ * @param ctx Riak Context
+ * @param obj PB Riak Object to be freed
+ */
+void
+riak_object_free_pb(riak_context *ctx,
+                    RpbContent   *obj);
+
+/**
+ * @brief Print contents of a Riak Object to a string
+ * @param obj Object to print
+ * @param target Location to write formatted string
+ * @param len Number of bytes to write
+ * @return Number of bytes written
+ */
+int
+riak_object_print(riak_object  *obj,
+                  char         *target,
+                  riak_uint32_t len);
 
 /**
  * @brief Copy a Riak Object to a protocol buffer

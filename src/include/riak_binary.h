@@ -54,10 +54,10 @@ void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from);
 #define riak_binary_from_pb_copy(A,B) riak_binary_from_pb_copy_ptr(&(A),&(B))
 riak_error riak_binary_from_pb_deep_copy_ptr(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from);
 #define riak_binary_from_pb_deep_copy(A,B,C) riak_binary_from_pb_deep_copy_ptr((A),&(B),&(C))
-int riak_binary_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len);
-#define riak_binary_dump(A,B,C) riak_binary_dump_ptr(&(A),(B),(C))
-int riak_binary_hex_dump_ptr(riak_binary *bin, char* target, riak_uint32_t len);
-#define riak_binary_hex_dump(A,B,C) riak_binary_hex_dump_ptr(&(A),(B),(C))
+int riak_binary_print_ptr(riak_binary *bin, char* target, riak_uint32_t len);
+#define riak_binary_print(A,B,C) riak_binary_print_ptr(&(A),(B),(C))
+int riak_binary_hex_print_ptr(riak_binary *bin, char* target, riak_uint32_t len);
+#define riak_binary_hex_print(A,B,C) riak_binary_hex_print_ptr(&(A),(B),(C))
 void riak_binary_from_string_ptr(riak_binary *to, const char *from);
 #define riak_binary_from_string(A,B) riak_binary_from_string_ptr(&(A),B)
 riak_error riak_binary_from_string_deep_copy_ptr(riak_context *ctx, riak_binary *to, const char *from);

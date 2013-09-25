@@ -33,7 +33,7 @@ riak_resolve_address(riak_context   *ctx,
     riak_addrinfo addrhints;
 
     // Build the hints to tell getaddrinfo how to act.
-    bzero(&addrhints, sizeof(riak_addrinfo));
+    memset(&addrhints, '\0', sizeof(riak_addrinfo));
 //   addrhints.ai_family   = AF_UNSPEC; // IPv6 seems a bit broken for now
     addrhints.ai_family   = AF_INET; // IPv4 works like a champ
     addrhints.ai_socktype = SOCK_STREAM;

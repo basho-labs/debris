@@ -66,7 +66,7 @@ void riak_free_internal(riak_context *ctx, void **pp) {
 riak_get_response*
 riak_get_response_new(riak_context *ctx) {
     riak_get_response* r = (riak_get_response*)(ctx->malloc_fn)(sizeof(riak_get_response));
-    bzero(r, sizeof(riak_get_response));
+    if (r) memset(r, '\0', sizeof(riak_get_response));
     return r;
 }
 
