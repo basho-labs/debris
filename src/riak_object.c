@@ -256,7 +256,7 @@ riak_object_new_array(riak_context  *ctx,
     if (result == NULL) {
         return ERIAK_OUT_OF_MEMORY;
     }
-    memset((void*)array, '\0', sizeof(riak_object)*len);
+    memset((void*)result, '\0', sizeof(riak_object)*len);
     *array = result;
 
     return ERIAK_OK;

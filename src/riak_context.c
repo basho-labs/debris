@@ -106,12 +106,13 @@ riak_context_get_base(riak_context *ctx) {
 }
 
 void
-riak_context_free(riak_context **ctx) {
-    riak_free_fn freer = (*ctx)->free_fn;
-    (freer)(*ctx);
-    *ctx = NULL;
-
-    if ((*ctx)->addrinfo) evutil_freeaddrinfo((*ctx)->addrinfo);
+riak_context_free(riak_context **context) {
+    riak_context *ctx = *context;
+    riak_free_fn freer = ctx->free_fn;
+    if (ctx->base == NULL) event_base_free(ctx->base);
+    if (ctx->addrinfo) evutil_freeaddrinfo(ctx->addrinfo);
+    (freer)(ctx);
+    *context = NULL;
 
     // Since we will only clean up one context, let's shut down non-threadsafe logging here, too
     log4c_fini();

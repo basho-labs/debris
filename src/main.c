@@ -365,5 +365,7 @@ main(int   argc,
         event_base_dispatch(riak_context_get_base(ctx));
     }
 
+    riak_context_free(&ctx);
+
     return 0;
 }

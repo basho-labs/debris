@@ -42,7 +42,7 @@ riak_pb_message_new(riak_context *ctx,
 }
 
 void
-riak_pb_message_free(riak_context      *ctx,
+riak_pb_message_free(riak_context     *ctx,
                      riak_pb_message **pb) {
     riak_free(ctx, (*pb)->data);
     riak_free(ctx, (*pb));
