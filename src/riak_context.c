@@ -24,16 +24,21 @@
 #include "riak.h"
 #include "riak_pb_message.h"
 #include "riak_utils.h"
+#include "riak_network.h"
 
 extern ProtobufCAllocator protobuf_c_default_allocator;
 
-riak_context*
-riak_context_new(riak_alloc_fn     alloc,
+riak_error
+riak_context_new(riak_context    **context,
+                 const char       *hostname,
+                 const char       *portnum,
+                 riak_alloc_fn     alloc,
                  riak_realloc_fn   realloc,
                  riak_free_fn      freeme,
                  riak_pb_alloc_fn  pb_alloc,
                  riak_pb_free_fn   pb_free,
                  const char       *logging_category) {
+    *context                   = NULL;
     riak_alloc_fn   alloc_fn   = malloc;
     riak_realloc_fn realloc_fn = realloc;
     riak_free_fn    free_fn    = free;
@@ -50,7 +55,7 @@ riak_context_new(riak_alloc_fn     alloc,
     }
     riak_context* ctx = (riak_context*)(alloc_fn)(sizeof(riak_context));
     if (ctx == NULL) {
-        return NULL;
+        return ERIAK_OUT_OF_MEMORY;
     }
     ctx->malloc_fn    = alloc_fn;
     ctx->realloc_fn   = realloc_fn;
@@ -64,25 +69,35 @@ riak_context_new(riak_alloc_fn     alloc,
     }
 
     if (logging_category == NULL) {
-        riak_strlcpy(ctx->logging_category, RIAK_LOGGING_DEFAULT_CATEGORY, RIAK_LOGGING_MAX_LEN);
+        riak_strlcpy(ctx->logging_category, RIAK_LOGGING_DEFAULT_CATEGORY, sizeof(ctx->logging_category));
     } else {
-        riak_strlcpy(ctx->logging_category, logging_category, RIAK_LOGGING_MAX_LEN);
+        riak_strlcpy(ctx->logging_category, logging_category, sizeof(ctx->logging_category));
     }
+    riak_strlcpy(ctx->hostname, hostname, sizeof(ctx->hostname));
+    riak_strlcpy(ctx->portnum, portnum, sizeof(ctx->hostname));
 
     // Since we will likely only have one context, set up non-thread-safe logging here
     // TODO: Make logging thread-safe
     int result = log4c_init();
     if (result != 0) {
         fprintf(stderr, "Could not initialize logging\n");
-        exit(1);
+        riak_context_free(&ctx);
+        return ERIAK_LOGGING;
     }
     ctx->base = event_base_new();
     if (ctx->base == NULL) {
         riak_log_context(ctx, RIAK_LOG_FATAL, "Could not construct an event base");
-        exit(1);
+        riak_context_free(&ctx);
+        return ERIAK_EVENT;
     }
 
-    return ctx;
+    riak_error err = riak_resolve_address(ctx, hostname, portnum, &(ctx->addrinfo));
+    if (err) {
+        riak_context_free(&ctx);
+        return ERIAK_DNS_RESOLUTION;
+    }
+    *context = ctx;
+    return ERIAK_OK;
 }
 
 riak_event_base*
@@ -94,6 +109,8 @@ void riak_context_free(riak_context **ctx) {
     riak_free_fn freer = (*ctx)->free_fn;
     (freer)(*ctx);
     *ctx = NULL;
+
+    if ((*ctx)->addrinfo) evutil_freeaddrinfo((*ctx)->addrinfo);
 
     // Since we will only clean up one context, let's shut down non-threadsafe logging here, too
     log4c_fini();

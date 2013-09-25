@@ -88,7 +88,6 @@ riak_get_response_free(riak_context      *ctx,
 riak_error
 riak_send_req(riak_event      *rev,
               riak_pb_message *req) {
-    riak_context     *ctx    = rev->context;
     riak_bufferevent *bev    = rev->bevent;
     riak_uint8_t      reqid  = req->msgid;
     riak_uint8_t     *msgbuf = req->data;
@@ -103,7 +102,7 @@ riak_send_req(riak_event      *rev,
         result = bufferevent_write(bev, (void*)msgbuf, len);
         if (result != 0) return ERIAK_WRITE;
     }
-    riak_log(ctx, RIAK_LOG_DEBUG, "Wrote %d bytes\n", (int)len);
+    riak_log(rev, RIAK_LOG_DEBUG, "Wrote %d bytes\n", (int)len);
     int i;
     for(i = 0; i < len; i++) {
         fprintf(stdout, "%02x", msgbuf[i]);

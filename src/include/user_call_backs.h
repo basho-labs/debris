@@ -42,4 +42,13 @@ void
 listkey_cb(riak_listkeys_response *response,
            void *ptr);
 
+typedef struct _riak_sync_wrapper {
+    riak_event    *rev;
+    void          *response;
+} riak_sync_wrapper;
+
+void
+riak_sync_cb(void *response,
+             void *ptr);
+
 #endif /* CALL_BACKS_H_ */

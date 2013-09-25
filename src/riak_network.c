@@ -84,7 +84,7 @@ riak_just_open_a_socket(riak_context  *ctx,
                                 addrinfo->ai_socktype,
                                 addrinfo->ai_protocol);
     if (sock < 0) {
-        riak_log_context(ctx, RIAK_LOG_FATAL, "Could not open a socket\n");
+        riak_log_context(ctx, RIAK_LOG_FATAL, "Could not just open a socket\n");
         return -1;
     }
 #if 0

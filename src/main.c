@@ -51,6 +51,7 @@ void usage(FILE *fp, char *progname) {
 }
 
 typedef struct {
+    riak_boolean_t async;
     riak_int32_t   iterate;
     riak_int32_t   port;
     riak_int32_t   timeout;
@@ -79,6 +80,7 @@ riak_parse_args(int        argc,
     int  c;
 
     bzero((void*)args, sizeof(riak_args));
+    args->async      = RIAK_FALSE;
     args->iterate    = 1;
     args->port       = 10017;
     args->timeout    = 10;
@@ -110,6 +112,7 @@ riak_parse_args(int        argc,
 
             // These options don't set a flag.
             // We distinguish them by their indices.
+            {"async",        no_argument,       NULL, 'a'},
             {"bucket",       required_argument, NULL, 'b'},
             {"host",         required_argument, NULL, 'h'},
             {"iterate",      required_argument, NULL, 'i'},
@@ -122,7 +125,7 @@ riak_parse_args(int        argc,
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "b:h:i:k:p:t:v:",
+        c = getopt_long (argc, argv, "ab:h:i:k:p:t:v:",
                         long_options, &option_index);
 
          // Detect the end of the options.
@@ -139,6 +142,10 @@ riak_parse_args(int        argc,
                 if (optarg)
                 printf (" with arg %s", optarg);
                 printf ("\n");
+                break;
+
+            case 'a':
+                args->async = RIAK_TRUE;
                 break;
 
             case 'b':
@@ -237,17 +244,15 @@ main(int   argc,
     event_enable_debug_mode();
 //    event_use_pthreads();
 
-    riak_context *ctx = riak_context_new_default();
-    riak_event *rev;
+    riak_context *ctx;
+    riak_error err = riak_context_new_default(&ctx, args.host, args.portnum);
+    if (err) {
+        exit(1);
+    }
+    riak_event  *rev;
     riak_object *obj;
+    riak_put_options put_options;
     int it;
-
-    riak_addrinfo *addrinfo;
-    riak_error err = riak_resolve_address(ctx, args.host, args.portnum, &addrinfo);
-    if (err) exit(1);
-
-    // If there was no error, we should have at least one answer so use the 1st
-    assert(addrinfo);
 
     for(it = 0; it < args.iterate; it++) {
         riak_log_context(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
@@ -257,25 +262,44 @@ main(int   argc,
         riak_binary_from_string(bucket_bin, args.bucket); // Not copied
         riak_binary_from_string(key_bin, args.key); // Not copied
 
-        rev = riak_event_new(ctx, addrinfo, NULL, NULL, NULL, NULL);
-        if (rev == NULL) {
-            return 1;
+        if (args.async) {
+            rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+            if (rev == NULL) {
+                return 1;
+            }
+            // For convenience have user callback know about its riak_event
+            riak_event_set_cb_data(rev, rev);
         }
-        // For convenience have user callback know about its riak_event
-        riak_event_set_cb_data(rev, rev);
         riak_pb_message *request = NULL;
 
         switch (operation) {
         case MSG_RPBPINGREQ:
-            riak_event_set_response_cb(rev, (riak_response_callback)ping_cb);
-            riak_encode_ping_request(rev, &request);
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)ping_cb);
+                riak_encode_ping_request(rev, &request);
+            } else {
+                err = riak_ping(ctx);
+                if (err) {
+                    fprintf(stderr, "No Ping\n");
+                }
+            }
             break;
         case MSG_RPBGETREQ:
-            riak_event_set_response_cb(rev, (riak_response_callback)get_cb);
-            riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &request);
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)get_cb);
+                riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &request);
+            } else {
+                char output[10240];
+                riak_get_response *get_response;
+                err = riak_get(ctx, &bucket_bin, &key_bin, NULL, &get_response);
+                if (err) {
+                    fprintf(stderr, "Get Problems\n");
+                }
+                riak_print_get_response(get_response, output, sizeof(output));
+                printf("%s\n", output);
+            }
             break;
         case MSG_RPBPUTREQ:
-            riak_event_set_response_cb(rev, (riak_response_callback)put_cb);
             obj = riak_object_new(ctx);
             if (obj == NULL) {
                 riak_log(rev, RIAK_LOG_FATAL, "Could not allocate a Riak Object");
@@ -283,11 +307,35 @@ main(int   argc,
             }
             riak_binary_from_string(obj->bucket, args.bucket); // Not copied
             riak_binary_from_string(obj->value, args.value); // Not copied
-            riak_encode_put_request(rev, obj, NULL, &request);
+            memset(&put_options, '\0', sizeof(riak_put_options));
+            put_options.has_return_head = RIAK_TRUE;
+            put_options.return_head = RIAK_TRUE;
+            put_options.has_return_body = RIAK_TRUE;
+            put_options.return_body = RIAK_TRUE;
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)put_cb);
+                riak_encode_put_request(rev, obj, &put_options, &request);
+            } else {
+                riak_put_response *put_response;
+                char output[10240];
+                err = riak_put(ctx, obj, &put_options, &put_response);
+                if (err) {
+                    fprintf(stderr, "Put Problems\n");
+                }
+                riak_print_put_response(put_response, output, sizeof(output));
+                printf("%s\n", output);
+            }
             break;
         case MSG_RPBDELREQ:
-            riak_event_set_response_cb(rev, (riak_response_callback)delete_cb);
-            riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &request);
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)delete_cb);
+                riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &request);
+            } else {
+                err = riak_delete(ctx, &bucket_bin, &key_bin, NULL);
+                if (err) {
+                    fprintf(stderr, "Delete Problems\n");
+                }
+            }
             break;
         case MSG_RPBLISTBUCKETSREQ:
             riak_event_set_response_cb(rev, (riak_response_callback)listbucket_cb);
@@ -301,19 +349,21 @@ main(int   argc,
             usage(stderr, argv[0]);
         }
 
-        err = riak_send_req(rev, request);
-        if (err) {
-            riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
-            exit(1);
+        if (args.async) {
+            err = riak_send_req(rev, request);
+            if (err) {
+                riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
+                exit(1);
+            }
         }
     }
     // What has been queued up
     fflush(stdout);
 
-    // Terminates only on error or timeout
-    event_base_dispatch(riak_context_get_base(ctx));
-
-    evutil_freeaddrinfo(addrinfo);
+    if (args.async) {
+        // Terminates only on error or timeout
+        event_base_dispatch(riak_context_get_base(ctx));
+    }
 
     return 0;
 }

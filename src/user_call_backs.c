@@ -38,15 +38,19 @@
 #include "riak_binary.h"
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
+#include "user_call_backs.h"
 
+//
+// TEST CALLBACKS
+//
 void ping_cb(riak_ping_response *response, void *ptr) {
-    riak_event   *rev = (riak_event*)ptr;
+    riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "ping_cb");
     riak_log(rev, RIAK_LOG_DEBUG, "PONG");
 }
 
 void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
-    riak_event   *rev = (riak_event*)ptr;
+    riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "listbucket_cb");
     riak_log(rev, RIAK_LOG_DEBUG, "n_buckets = %d", response->n_buckets);
     int i;
@@ -59,7 +63,7 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
 }
 
 void listkey_cb(riak_listkeys_response *response, void *ptr) {
-    riak_event   *rev = (riak_event*)ptr;
+    riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "listkey_cb");
     riak_log(rev, RIAK_LOG_DEBUG, "n_keys = %d", response->n_keys);
     int i;
@@ -72,29 +76,10 @@ void listkey_cb(riak_listkeys_response *response, void *ptr) {
 }
 
 void get_cb(riak_get_response *response, void *ptr) {
-    riak_event   *rev = (riak_event*)ptr;
+    riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "get_cb");
     char output[10240];
-    char buffer[1024];
-    int len = 10240;
-    riak_binary_hex_dump(response->vclock, buffer, 1024);
-    char *target = output;
-    int wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Unmodified: %s\n", (response->unmodified) ? "true" : "false");
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Deleted: %s\n", (response->deleted) ? "true" : "false");
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
-    len -= wrote;
-    target += wrote;
-    riak_uint32_t i;
-    for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump_ptr(response->content[i], target, len);
-    }
+    riak_print_get_response(response, output, sizeof(output));
     riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
 }
 
@@ -102,33 +87,24 @@ void put_cb(riak_put_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "put_cb\n");
     char output[10240];
-    char buffer[1024];
-    int len = 10240;
-    char *target = output;
-    int wrote;
-    if (response->has_vclock) {
-        riak_binary_hex_dump(response->vclock, buffer, 1024);
-        wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
-        len -= wrote;
-        target += wrote;
-    }
-    if (response->has_key) {
-        riak_binary_dump(response->key, buffer, 1024);
-        wrote = snprintf(target, len, "Key: %s\n", buffer);
-        len -= wrote;
-        target += wrote;
-    }
-    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
-    len -= wrote;
-    target += wrote;
-    riak_uint32_t i;
-    for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_dump_ptr(response->content[i], target, len);
-    }
+    riak_print_put_response(response, output, sizeof(output));
     riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
 }
 
 void delete_cb(riak_delete_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "delete_cb");
+}
+
+//
+// SYNCHRONOUS CALLBACKS
+//
+
+void
+riak_sync_cb(void *response,
+                  void *ptr) {
+    riak_sync_wrapper *wrapper = (riak_sync_wrapper*)ptr;
+    riak_event        *rev     = wrapper->rev;
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_sync_cb");
+    wrapper->response = response;
 }

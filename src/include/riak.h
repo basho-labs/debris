@@ -161,7 +161,7 @@ typedef struct _riak_error_response {
 } riak_error_response;
 
 typedef struct _riak_ping_response {
-// Nothing to see here
+    riak_boolean_t success;
 } riak_ping_response;
 
 // Based on RpbDelReq
@@ -188,16 +188,6 @@ typedef struct _riak_delete_response {
 } riak_delete_response;
 
 
-void riak_write_callback(struct bufferevent *bev, void *ptr);
-
-
-// basic ops
-void riak_ping(riak_context*);
-
-// we'll provide an async version
-// int riak_get(riak_context*, struct riak_get_options*, riak_get_callback*);
-// and a sync version that calls the async version:
-
 typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);
 
 typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
@@ -210,20 +200,62 @@ typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *re
 
 typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response, void *ptr);
 
+//
+// Basic Synchronous Operations
+//
+/**
+ * @brief Send a Ping Request
+ * @param ctx Riak Context
+ * @return ERIAK_OK on Pong response
+ */
 riak_error
-riak_get(riak_context*,
-         riak_binary *bucket,
-         riak_binary *key,
-         riak_get_options*,
-         riak_get_response_callback);
+riak_ping(riak_context  *ctx);
+
+/**
+ * @brief Synchronous Fetch request
+ * @param ctx Riak Context
+ * @param bucket Name of Riak bucket
+ * @param key Name of Riak key
+ * @param opts Fetch options
+ * @param response Returned Fetched data
+ * @returns Error code
+ */
+riak_error
+riak_get(riak_context              *ctx,
+         riak_binary               *bucket,
+         riak_binary               *key,
+         riak_get_options          *opts,
+         riak_get_response        **response);
+
+/**
+ * @brief Synchronous Store request
+ * @param ctx Riak Context
+ * @param obj Object to be stored in Riak
+ * @param opts Store options
+ * @param response Returned Fetched data
+ * @returns Error code
+ */
+riak_error
+riak_put(riak_context       *ctx,
+         riak_object        *obj,
+         riak_put_options   *opts,
+         riak_put_response **response);
+
+/**
+ * @brief Synchronous Delete request
+ * @param ctx Riak Context
+ * @param bucket Name of Riak bucket
+ * @param key Name of Riak key
+ * @param opts Delete options
+ * @returns Error code
+ */
+riak_error
+riak_delete(riak_context     *ctx,
+         riak_binary         *bucket,
+         riak_binary         *key,
+         riak_delete_options *opts);
 
 void riak_server_info(riak_context*);
-
-void riak_fetch(riak_context*);
-
-void riak_store(riak_context*);
-
-void riak_delete(riak_context*);
 
 void riak_bucket_set_props(riak_context*);
 

@@ -28,6 +28,9 @@ typedef enum riak_error_enum {
     ERIAK_DNS_RESOLUTION,
     ERIAK_OUT_OF_MEMORY,
     ERIAK_WRITE,
+    ERIAK_EVENT,
+    ERIAK_NO_PING,
+    ERIAK_LOGGING,
     ERIAK_LAST_ERRORNUM
 } riak_error;
 
@@ -36,7 +39,10 @@ static const char* errmsgs[] = {
     "No Error",
     "Problems resolving host name/port number",
     "Out of Memory",
-    "Write error"
+    "Write error",
+    "Riak Event error",
+    "Ping failure error",
+    "Logging failure",
     "SENTINEL FOR LAST ERROR MESSAGE"
 };
 #endif

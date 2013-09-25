@@ -95,6 +95,7 @@ riak_decode_ping_response(riak_event          *rev,
     if (response == NULL) {
         return ERIAK_OUT_OF_MEMORY;
     }
+    response->success = RIAK_TRUE;
     *resp = response;
 
     return ERIAK_OK;
@@ -195,7 +196,7 @@ riak_decode_get_response(riak_event         *rev,
     if (response == NULL) {
         return ERIAK_OUT_OF_MEMORY;
     }
-    bzero(response, sizeof(riak_get_response));
+    memset(response, '\0', sizeof(riak_get_response));
     response->_internal = rpbresp;
 
     if (rpbresp->has_vclock) {
@@ -226,6 +227,30 @@ riak_decode_get_response(riak_event         *rev,
     *resp = response;
 
     return ERIAK_OK;
+}
+
+void
+riak_print_get_response(riak_get_response *response,
+                        char              *target,
+                        riak_size_t        len) {
+    char buffer[1024];
+    riak_binary_hex_dump(response->vclock, buffer, sizeof(buffer));
+    int wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
+    len -= wrote;
+    target += wrote;
+    wrote = snprintf(target, len, "Unmodified: %s\n", (response->unmodified) ? "true" : "false");
+    len -= wrote;
+    target += wrote;
+    wrote = snprintf(target, len, "Deleted: %s\n", (response->deleted) ? "true" : "false");
+    len -= wrote;
+    target += wrote;
+    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
+    len -= wrote;
+    target += wrote;
+    riak_uint32_t i;
+    for(i = 0; i < response->n_content; i++) {
+        wrote = riak_object_dump_ptr(response->content[i], target, len);
+    }
 }
 
 void
@@ -359,7 +384,8 @@ riak_decode_put_response(riak_event         *rev,
     if (response == NULL) {
         return ERIAK_OUT_OF_MEMORY;
     }
-    bzero(response, sizeof(riak_put_response));
+    memset(response, '\0', sizeof(riak_put_response));
+    response->_internal = rpbresp;
     if (rpbresp->has_vclock) {
         response->has_vclock = RIAK_TRUE;
         riak_binary_from_pb_copy(response->vclock, rpbresp->vclock);
@@ -371,7 +397,7 @@ riak_decode_put_response(riak_event         *rev,
         riak_error err = riak_object_new_array(ctx, &(response->content), rpbresp->n_content);
         if (err != ERIAK_OK) {
             riak_free(ctx, response);
-            return 1;
+            return err;
         }
         response->n_content = rpbresp->n_content;
         for(i = 0; i < rpbresp->n_content; i++) {
@@ -387,6 +413,34 @@ riak_decode_put_response(riak_event         *rev,
     *resp = response;
 
     return ERIAK_OK;
+}
+
+void
+riak_print_put_response(riak_put_response *response,
+                        char              *target,
+                        riak_size_t        len) {
+
+    char buffer[1024];
+    int wrote;
+    if (response->has_vclock) {
+        riak_binary_hex_dump(response->vclock, buffer, sizeof(buffer));
+        wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
+        len -= wrote;
+        target += wrote;
+    }
+    if (response->has_key) {
+        riak_binary_dump(response->key, buffer, sizeof(buffer));
+        wrote = snprintf(target, len, "Key: %s\n", buffer);
+        len -= wrote;
+        target += wrote;
+    }
+    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
+    len -= wrote;
+    target += wrote;
+    riak_uint32_t i;
+    for(i = 0; i < response->n_content; i++) {
+        wrote = riak_object_dump_ptr(response->content[i], target, len);
+    }
 }
 
 void
@@ -690,6 +744,14 @@ riak_event_callback(riak_bufferevent *bev,
 }
 
 
+void riak_write_callback(riak_bufferevent *bev, void *ptr)
+{
+    riak_event *rev = (riak_event*)ptr;
+    struct evbuffer *buf = bufferevent_get_output(bev);
+    riak_log(rev, RIAK_LOG_DEBUG, "Ready for write with event %p.\n", (void*)buf);
+}
+
+
 // MAIN RESULT CALLBACK
 void
 riak_read_result_callback(riak_bufferevent *bev,
@@ -767,7 +829,11 @@ riak_read_result_callback(riak_bufferevent *bev,
         }
         if (msgid == MSG_RPBERRORRESP) {
             result = riak_decode_error_response(rev, pbresp, &err_response, &done_streaming);
-            riak_log(rev, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, err_response->errmsg.data);
+            // Convert error response to a null-terminated string
+            char errmsg[2048];
+            size_t len = (err_response->errmsg.len > sizeof(errmsg)-1) ? sizeof(errmsg)-1 : err_response->errmsg.len;
+            riak_strlcpy(errmsg, err_response->errmsg.data, len);
+            riak_log(rev, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, errmsg);
             if (rev->error_cb) (rev->error_cb)(err_response, rev->cb_data);
             exit(1);
         }

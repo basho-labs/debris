@@ -97,6 +97,15 @@ riak_event_callback(riak_bufferevent *bev,
                     void             *ptr);
 
 /**
+ * @brief Called by libevent when event is ready for writing
+ * @param bev Riak Bufferevent (libevent)
+ * @param ptr User-supplied pointer (Riak Event)
+ */
+void
+riak_write_callback(riak_bufferevent *bev,
+                    void             *ptr);
+
+/**
  * @brief Called by libevent on a read event
  * @param bev Riak Bufferevent (libevent)
  * @param ptr User-supplied pointer (Riak Event)
@@ -143,7 +152,7 @@ riak_encode_ping_request(riak_event       *rev,
  * @param resp Ping PBC Response
  */
 void
-riak_free_ping_response(riak_event           *rev,
+riak_free_ping_response(riak_event          *rev,
                         riak_ping_response **resp);
 
 /**
@@ -175,6 +184,17 @@ riak_decode_get_response(riak_event         *rev,
                          riak_pb_message    *pbresp,
                          riak_get_response **resp,
                          riak_boolean_t     *done);
+
+/**
+ * @brief Print a summary of a `riak_get_response`
+ * @param response Result from a Get request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_get_response(riak_get_response *response,
+                        char              *target,
+                        riak_size_t        len);
 
 /**
  * @brief Free get response
@@ -212,6 +232,17 @@ riak_decode_put_response(riak_event         *rev,
                          riak_pb_message    *pbresp,
                          riak_put_response **resp,
                          riak_boolean_t     *done);
+
+/**
+ * @brief Print a summary of a `riak_put_response`
+ * @param response Result from a Put request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_put_response(riak_put_response *response,
+                        char              *target,
+                        riak_size_t        len);
 
 /**
  * @brief Free put response

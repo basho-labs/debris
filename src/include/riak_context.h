@@ -26,6 +26,7 @@
 // TODO: one day make this configurable?
 #define RIAK_LOGGING_DEFAULT_CATEGORY   "com.basho.client.c"
 #define RIAK_LOGGING_MAX_LEN            256
+#define RIAK_HOST_MAX_LEN               256
 
 // per-thread
 // do we need a *shared* context to complement?
@@ -53,30 +54,39 @@ typedef struct _riak_context {
     riak_free_fn        free_fn;
     ProtobufCAllocator *pb_allocator;
     char                logging_category[RIAK_LOGGING_MAX_LEN];
-    riak_event_base    *base; // Is this the right location?
+    riak_event_base    *base; // Is this the right location? One per thread, so probably
+    char                hostname[RIAK_HOST_MAX_LEN];
+    char                portnum[RIAK_HOST_MAX_LEN]; // Keep as a string for debugging
+    riak_addrinfo      *addrinfo;
 } riak_context;
 
 
 /**
  * @brief Construct a Riak Context
+ * @param context Spanking new `riak_context` struct
  * @param alloc Memory allocator function (optional)
  * @param realloc Memory re-allocation function (optional)
  * @param freeme Memory releasing function (optional)
  * @param pb_alloc Memory allocator function for protocol buffers (optional)
  * @param pb_free Memory releasing function for protocol buffer (optional)
  * @param logging_category logging prefix (optional)
- * @returns Spanking new `riak_context` struct
+ * @param hostname Name of Riak server
+ * @param portnum Riak PBC port number
+ * @return Error code
  */
-riak_context*
-riak_context_new(riak_alloc_fn alloc,
-                 riak_realloc_fn realloc,
-                 riak_free_fn freeme,
-                 riak_pb_alloc_fn pb_alloc,
-                 riak_pb_free_fn pb_free,
-                 const char *logging_category);
+riak_error
+riak_context_new(riak_context    **context,
+                 const char       *hostname,
+                 const char       *portnum,
+                 riak_alloc_fn     alloc,
+                 riak_realloc_fn   realloc,
+                 riak_free_fn      freeme,
+                 riak_pb_alloc_fn  pb_alloc,
+                 riak_pb_free_fn   pb_free,
+                 const char       *logging_category);
 
 // By default use system's built-in memory management utilities (malloc/free)
-#define riak_context_new_default() riak_context_new(NULL,NULL,NULL,NULL,NULL,NULL)
+#define riak_context_new_default(C,H,P) riak_context_new((C),(H),(P),NULL,NULL,NULL,NULL,NULL,NULL)
 
 // Generic placeholder for message-specific callbacks
 typedef void (*riak_response_callback)(void *response, void *ptr);
