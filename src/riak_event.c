@@ -104,8 +104,11 @@ void riak_event_free(riak_event** re) {
     riak_event *rev = *re;
     riak_free_fn freer = rev->context->free_fn;
     if (rev->bevent) {
-        bufferevent_disable(rev->bevent, EV_READ|EV_WRITE);
+        //bufferevent_disable(rev->bevent, EV_READ|EV_WRITE);
         bufferevent_free(rev->bevent);
+    }
+    if (rev->request) {
+        riak_pb_message_free(rev->context, &(rev->request));
     }
     if (rev->fd) close(rev->fd);
     (freer)(*re);

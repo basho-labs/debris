@@ -844,7 +844,7 @@ riak_read_result_callback(riak_bufferevent *bev,
         if (rev->response_cb) (rev->response_cb)(response, rev->cb_data);
 
         // NOTE: Also frees the local buffer
-        riak_pb_message_free(ctx, &pbresp);
+        //riak_pb_message_free(ctx, &pbresp);
 
         // Something is amiss
         if (result)
@@ -855,8 +855,9 @@ riak_read_result_callback(riak_bufferevent *bev,
     fflush(stdout);
     event_base_dump_events(rev->base, stdout);
 
-    if (done_streaming)
-        bufferevent_free(bev);
+    if (done_streaming) {
+        riak_event_free(&rev);
+    }
 
     //sleep(1);
 }

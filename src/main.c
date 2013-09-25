@@ -270,13 +270,11 @@ main(int   argc,
             // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
         }
-        riak_pb_message *request = NULL;
-
         switch (operation) {
         case MSG_RPBPINGREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)ping_cb);
-                riak_encode_ping_request(rev, &request);
+                riak_encode_ping_request(rev, &(rev->request));
             } else {
                 err = riak_ping(ctx);
                 if (err) {
@@ -287,7 +285,7 @@ main(int   argc,
         case MSG_RPBGETREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)get_cb);
-                riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &request);
+                riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &(rev->request));
             } else {
                 char output[10240];
                 riak_get_response *get_response;
@@ -314,7 +312,7 @@ main(int   argc,
             put_options.return_body = RIAK_TRUE;
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)put_cb);
-                riak_encode_put_request(rev, obj, &put_options, &request);
+                riak_encode_put_request(rev, obj, &put_options, &(rev->request));
             } else {
                 riak_put_response *put_response;
                 char output[10240];
@@ -329,7 +327,7 @@ main(int   argc,
         case MSG_RPBDELREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)delete_cb);
-                riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &request);
+                riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &(rev->request));
             } else {
                 err = riak_delete(ctx, &bucket_bin, &key_bin, NULL);
                 if (err) {
@@ -339,18 +337,18 @@ main(int   argc,
             break;
         case MSG_RPBLISTBUCKETSREQ:
             riak_event_set_response_cb(rev, (riak_response_callback)listbucket_cb);
-            riak_encode_listbuckets_request(rev, &request);
+            riak_encode_listbuckets_request(rev, &(rev->request));
             break;
         case MSG_RPBLISTKEYSREQ:
             riak_event_set_response_cb(rev, (riak_response_callback)listkey_cb);
-            riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &request);
+            riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &(rev->request));
             break;
         default:
             usage(stderr, argv[0]);
         }
 
         if (args.async) {
-            err = riak_send_req(rev, request);
+            err = riak_send_req(rev, rev->request);
             if (err) {
                 riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
                 exit(1);

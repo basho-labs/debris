@@ -23,23 +23,38 @@
 #ifndef RIAK_EVENT_H_
 #define RIAK_EVENT_H_
 
+// Generic placeholder for message-specific callbacks
+typedef void (*riak_response_callback)(void *response, void *ptr);
+
+// Forward declarations
+struct _riak_event;
+struct _riak_pb_message;
+
+// Template for message-specific decoder
+typedef riak_error (*riak_response_decoder)(struct _riak_event      *rev,
+                                            struct _riak_pb_message *pbresp,
+                                            void                   **response,
+                                            riak_boolean_t          *done);
+
 // Essentially the state of the current event
 typedef struct _riak_event {
-    riak_context          *context;
-    riak_event_base       *base;
-    riak_bufferevent      *bevent;
-    riak_response_decoder  decoder;
-    riak_response_callback response_cb;
-    riak_response_callback error_cb;
-    void                  *cb_data;
-    riak_socket_t          fd;
+    riak_context            *context;
+    riak_event_base         *base;
+    riak_bufferevent        *bevent;
+    struct _riak_pb_message *request;
+    riak_response_decoder    decoder;
+    riak_response_callback   response_cb;
+    riak_response_callback   error_cb;
+    void                    *cb_data;
+    riak_socket_t            fd;
 
     // Current message being decoded
-    riak_uint32_t          position;
-    riak_uint32_t          msglen;
-    riak_uint8_t          *msgbuf;
-    riak_boolean_t         msglen_complete;
+    riak_uint32_t            position;
+    riak_uint32_t            msglen;
+    riak_uint8_t            *msgbuf;
+    riak_boolean_t           msglen_complete;
 } riak_event;
+
 
 /**
  * @brief Construct a Riak event

@@ -88,18 +88,6 @@ riak_context_new(riak_context    **context,
 // By default use system's built-in memory management utilities (malloc/free)
 #define riak_context_new_default(C,H,P) riak_context_new((C),(H),(P),NULL,NULL,NULL,NULL,NULL,NULL)
 
-// Generic placeholder for message-specific callbacks
-typedef void (*riak_response_callback)(void *response, void *ptr);
-
-// Forward declarations
-struct _riak_event;
-struct _riak_pb_message;
-
-// Template for message-specific decoder
-typedef riak_error (*riak_response_decoder)(struct _riak_event      *rev,
-                                            struct _riak_pb_message *pbresp,
-                                            void                   **response,
-                                            riak_boolean_t          *done);
 /**
  * @brief Gets the underlying event base
  * @param ctx Riak Context
