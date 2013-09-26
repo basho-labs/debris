@@ -75,9 +75,8 @@ riak_decode_error_response(riak_event           *rev,
 }
 
 void
-riak_free_error_response(riak_event           *rev,
+riak_free_error_response(riak_context         *ctx,
                          riak_error_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
     riak_error_response *response = *resp;
     rpb_error_resp__free_unpacked(response->_internal, ctx->pb_allocator);
     riak_free_ptr(ctx, resp);
@@ -117,9 +116,8 @@ riak_encode_ping_request(riak_event      *rev,
 
 
 void
-riak_free_ping_response(riak_event           *rev,
-                         riak_ping_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
+riak_free_ping_response(riak_context        *ctx,
+                        riak_ping_response **resp) {
     riak_free_ptr(ctx, resp);
 }
 
@@ -254,9 +252,8 @@ riak_print_get_response(riak_get_response *response,
 }
 
 void
-riak_free_get_response(riak_event         *rev,
+riak_free_get_response(riak_context       *ctx,
                        riak_get_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
     riak_get_response *response = *resp;
     if (response->n_content > 0) {
         riak_object_free_array(ctx, &(response->content), response->n_content);
@@ -358,9 +355,8 @@ riak_encode_put_request(riak_event       *rev,
 }
 
 void
-riak_free_put_request(riak_event         *rev,
+riak_free_put_request(riak_context       *ctx,
                       riak_put_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
     riak_put_response *response = *resp;
     rpb_put_resp__free_unpacked(response->_internal, ctx->pb_allocator);
     riak_free_ptr(ctx, resp);
@@ -444,9 +440,8 @@ riak_print_put_response(riak_put_response *response,
 }
 
 void
-riak_free_put_response(riak_event         *rev,
+riak_free_put_response(riak_context       *ctx,
                        riak_put_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
     riak_put_response *response = *resp;
     if (response->n_content > 0) {
         riak_object_free_array(ctx, &(response->content), response->n_content);
@@ -536,9 +531,8 @@ riak_decode_delete_response(riak_event            *rev,
 }
 
 void
-riak_free_delete_response(riak_event            *rev,
+riak_free_delete_response(riak_context           *ctx,
                           riak_delete_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
     riak_free_ptr(ctx, resp);
 }
 
@@ -610,9 +604,8 @@ riak_decode_listbuckets_response(riak_event                 *rev,
 
 
 void
-riak_free_listbuckets_response(riak_event                 *rev,
+riak_free_listbuckets_response(riak_context               *ctx,
                                riak_listbuckets_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
     riak_listbuckets_response *response = *resp;
     int i;
     for(i = 0; i < response->n_buckets; i++) {
@@ -697,9 +690,8 @@ riak_decode_listkeys_response(riak_event              *rev,
 }
 
 void
-riak_free_listkeys_response(riak_event                 *rev,
-                               riak_listkeys_response **resp) {
-    riak_context *ctx = (riak_context*)(rev->context);
+riak_free_listkeys_response(riak_context            *ctx,
+                            riak_listkeys_response **resp) {
     riak_listkeys_response *response = *resp;
     int i;
     for(i = 0; i < response->n_keys; i++) {

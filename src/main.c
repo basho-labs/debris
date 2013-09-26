@@ -295,6 +295,7 @@ main(int   argc,
                 }
                 riak_print_get_response(get_response, output, sizeof(output));
                 printf("%s\n", output);
+                riak_free_get_response(ctx, &get_response);
             }
             break;
         case MSG_RPBPUTREQ:
@@ -322,6 +323,7 @@ main(int   argc,
                 }
                 riak_print_put_response(put_response, output, sizeof(output));
                 printf("%s\n", output);
+                riak_free_put_response(ctx, &put_response);
             }
             break;
         case MSG_RPBDELREQ:

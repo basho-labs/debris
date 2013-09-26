@@ -129,11 +129,11 @@ riak_decode_error_response(riak_event           *rev,
                            riak_boolean_t       *done);
 /**
  * @brief Free memory used by an error response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp Error structure to be freed
  */
 void
-riak_free_error_response(riak_event           *rev,
+riak_free_error_response(riak_context         *ctx,
                          riak_error_response **resp);
 
 /**
@@ -148,11 +148,11 @@ riak_encode_ping_request(riak_event       *rev,
 
 /**
  * @brief Free memory from response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp Ping PBC Response
  */
 void
-riak_free_ping_response(riak_event          *rev,
+riak_free_ping_response(riak_context        *ctx,
                         riak_ping_response **resp);
 
 /**
@@ -198,11 +198,11 @@ riak_print_get_response(riak_get_response *response,
 
 /**
  * @brief Free get response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp Get response
  */
 void
-riak_free_get_response(riak_event         *rev,
+riak_free_get_response(riak_context       *ctx,
                        riak_get_response **resp);
 
 /**
@@ -246,11 +246,11 @@ riak_print_put_response(riak_put_response *response,
 
 /**
  * @brief Free put response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp Put message to be cleaned up
  */
 void
-riak_free_put_response(riak_event         *rev,
+riak_free_put_response(riak_context       *ctx,
                        riak_put_response **resp);
 
 /**
@@ -285,11 +285,11 @@ riak_decode_delete_response(riak_event            *rev,
 
 /**
  * @brief Free memory from response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp Delete PBC Response
  */
 void
-riak_free_delete_response(riak_event            *rev,
+riak_free_delete_response(riak_context          *ctx,
                           riak_delete_response **resp);
 
 /**
@@ -318,11 +318,11 @@ riak_decode_listbuckets_response(riak_event                 *rev,
 
 /**
  * @brief Free listbuckets response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp List buckets message to be cleaned up
  */
 void
-riak_free_listbuckets_response(riak_event                 *rev,
+riak_free_listbuckets_response(riak_context               *ctx,
                                riak_listbuckets_response **resp);
 
 /**
@@ -355,11 +355,11 @@ riak_decode_listkeys_response(riak_event              *rev,
 
 /**
  * @brief Free listkeys response
- * @param rev Riak Event
+ * @param ctx Riak Context
  * @param resp List keys message to be cleaned up
  */
 void
-riak_free_listkeys_response(riak_event              *rev,
+riak_free_listkeys_response(riak_context            *ctx,
                             riak_listkeys_response **resp);
 
 #endif

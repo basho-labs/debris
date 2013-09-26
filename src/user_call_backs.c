@@ -47,6 +47,7 @@ void ping_cb(riak_ping_response *response, void *ptr) {
     riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "ping_cb");
     riak_log(rev, RIAK_LOG_DEBUG, "PONG");
+    riak_free_ping_response(rev->context, &response);
 }
 
 void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
@@ -60,6 +61,7 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
         riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
     riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
+    riak_free_listbuckets_response(rev->context, &response);
 }
 
 void listkey_cb(riak_listkeys_response *response, void *ptr) {
@@ -73,6 +75,7 @@ void listkey_cb(riak_listkeys_response *response, void *ptr) {
         riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
     riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
+    riak_free_listkeys_response(rev->context, &response);
 }
 
 void get_cb(riak_get_response *response, void *ptr) {
@@ -81,6 +84,7 @@ void get_cb(riak_get_response *response, void *ptr) {
     char output[10240];
     riak_print_get_response(response, output, sizeof(output));
     riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
+    riak_free_get_response(rev->context, &response);
 }
 
 void put_cb(riak_put_response *response, void *ptr) {
@@ -89,11 +93,13 @@ void put_cb(riak_put_response *response, void *ptr) {
     char output[10240];
     riak_print_put_response(response, output, sizeof(output));
     riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
+    riak_free_put_response(rev->context, &response);
 }
 
 void delete_cb(riak_delete_response *response, void *ptr) {
     riak_event   *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "delete_cb");
+    riak_free_delete_response(rev->context, &response);
 }
 
 //
@@ -102,7 +108,7 @@ void delete_cb(riak_delete_response *response, void *ptr) {
 
 void
 riak_sync_cb(void *response,
-                  void *ptr) {
+             void *ptr) {
     riak_sync_wrapper *wrapper = (riak_sync_wrapper*)ptr;
     riak_event        *rev     = wrapper->rev;
     riak_log(rev, RIAK_LOG_DEBUG, "riak_sync_cb");
