@@ -27,15 +27,14 @@
 #include "user_call_backs.h"
 
 static riak_error
-riak_synchronous_request(riak_event      *rev,
-                         riak_pb_message *request,
-                         void           **response) {
+riak_synchronous_request(riak_event *rev,
+                         void      **response) {
     riak_event_set_response_cb(rev, (riak_response_callback)riak_sync_cb);
     riak_sync_wrapper wrapper;
     wrapper.rev = rev;
     riak_event_set_cb_data(rev, &wrapper);
 
-    riak_error err = riak_send_req(rev, request);
+    riak_error err = riak_send_req(rev, rev->request);
     if (err) {
         riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
         return err;
@@ -55,13 +54,12 @@ riak_ping(riak_context  *ctx) {
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_pb_message    *request  = NULL;
     riak_ping_response *response = NULL;
-    riak_error err = riak_encode_ping_request(rev, &request);
+    riak_error err = riak_encode_ping_request(rev, &(rev->request));
     if (err) {
         return err;
     }
-    err = riak_synchronous_request(rev, request, (void**)&response);
+    err = riak_synchronous_request(rev, (void**)&response);
     if (err) {
         return err;
     }
@@ -82,12 +80,11 @@ riak_get(riak_context      *ctx,
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_pb_message   *request  = NULL;
-    riak_error err = riak_encode_get_request(rev, bucket, key, opts, &request);
+    riak_error err = riak_encode_get_request(rev, bucket, key, opts, &(rev->request));
     if (err) {
         return err;
     }
-    err = riak_synchronous_request(rev, request, (void**)response);
+    err = riak_synchronous_request(rev, (void**)response);
     if (err) {
         return err;
     }
@@ -104,13 +101,11 @@ riak_put(riak_context      *ctx,
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_pb_message *request = NULL;
-
-    riak_error err = riak_encode_put_request(rev, obj, opts, &request);
+    riak_error err = riak_encode_put_request(rev, obj, opts, &(rev->request));
     if (err) {
         return err;
     }
-    err = riak_synchronous_request(rev, request, (void**)response);
+    err = riak_synchronous_request(rev, (void**)response);
     if (err) {
         return err;
     }
@@ -127,13 +122,12 @@ riak_delete(riak_context      *ctx,
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_pb_message *request  = NULL;
-    riak_error err = riak_encode_delete_request(rev, bucket, key, opts, &request);
+    riak_error err = riak_encode_delete_request(rev, bucket, key, opts, &(rev->request));
     if (err) {
         return err;
     }
     riak_get_response *response = NULL;
-    err = riak_synchronous_request(rev, request, (void**)&response);
+    err = riak_synchronous_request(rev, (void**)&response);
     if (err) {
         return err;
     }

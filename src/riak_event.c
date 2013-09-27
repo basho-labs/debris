@@ -35,7 +35,6 @@ riak_event_new(riak_context          *ctx,
                riak_response_callback error_cb,
                void                  *cb_data) {
 
-
     riak_event *rev = (riak_event*)(ctx->malloc_fn)(sizeof(riak_event));
     if (rev == NULL) {
         riak_log_context(ctx, RIAK_LOG_FATAL, "Could not allocate a riak_event");
