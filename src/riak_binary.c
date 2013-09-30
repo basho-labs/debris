@@ -116,18 +116,20 @@ riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
 
 //TODO: Figure out clean way to print UTF-8 encoding
 int
-riak_binary_print_ptr(riak_binary  *bin,
+riak_binary_print_ptr(riak_binary *bin,
                      char         *target,
                      riak_uint32_t len) {
-    int count = 0;
-    for( ; count < bin->len && count < len-1; count++) {
+    int i = 0;
+    for( ; i < (bin->len) && i < (len-1); i++) {
         char c = '.';
         // Non-printable characters are replaced by a dot
-        if (bin->data[count] >= 32) c = bin->data[count];
-        target[count] = c;
+        if (bin->data[i] >= 32) c = bin->data[i];
+        target[i] = c;
     }
-    if (len > 0) target[count] = '\0';
-    return count;
+    if (len > 0) {
+        target[i] = '\0';
+    }
+    return i;
 }
 
 int

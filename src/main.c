@@ -362,7 +362,7 @@ main(int   argc,
                     fprintf(stderr, "List keys Problems\n");
                 }
                 riak_print_listkeys_response(key_response, output, sizeof(output));
-                printf("%s\n", output);
+                riak_log_context(ctx, RIAK_LOG_DEBUG, "%s", output);
                 riak_free_listkeys_response(ctx, &key_response);
             }
             break;

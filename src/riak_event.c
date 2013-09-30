@@ -103,6 +103,7 @@ riak_event_set_response_decoder(riak_event           *rev,
 
 void riak_event_free(riak_event** re) {
     riak_event *rev = *re;
+    if (re == NULL) return;
     riak_free_fn freer = rev->context->free_fn;
     if (rev->bevent) {
         //bufferevent_disable(rev->bevent, EV_READ|EV_WRITE);

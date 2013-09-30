@@ -231,23 +231,33 @@ void
 riak_print_get_response(riak_get_response *response,
                         char              *target,
                         riak_size_t        len) {
+    riak_int32_t left_to_write = len;
+    riak_int32_t wrote;
     char buffer[1024];
     riak_binary_hex_print(response->vclock, buffer, sizeof(buffer));
-    int wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Unmodified: %s\n", (response->unmodified) ? "true" : "false");
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Deleted: %s\n", (response->deleted) ? "true" : "false");
-    len -= wrote;
-    target += wrote;
-    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
-    len -= wrote;
-    target += wrote;
+    if (left_to_write > 0) {
+        wrote = snprintf(target, left_to_write, "V-Clock: %s\n", buffer);
+        left_to_write -= wrote;
+        target += wrote;
+    }
+    if (left_to_write > 0) {
+        wrote = snprintf(target, left_to_write, "Unmodified: %s\n", (response->unmodified) ? "true" : "false");
+        left_to_write -= wrote;
+        target += wrote;
+    }
+    if (left_to_write > 0) {
+        wrote = snprintf(target, left_to_write, "Deleted: %s\n", (response->deleted) ? "true" : "false");
+        left_to_write -= wrote;
+        target += wrote;
+    }
+    if (left_to_write > 0) {
+        wrote = snprintf(target, left_to_write, "Objects: %d\n", response->n_content);
+        left_to_write -= wrote;
+        target += wrote;
+    }
     riak_uint32_t i;
-    for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_print(response->content[i], target, len);
+    for(i = 0; (i < response->n_content) && (left_to_write > 0); i++) {
+        wrote = riak_object_print(response->content[i], target, left_to_write);
     }
 }
 
@@ -417,25 +427,29 @@ riak_print_put_response(riak_put_response *response,
                         riak_size_t        len) {
 
     char buffer[1024];
-    int wrote;
-    if (response->has_vclock) {
+    riak_int32_t wrote;
+    riak_int32_t left_to_write = len;
+    if ((left_to_write > 0) && (response->has_vclock)) {
         riak_binary_hex_print(response->vclock, buffer, sizeof(buffer));
-        wrote = snprintf(target, len, "V-Clock: %s\n", buffer);
-        len -= wrote;
+        wrote = snprintf(target, left_to_write, "V-Clock: %s\n", buffer);
+        left_to_write -= wrote;
         target += wrote;
     }
-    if (response->has_key) {
+    if ((left_to_write > 0) && (response->has_key)) {
         riak_binary_print(response->key, buffer, sizeof(buffer));
-        wrote = snprintf(target, len, "Key: %s\n", buffer);
-        len -= wrote;
+        wrote = snprintf(target, left_to_write, "Key: %s\n", buffer);
+        left_to_write -= wrote;
         target += wrote;
     }
-    wrote = snprintf(target, len, "Objects: %d\n", response->n_content);
-    len -= wrote;
-    target += wrote;
+    if (left_to_write > 0) {
+
+        wrote = snprintf(target, left_to_write, "Objects: %d\n", response->n_content);
+        left_to_write -= wrote;
+        target += wrote;
+    }
     riak_uint32_t i;
-    for(i = 0; i < response->n_content; i++) {
-        wrote = riak_object_print(response->content[i], target, len);
+    for(i = 0; (i < response->n_content) && (left_to_write > 0); i++) {
+        wrote = riak_object_print(response->content[i], target, left_to_write);
     }
 }
 
@@ -666,6 +680,7 @@ riak_decode_listkeys_response(riak_event              *rev,
     riak_listkeys_response *response = *resp;
     // If this is NULL, there was no previous message
     if (response == NULL) {
+        riak_log(rev, RIAK_LOG_DEBUG, "Initializing listkey response");
         response = (ctx->malloc_fn)(sizeof(riak_listkeys_response));
         if (response == NULL) {
             return ERIAK_OUT_OF_MEMORY;
@@ -675,34 +690,34 @@ riak_decode_listkeys_response(riak_event              *rev,
     // Existing keys need some expansion, so copy the pointers
     // of the old keys to a new, larger array
     // TODO: Geometric reallocation to minimize extra mallocs, maybe?
-    riak_uint32_t offset = response->n_keys;
+    riak_uint32_t existing_keys   = response->n_keys;
+    riak_uint32_t additional_keys = listkeyresp->n_keys;
     if (response->keys != NULL) {
+        riak_log(rev, RIAK_LOG_DEBUG, "Reallocing listkey key array (total %d)", (additional_keys+existing_keys));
         //TODO: realloc() anyone?
-        riak_binary** new_keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary)*(listkeyresp->n_keys+offset));
+        riak_binary** new_keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary*)*(additional_keys+existing_keys));
         if (new_keys == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
-        int k;
-        for(k = 0; k < response->n_keys; k++) {
-            new_keys[k] = response->keys[k];
-        }
+        memcpy((void*)new_keys, (void*)response->keys, existing_keys*sizeof(riak_binary*));
         riak_free(ctx, response->keys);
         response->keys = new_keys;
     } else {
-        response->keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary)*(listkeyresp->n_keys));
+        riak_log(rev, RIAK_LOG_DEBUG, "Initializing listkey key array");
+        response->keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary*)*additional_keys);
         if (response->keys == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
     }
-    response->n_keys += listkeyresp->n_keys;
-    for(i = 0; i < listkeyresp->n_keys; i++) {
-        ProtobufCBinaryData binary = listkeyresp->keys[i];
-        response->keys[i+offset] = riak_binary_new(ctx, binary.len, binary.data);
-        if (response->keys[i+offset]->data == NULL) {
+    response->n_keys += additional_keys;
+    for(i = 0; i < additional_keys; i++) {
+        ProtobufCBinaryData *binary = &(listkeyresp->keys[i]);
+        response->keys[i+existing_keys] = riak_binary_new(ctx, binary->len, binary->data);
+        if (response->keys[i+existing_keys]->data == NULL) {
             int j;
             rpb_list_keys_resp__free_unpacked(listkeyresp, ctx->pb_allocator);
             for(j = 0; j < i; j++) {
-                riak_free(ctx, response->keys[j+offset]);
+                riak_free(ctx, response->keys[j+existing_keys]);
             }
             riak_free(ctx, response->keys);
             riak_free(ctx, response);
@@ -718,24 +733,25 @@ riak_decode_listkeys_response(riak_event              *rev,
     *done = response->done;
 
     // Expand the vector of internal RpbListKeysResp links as necessary
-    if (response->n_responses > 0) {
+    riak_uint32_t existing_pbs = response->n_responses;
+    if (existing_pbs > 0) {
+        riak_log(rev, RIAK_LOG_DEBUG, "Reallocing RpbListKeysResp cache to %d", existing_pbs+1);
         // TODO: realloc()
-        RpbListKeysResp **new_internal = (RpbListKeysResp**)(ctx->malloc_fn)(sizeof(RpbListKeysResp*)*(response->n_responses+1));
+        RpbListKeysResp **new_internal = (RpbListKeysResp**)(ctx->malloc_fn)(sizeof(RpbListKeysResp*)*(existing_pbs+1));
         if (new_internal == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
-        for(i = 0; i < response->n_responses; i++) {
-            new_internal[i] = response->_internal[i];
-        }
+        memcpy((void*)new_internal, (void*)response->_internal, sizeof(RpbListKeysResp*)*existing_pbs);
         riak_free(ctx, response->_internal);
         response->_internal = new_internal;
     } else {
+        riak_log(rev, RIAK_LOG_DEBUG, "Initializing RpbListKeysResp cache");
         response->_internal = (RpbListKeysResp **)(ctx->malloc_fn)(sizeof(RpbListKeysResp*));
         if (response->_internal == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
     }
-    response->_internal[response->n_responses] = listkeyresp;
+    response->_internal[existing_pbs] = listkeyresp;
     response->n_responses++;
     *resp = response;
 
@@ -747,18 +763,23 @@ riak_print_listkeys_response(riak_listkeys_response *response,
                              char                   *target,
                              riak_size_t             len) {
     int i;
-    riak_size_t written = 0;
+    riak_size_t wrote = 0;
+    riak_int32_t left_to_write = len;
     char name[2048];
-    written = snprintf(target, len, "n_keys = %d\n", response->n_keys);
-    len -= written;
-    target += written;
-    for(i = 0; i < response->n_keys; i++) {
-        riak_binary_print_ptr(response->keys[i], name, sizeof(name));
-        written = snprintf(target, len, "%d - %s\n", i, name);
-        len -= written;
-        target += written;
+    if (left_to_write > 0) {
+        wrote = snprintf(target, left_to_write, "n_keys = %d\n", response->n_keys);
+        left_to_write -= wrote;
+        target += wrote;
     }
-    snprintf(target, len, "done = %d", response->done);
+    for(i = 0; (left_to_write > 0) && (i < response->n_keys); i++) {
+        riak_binary_print_ptr(response->keys[i], name, sizeof(name));
+        wrote = snprintf(target, left_to_write, "%d - %s\n", i, name);
+        left_to_write -= wrote;
+        target += wrote;
+    }
+    if (left_to_write > 0) {
+        snprintf(target, left_to_write, "done = %d", response->done);
+    }
 }
 
 void

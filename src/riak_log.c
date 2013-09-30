@@ -47,7 +47,7 @@ void riak_log(riak_event *rev, riak_log_level_t level, const char *format, ...) 
     log4c_category_t *category = log4c_category_get(rev->context->logging_category);
     // Prefix with the file descriptor
     // TODO: Get rid of copying format string
-    char formatted[256];
+    char formatted[2048];
     snprintf(formatted, sizeof(formatted), "[%d] %s", rev->fd, format);
 
     va_list va;

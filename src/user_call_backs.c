@@ -70,8 +70,9 @@ void listkey_cb(riak_listkeys_response *response, void *ptr) {
     riak_log(rev, RIAK_LOG_DEBUG, "listkey_cb");
     char output[10240];
     riak_print_listkeys_response(response, output, sizeof(output));
-    riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
-    riak_free_listkeys_response(rev->context, (riak_listkeys_response**)&(rev->response));
+    riak_log(rev, RIAK_LOG_DEBUG, "%s", output);
+    fflush(stdout);
+    riak_free_listkeys_response(rev->context, (riak_listkeys_response**)&(response));
 }
 
 void get_cb(riak_get_response *response, void *ptr) {
