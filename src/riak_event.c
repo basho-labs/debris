@@ -50,6 +50,8 @@ riak_event_new(riak_context          *ctx,
     rev->msglen = 0;
     rev->msgbuf = NULL;
     rev->msglen_complete = RIAK_FALSE;
+    rev->request = NULL;
+    rev->response = NULL;
 
     // TODO: Implement retry logic
     rev->fd = riak_just_open_a_socket(ctx, ctx->addrinfo);

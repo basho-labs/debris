@@ -134,3 +134,41 @@ riak_delete(riak_context      *ctx,
 
     return ERIAK_OK;
 }
+
+riak_error
+riak_listbuckets(riak_context               *ctx,
+                 riak_listbuckets_response **response) {
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    if (rev == NULL) {
+        return ERIAK_EVENT;
+    }
+    riak_error err = riak_encode_listbuckets_request(rev, &(rev->request));
+    if (err) {
+        return err;
+    }
+    err = riak_synchronous_request(rev, (void**)response);
+    if (err) {
+        return err;
+    }
+    return ERIAK_OK;
+}
+
+riak_error
+riak_listkeys(riak_context            *ctx,
+              riak_binary             *bucket,
+              riak_uint32_t            timeout,
+              riak_listkeys_response **response) {
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    if (rev == NULL) {
+        return ERIAK_EVENT;
+    }
+    riak_error err = riak_encode_listkeys_request(rev, bucket, timeout, &(rev->request));
+    if (err) {
+        return err;
+    }
+    err = riak_synchronous_request(rev, (void**)response);
+    if (err) {
+        return err;
+    }
+    return ERIAK_OK;
+}

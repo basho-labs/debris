@@ -329,7 +329,7 @@ riak_free_listbuckets_response(riak_context               *ctx,
  * @brief Create a request to find all keys in a bucket
  * @param rev Riak Event
  * @param bucket Name of Riak bucket
- * @paran timeout How long to wait for a response
+ * @param timeout How long to wait for a response
  * @param req Returned listbuckets request
  * @return Error if out of memory
  */
@@ -340,7 +340,7 @@ riak_encode_listkeys_request(riak_event       *rev,
                                  riak_pb_message **req);
 
 /**
- * @brief Translate PBC listbuckets response into Riak strucuture
+ * @brief Translate PBC listkeys response into Riak structure
  * @param rev Riak Event
  * @param pbresp PBC response message
  * @param resp Returned Riak response structure
@@ -352,6 +352,17 @@ riak_decode_listkeys_response(riak_event              *rev,
                               riak_pb_message         *pbresp,
                               riak_listkeys_response **resp,
                               riak_boolean_t          *done);
+
+/**
+ * @brief Print a summary of a `riak_listkeys_response`
+ * @param response Result from a Listkeys request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_listkeys_response(riak_listkeys_response *response,
+                             char                   *target,
+                             riak_size_t             len);
 
 /**
  * @brief Free listkeys response

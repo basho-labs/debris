@@ -41,7 +41,6 @@ typedef struct _riak_event {
     riak_context            *context;
     riak_event_base         *base;
     riak_bufferevent        *bevent;
-    struct _riak_pb_message *request;
     riak_response_decoder    decoder;
     riak_response_callback   response_cb;
     riak_response_callback   error_cb;
@@ -53,6 +52,10 @@ typedef struct _riak_event {
     riak_uint32_t            msglen;
     riak_uint8_t            *msgbuf;
     riak_boolean_t           msglen_complete;
+
+    // Results of message translation
+    struct _riak_pb_message *request;
+    void                    *response;
 } riak_event;
 
 

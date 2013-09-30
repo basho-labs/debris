@@ -611,8 +611,12 @@ riak_free_listbuckets_response(riak_context               *ctx,
     for(i = 0; i < response->n_buckets; i++) {
         riak_free(ctx, response->buckets[i]);
     }
-    riak_free(ctx, response->buckets);
-    rpb_list_buckets_resp__free_unpacked(response->_internal, ctx->pb_allocator);
+    if (response->buckets) {
+        riak_free(ctx, response->buckets);
+    }
+    if (response->_internal) {
+        rpb_list_buckets_resp__free_unpacked(response->_internal, ctx->pb_allocator);
+    }
     riak_free_ptr(ctx, resp);
 }
 
@@ -648,6 +652,7 @@ riak_encode_listkeys_request(riak_event       *rev,
 
 }
 
+// STREAMING MESSAGE
 riak_error
 riak_decode_listkeys_response(riak_event              *rev,
                               riak_pb_message         *pbresp,
@@ -657,20 +662,47 @@ riak_decode_listkeys_response(riak_event              *rev,
     riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_listkeys_response");
     RpbListKeysResp *listkeyresp = rpb_list_keys_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     int i;
-    riak_listkeys_response *response = (ctx->malloc_fn)(sizeof(riak_listkeys_response));
-    response->keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary)*(listkeyresp->n_keys));
-    if (response->keys == NULL) {
-        return ERIAK_OUT_OF_MEMORY;
+    // Initialize from an existing response
+    riak_listkeys_response *response = *resp;
+    // If this is NULL, there was no previous message
+    if (response == NULL) {
+        response = (ctx->malloc_fn)(sizeof(riak_listkeys_response));
+        if (response == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+        memset((void*)response, '\0', sizeof(riak_listkeys_response));
     }
-    response->n_keys = listkeyresp->n_keys;
+    // Existing keys need some expansion, so copy the pointers
+    // of the old keys to a new, larger array
+    // TODO: Geometric reallocation to minimize extra mallocs, maybe?
+    riak_uint32_t offset = response->n_keys;
+    if (response->keys != NULL) {
+        //TODO: realloc() anyone?
+        riak_binary** new_keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary)*(listkeyresp->n_keys+offset));
+        if (new_keys == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+        int k;
+        for(k = 0; k < response->n_keys; k++) {
+            new_keys[k] = response->keys[k];
+        }
+        riak_free(ctx, response->keys);
+        response->keys = new_keys;
+    } else {
+        response->keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary)*(listkeyresp->n_keys));
+        if (response->keys == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+    }
+    response->n_keys += listkeyresp->n_keys;
     for(i = 0; i < listkeyresp->n_keys; i++) {
         ProtobufCBinaryData binary = listkeyresp->keys[i];
-        response->keys[i] = riak_binary_new(ctx, binary.len, binary.data);
-        if (response->keys[i]->data == NULL) {
+        response->keys[i+offset] = riak_binary_new(ctx, binary.len, binary.data);
+        if (response->keys[i+offset]->data == NULL) {
             int j;
             rpb_list_keys_resp__free_unpacked(listkeyresp, ctx->pb_allocator);
             for(j = 0; j < i; j++) {
-                riak_free(ctx, response->keys[j]);
+                riak_free(ctx, response->keys[j+offset]);
             }
             riak_free(ctx, response->keys);
             riak_free(ctx, response);
@@ -684,9 +716,49 @@ riak_decode_listkeys_response(riak_event              *rev,
         response->done = listkeyresp->done;
     }
     *done = response->done;
+
+    // Expand the vector of internal RpbListKeysResp links as necessary
+    if (response->n_responses > 0) {
+        // TODO: realloc()
+        RpbListKeysResp **new_internal = (RpbListKeysResp**)(ctx->malloc_fn)(sizeof(RpbListKeysResp*)*(response->n_responses+1));
+        if (new_internal == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+        for(i = 0; i < response->n_responses; i++) {
+            new_internal[i] = response->_internal[i];
+        }
+        riak_free(ctx, response->_internal);
+        response->_internal = new_internal;
+    } else {
+        response->_internal = (RpbListKeysResp **)(ctx->malloc_fn)(sizeof(RpbListKeysResp*));
+        if (response->_internal == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+    }
+    response->_internal[response->n_responses] = listkeyresp;
+    response->n_responses++;
     *resp = response;
 
     return ERIAK_OK;
+}
+
+void
+riak_print_listkeys_response(riak_listkeys_response *response,
+                             char                   *target,
+                             riak_size_t             len) {
+    int i;
+    riak_size_t written = 0;
+    char name[2048];
+    written = snprintf(target, len, "n_keys = %d\n", response->n_keys);
+    len -= written;
+    target += written;
+    for(i = 0; i < response->n_keys; i++) {
+        riak_binary_print_ptr(response->keys[i], name, sizeof(name));
+        written = snprintf(target, len, "%d - %s\n", i, name);
+        len -= written;
+        target += written;
+    }
+    snprintf(target, len, "done = %d", response->done);
 }
 
 void
@@ -698,7 +770,12 @@ riak_free_listkeys_response(riak_context            *ctx,
         riak_free(ctx, response->keys[i]);
     }
     riak_free(ctx, response->keys);
-    rpb_list_keys_resp__free_unpacked(response->_internal, ctx->pb_allocator);
+    if (response->n_responses > 0) {
+        for(i = 0; i < response->n_responses; i++) {
+            rpb_list_keys_resp__free_unpacked(response->_internal[i], ctx->pb_allocator);
+        }
+        riak_free(ctx, response->_internal);
+    }
     riak_free_ptr(ctx, resp);
 }
 
@@ -811,7 +888,6 @@ riak_read_result_callback(riak_bufferevent *bev,
         rev->msglen_complete = RIAK_FALSE;
 
         // Response varies by data type
-        void *response = NULL;
         riak_error_response *err_response = NULL;
         // Assume we are doing a single loop, unless told otherwise
         done_streaming = RIAK_TRUE;
@@ -830,13 +906,12 @@ riak_read_result_callback(riak_bufferevent *bev,
             exit(1);
         }
         // Decode the message from Protocol Buffers
-        result = (rev->decoder)(rev, pbresp, &response, &done_streaming);
+        result = (rev->decoder)(rev, pbresp, &(rev->response), &done_streaming);
 
-        // Call the user-defined callback for this message
-        if (rev->response_cb) (rev->response_cb)(response, rev->cb_data);
-
-        // NOTE: Also frees the local buffer
-        riak_pb_message_free(ctx, &pbresp);
+        // Call the user-defined callback for this message, when finished
+        if (done_streaming) {
+            if (rev->response_cb) (rev->response_cb)(rev->response, rev->cb_data);
+        }
 
         // Something is amiss
         if (result)

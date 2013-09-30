@@ -61,21 +61,17 @@ void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
         riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
     }
     riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
+    // TODO: Grow streaming objects
     riak_free_listbuckets_response(rev->context, &response);
 }
 
 void listkey_cb(riak_listkeys_response *response, void *ptr) {
     riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "listkey_cb");
-    riak_log(rev, RIAK_LOG_DEBUG, "n_keys = %d", response->n_keys);
-    int i;
-    char name[1024];
-    for(i = 0; i < response->n_keys; i++) {
-        riak_binary_print_ptr(response->keys[i], name, 1024);
-        riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
-    }
-    riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
-    riak_free_listkeys_response(rev->context, &response);
+    char output[10240];
+    riak_print_listkeys_response(response, output, sizeof(output));
+    riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
+    riak_free_listkeys_response(rev->context, (riak_listkeys_response**)&(rev->response));
 }
 
 void get_cb(riak_get_response *response, void *ptr) {

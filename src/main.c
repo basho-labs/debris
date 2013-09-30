@@ -338,12 +338,33 @@ main(int   argc,
             }
             break;
         case MSG_RPBLISTBUCKETSREQ:
-            riak_event_set_response_cb(rev, (riak_response_callback)listbucket_cb);
-            riak_encode_listbuckets_request(rev, &(rev->request));
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)listbucket_cb);
+                riak_encode_listbuckets_request(rev, &(rev->request));
+            } else {
+                riak_listbuckets_response *bucket_response;
+                err = riak_listbuckets(ctx, &bucket_response);
+                if (err) {
+                    fprintf(stderr, "List buckets Problems\n");
+                }
+                riak_free_listbuckets_response(ctx, &bucket_response);
+           }
             break;
         case MSG_RPBLISTKEYSREQ:
-            riak_event_set_response_cb(rev, (riak_response_callback)listkey_cb);
-            riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &(rev->request));
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)listkey_cb);
+                riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &(rev->request));
+            } else {
+                riak_listkeys_response *key_response;
+                char output[10240];
+                err = riak_listkeys(ctx, &bucket_bin, args.timeout * 1000, &key_response);
+                if (err) {
+                    fprintf(stderr, "List keys Problems\n");
+                }
+                riak_print_listkeys_response(key_response, output, sizeof(output));
+                printf("%s\n", output);
+                riak_free_listkeys_response(ctx, &key_response);
+            }
             break;
         default:
             usage(stderr, argv[0]);

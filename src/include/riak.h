@@ -136,20 +136,22 @@ typedef struct _riak_put_options {
 
 // Based on RpbListBucketsResp
 typedef struct _riak_listbuckets_response {
-    riak_uint32_t       n_buckets;
-    riak_binary       **buckets; // Array of pointers to allow growth
-    riak_boolean_t      done;
+    riak_uint32_t        n_buckets;
+    riak_binary        **buckets; // Array of pointers to allow growth
+    riak_boolean_t       done;
 
+    riak_uint32_t        n_responses;
     RpbListBucketsResp *_internal;
 } riak_listbuckets_response;
 
 // Based on RpbListKeysResp
 typedef struct _riak_listkeys_response {
-    riak_uint32_t    n_keys;
-    riak_binary    **keys; // Array of pointers to allow growth
-    riak_boolean_t   done;
+    riak_uint32_t     n_keys;
+    riak_binary     **keys; // Array of pointers to allow growth
+    riak_boolean_t    done;
 
-    RpbListKeysResp *_internal;
+    riak_uint32_t     n_responses;
+    RpbListKeysResp **_internal;
 } riak_listkeys_response;
 
 // Based on RpbErrorResp
@@ -255,13 +257,36 @@ riak_delete(riak_context     *ctx,
          riak_binary         *key,
          riak_delete_options *opts);
 
+/**
+ * @brief List all of the buckets on a server
+ * @param ctx Riak Context
+ * @param response Returned collection of bucket names
+ * @return ERIAK_OK on Pong response
+ */
+riak_error
+riak_listbuckets(riak_context               *ctx,
+                 riak_listbuckets_response **repsonse);
+
+/**
+ * @brief List all of the keys in a bucket
+ * @param ctx Riak Context
+ * @param bucket Name of bucket
+ * @param timeout How long to wait for a response
+ * @param response Returned collection of key names
+ * @return ERIAK_OK on Pong response
+ */
+riak_error
+riak_listkeys(riak_context            *ctx,
+              riak_binary             *bucket,
+              riak_uint32_t            timeout,
+              riak_listkeys_response **repsonse);
+
 void riak_server_info(riak_context*);
 
 void riak_bucket_set_props(riak_context*);
 
 void riak_bucket_get_props(riak_context*);
 
-//void riak_list_buckets(riak_context*);
 int riak_list_buckets(riak_context *ctx);
 
 void riak_list_keys(riak_context*);
