@@ -51,6 +51,17 @@ typedef struct _riak_binary {
 
 #include "riak_object.h"
 
+// Based on RpbGetServerInfoResp
+typedef struct _riak_serverinfo_response
+{
+    riak_boolean_t        has_node;
+    riak_binary           node;
+    riak_boolean_t        has_server_version;
+    riak_binary           server_version;
+
+    RpbGetServerInfoResp *_internal;
+} riak_serverinfo_response;
+
 // Based on RpbGetResp
 typedef struct _riak_get_response {
     riak_boolean_t has_vclock;
@@ -192,6 +203,8 @@ typedef struct _riak_delete_response {
 
 typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);
 
+typedef void (*riak_serverinfo_response_callback)(riak_serverinfo_response *response, void *ptr);
+
 typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
 
 typedef void (*riak_put_response_callback)(riak_put_response *response, void *ptr);
@@ -205,6 +218,7 @@ typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response
 //
 // Basic Synchronous Operations
 //
+
 /**
  * @brief Send a Ping Request
  * @param ctx Riak Context
@@ -212,6 +226,16 @@ typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response
  */
 riak_error
 riak_ping(riak_context  *ctx);
+
+/**
+ * @brief Send a Server Info Request
+ * @param ctx Riak Context
+ * @param response Returned Fetched data
+ * @returns Error code
+ */
+riak_error
+riak_serverinfo(riak_context              *ctx,
+                riak_serverinfo_response **response);
 
 /**
  * @brief Synchronous Fetch request
@@ -280,8 +304,6 @@ riak_listkeys(riak_context            *ctx,
               riak_binary             *bucket,
               riak_uint32_t            timeout,
               riak_listkeys_response **repsonse);
-
-void riak_server_info(riak_context*);
 
 void riak_bucket_set_props(riak_context*);
 

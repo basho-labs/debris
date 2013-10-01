@@ -27,6 +27,9 @@ void
 ping_cb(riak_ping_response *response,
         void *ptr);
 void
+serverinfo_cb(riak_serverinfo_response *response,
+              void *ptr);
+void
 get_cb(riak_get_response *response,
        void *ptr);
 void
@@ -50,5 +53,34 @@ typedef struct _riak_sync_wrapper {
 void
 riak_sync_cb(void *response,
              void *ptr);
+
+/**
+ * @brief Called by libevent when event posts
+ * @param bev Riak Bufferevent (libevent)
+ * @param ptr User-supplied pointer (Riak Event)
+ */
+void
+riak_event_callback(riak_bufferevent *bev,
+                    short             events,
+                    void             *ptr);
+
+/**
+ * @brief Called by libevent when event is ready for writing
+ * @param bev Riak Bufferevent (libevent)
+ * @param ptr User-supplied pointer (Riak Event)
+ */
+void
+riak_write_callback(riak_bufferevent *bev,
+                    void             *ptr);
+
+/**
+ * @brief Called by libevent on a read event
+ * @param bev Riak Bufferevent (libevent)
+ * @param ptr User-supplied pointer (Riak Event)
+ */
+void
+riak_read_result_callback(riak_bufferevent *bev,
+                          void             *ptr);
+
 
 #endif /* CALL_BACKS_H_ */

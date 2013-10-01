@@ -38,7 +38,7 @@
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_network.h"
-#include "user_call_backs.h"
+#include "riak_call_backs.h"
 
 void usage(FILE *fp, char *progname) {
     fprintf(fp, "Usage:\n");
@@ -95,20 +95,20 @@ riak_parse_args(int        argc,
     while (1) {
         static struct option long_options[] = {
             // These options set a flag.
-            {"get",          no_argument, &operation, MSG_RPBGETREQ},
-            {"put",          no_argument, &operation, MSG_RPBPUTREQ},
-            {"list-buckets", no_argument, &operation, MSG_RPBLISTBUCKETSREQ},
-            {"ping",         no_argument, &operation, MSG_RPBPINGREQ},
-            {"get-clident",  no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
-            {"set-clident",  no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
-            {"server-info",  no_argument, &operation, MSG_RPBGETSERVERINFOREQ},
             {"delete",       no_argument, &operation, MSG_RPBDELREQ},
-            {"list-keys",    no_argument, &operation, MSG_RPBLISTKEYSREQ},
             {"get-bucket",   no_argument, &operation, MSG_RPBGETBUCKETREQ},
-            {"set-bucket",   no_argument, &operation, MSG_RPBSETBUCKETREQ},
-            {"map-reduce",   no_argument, &operation, MSG_RPBMAPREDREQ},
+            {"get-clident",  no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
+            {"get",          no_argument, &operation, MSG_RPBGETREQ},
             {"index",        no_argument, &operation, MSG_RPBINDEXRESP},
+            {"list-buckets", no_argument, &operation, MSG_RPBLISTBUCKETSREQ},
+            {"list-keys",    no_argument, &operation, MSG_RPBLISTKEYSREQ},
+            {"map-reduce",   no_argument, &operation, MSG_RPBMAPREDREQ},
+            {"ping",         no_argument, &operation, MSG_RPBPINGREQ},
+            {"put",          no_argument, &operation, MSG_RPBPUTREQ},
             {"search",       no_argument, &operation, MSG_RPBSEARCHQUERYREQ},
+            {"server-info",  no_argument, &operation, MSG_RPBGETSERVERINFOREQ},
+            {"set-bucket",   no_argument, &operation, MSG_RPBSETBUCKETREQ},
+            {"set-clident",  no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
 
             // These options don't set a flag.
             // We distinguish them by their indices.
@@ -280,6 +280,22 @@ main(int   argc,
                 if (err) {
                     fprintf(stderr, "No Ping\n");
                 }
+            }
+            break;
+        case MSG_RPBGETSERVERINFOREQ:
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)serverinfo_cb);
+                riak_encode_serverinfo_request(rev, &(rev->request));
+            } else {
+                char output[10240];
+                riak_serverinfo_response *serverinfo_response;
+                err = riak_serverinfo(ctx, &serverinfo_response);
+                if (err) {
+                    fprintf(stderr, "Server Info Problems\n");
+                }
+                riak_print_serverinfo_response(serverinfo_response, output, sizeof(output));
+                printf("%s\n", output);
+                riak_free_serverinfo_response(ctx, &serverinfo_response);
             }
             break;
         case MSG_RPBGETREQ:

@@ -27,6 +27,7 @@
 #include "riak_utils.h"
 #include "riak_event.h"
 #include "riak_network.h"
+#include "riak_call_backs.h"
 
 riak_event*
 riak_event_new(riak_context          *ctx,

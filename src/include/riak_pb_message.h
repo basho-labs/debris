@@ -43,13 +43,12 @@
 #define MSG_RPBGETREQ               9
 #define MSG_RPBGETRESP              10
 #define MSG_RPBPUTREQ               11
-
-// 0 length
 #define MSG_RPBPUTRESP              12
-
 #define MSG_RPBDELREQ               13
 #define MSG_RPBDELRESP              14
 #define MSG_RPBLISTBUCKETSREQ       15
+
+// streaming
 #define MSG_RPBLISTBUCKETSRESP      16
 #define MSG_RPBLISTKEYSREQ          17
 
@@ -85,34 +84,6 @@ riak_pb_message_new(riak_context *ctx,
 void
 riak_pb_message_free(riak_context     *ctx,
                      riak_pb_message **pb);
-
-/**
- * @brief Called by libevent when event posts
- * @param bev Riak Bufferevent (libevent)
- * @param ptr User-supplied pointer (Riak Event)
- */
-void
-riak_event_callback(riak_bufferevent *bev,
-                    short             events,
-                    void             *ptr);
-
-/**
- * @brief Called by libevent when event is ready for writing
- * @param bev Riak Bufferevent (libevent)
- * @param ptr User-supplied pointer (Riak Event)
- */
-void
-riak_write_callback(riak_bufferevent *bev,
-                    void             *ptr);
-
-/**
- * @brief Called by libevent on a read event
- * @param bev Riak Bufferevent (libevent)
- * @param ptr User-supplied pointer (Riak Event)
- */
-void
-riak_read_result_callback(riak_bufferevent *bev,
-                          void             *ptr);
 
 /**
  * @brief Convert PBC error response into user-readable data type
@@ -154,6 +125,51 @@ riak_encode_ping_request(riak_event       *rev,
 void
 riak_free_ping_response(riak_context        *ctx,
                         riak_ping_response **resp);
+
+/**
+ * @brief Build a server info request
+ * @param rev Riak Event
+ * @param req Created PB message
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_serverinfo_request(riak_event       *rev,
+                               riak_pb_message **req);
+
+/**
+ * @brief Translate PBC message to Riak message
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer message
+ * @param done Returned flag set to true if finished streaming
+ * @param resp Returned Get message
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_serverinfo_response(riak_event                *rev,
+                                riak_pb_message           *pbresp,
+                                riak_serverinfo_response **resp,
+                                riak_boolean_t            *done);
+
+/**
+ * @brief Print a summary of a `riak_serverinfo_response`
+ * @param response Result from a Server Info request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_serverinfo_response(riak_serverinfo_response *response,
+                               char                     *target,
+                               riak_size_t               len);
+
+/**
+ * @brief Free memory from response
+ * @param ctx Riak Context
+ * @param resp Server Info PBC Response
+ */
+void
+riak_free_serverinfo_response(riak_context              *ctx,
+                              riak_serverinfo_response **resp);
+
 
 /**
  * @brief Create a get/fetch Request

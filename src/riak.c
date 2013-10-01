@@ -24,7 +24,7 @@
 #include "riak_pb_message.h"
 #include "riak_kv.pb-c.h"
 #include "riak_utils.h"
-#include "user_call_backs.h"
+#include "riak_call_backs.h"
 
 static riak_error
 riak_synchronous_request(riak_event *rev,
@@ -66,6 +66,25 @@ riak_ping(riak_context  *ctx) {
     if (response->success != RIAK_TRUE) {
         return ERIAK_NO_PING;
     }
+    return ERIAK_OK;
+}
+
+riak_error
+riak_serverinfo(riak_context              *ctx,
+                riak_serverinfo_response **response) {
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    if (rev == NULL) {
+        return ERIAK_EVENT;
+    }
+    riak_error err = riak_encode_serverinfo_request(rev, &(rev->request));
+    if (err) {
+        return err;
+    }
+    err = riak_synchronous_request(rev, (void**)response);
+    if (err) {
+        return err;
+    }
+
     return ERIAK_OK;
 }
 
