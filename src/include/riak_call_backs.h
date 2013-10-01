@@ -45,6 +45,14 @@ void
 listkey_cb(riak_listkeys_response *response,
            void *ptr);
 
+void
+getclientid_cb(riak_get_clientid_response *response,
+               void *ptr);
+
+void
+setclientid_cb(riak_set_clientid_response *response,
+               void *ptr);
+
 typedef struct _riak_sync_wrapper {
     riak_event    *rev;
     void          *response;

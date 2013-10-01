@@ -82,6 +82,20 @@ riak_free_error_response(riak_context         *ctx,
     riak_free_ptr(ctx, resp);
 }
 
+riak_error
+riak_encode_ping_request(riak_event      *rev,
+                        riak_pb_message **req) {
+    riak_context *ctx = (riak_context*)(rev->context);
+    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBPINGREQ, 0, NULL);
+    if (request == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_ping_response);
+
+    return ERIAK_OK;
+}
+
 
 riak_error
 riak_decode_ping_response(riak_event          *rev,
@@ -104,20 +118,6 @@ void
 riak_free_ping_response(riak_context        *ctx,
                         riak_ping_response **resp) {
     riak_free_ptr(ctx, resp);
-}
-
-riak_error
-riak_encode_ping_request(riak_event      *rev,
-                        riak_pb_message **req) {
-    riak_context *ctx = (riak_context*)(rev->context);
-    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBPINGREQ, 0, NULL);
-    if (request == NULL) {
-        return ERIAK_OUT_OF_MEMORY;
-    }
-    *req = request;
-    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_ping_response);
-
-    return ERIAK_OK;
 }
 
 riak_error
@@ -936,4 +936,114 @@ riak_free_listkeys_response(riak_context            *ctx,
     }
     riak_free_ptr(ctx, resp);
 }
+
+
+riak_error
+riak_encode_get_clientid_request(riak_event      *rev,
+                                 riak_pb_message **req) {
+    riak_context *ctx = (riak_context*)(rev->context);
+    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBGETCLIENTIDREQ, 0, NULL);
+    if (request == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_get_clientid_response);
+
+    return ERIAK_OK;
+}
+
+
+riak_error
+riak_decode_get_clientid_response(riak_event                  *rev,
+                                  riak_pb_message             *pbresp,
+                                  riak_get_clientid_response **resp,
+                                  riak_boolean_t              *done) {
+    // decode the PB response etc
+    riak_context *ctx = (riak_context*)(rev->context);
+    RpbGetClientIdResp *rpbresp = rpb_get_client_id_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_get_clientid_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
+    *done = RIAK_TRUE;
+    if (rpbresp == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    riak_get_clientid_response *response = (riak_get_clientid_response*)(ctx->malloc_fn)(sizeof(riak_get_clientid_response));
+    if (response == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    memset(response, '\0', sizeof(riak_get_clientid_response));
+    response->_internal = rpbresp;
+
+    riak_binary_from_pb_copy(response->client_id, rpbresp->client_id);
+
+    *resp = response;
+
+    return ERIAK_OK;
+}
+
+void
+riak_print_get_clientid_response(riak_get_clientid_response *response,
+                                 char                       *target,
+                                 riak_size_t                 len) {
+    char buffer[2048];
+    riak_binary_hex_print(response->client_id, buffer, sizeof(buffer));
+    if (len > 0) {
+        snprintf(target, len, "client_id = %s\n", buffer);
+    }
+}
+
+void
+riak_free_get_clientid_response(riak_context                *ctx,
+                                riak_get_clientid_response **resp) {
+    rpb_get_client_id_resp__free_unpacked((*resp)->_internal, ctx->pb_allocator);
+    riak_free_ptr(ctx, resp);
+}
+
+riak_error
+riak_decode_set_clientid_response(riak_event                  *rev,
+                                  riak_pb_message             *pbresp,
+                                  riak_set_clientid_response **resp,
+                                  riak_boolean_t              *done) {
+    riak_context *ctx = (riak_context*)(rev->context);
+    riak_set_clientid_response *response = (riak_set_clientid_response*)(ctx->malloc_fn)(sizeof(riak_set_clientid_response));
+    *done = RIAK_TRUE;
+    if (response == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *resp = response;
+
+    return ERIAK_OK;
+}
+
+riak_error
+riak_encode_set_clientid_request(riak_event       *rev,
+                                 riak_binary      *clientid,
+                                 riak_pb_message **req) {
+
+    riak_context *ctx = (riak_context*)(rev->context);
+    RpbSetClientIdReq clidmsg = RPB_SET_CLIENT_ID_REQ__INIT;
+    riak_binary_to_pb_copy_ptr(&(clidmsg.client_id), clientid);
+
+    riak_uint32_t msglen = rpb_set_client_id_req__get_packed_size(&clidmsg);
+    riak_uint8_t* msgbuf = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
+    if (msgbuf == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    rpb_set_client_id_req__pack (&clidmsg, msgbuf);
+
+    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBSETCLIENTIDREQ, msglen, msgbuf);
+    if (request == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_set_clientid_response);
+
+    return ERIAK_OK;
+}
+
+void
+riak_free_set_clientid_response(riak_context                *ctx,
+                                riak_set_clientid_response **resp) {
+    riak_free_ptr(ctx, resp);
+}
+
 

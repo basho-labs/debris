@@ -103,6 +103,21 @@ void delete_cb(riak_delete_response *response, void *ptr) {
     riak_free_delete_response(rev->context, &response);
 }
 
+void getclientid_cb(riak_get_clientid_response *response, void *ptr) {
+    riak_event   *rev = (riak_event*)ptr;
+    riak_log(rev, RIAK_LOG_DEBUG, "getclientid_cb\n");
+    char output[10240];
+    riak_print_get_clientid_response(response, output, sizeof(output));
+    riak_log(rev, RIAK_LOG_DEBUG, "%s\n", output);
+    riak_free_get_clientid_response(rev->context, &response);
+}
+
+void setclientid_cb(riak_set_clientid_response *response, void *ptr) {
+    riak_event *rev = (riak_event*)ptr;
+    riak_log(rev, RIAK_LOG_DEBUG, "setclientid_cb");
+    riak_free_set_clientid_response(rev->context, &response);
+}
+
 //
 // SYNCHRONOUS CALLBACKS
 //

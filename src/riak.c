@@ -191,3 +191,42 @@ riak_listkeys(riak_context            *ctx,
     }
     return ERIAK_OK;
 }
+
+riak_error
+riak_get_clientid(riak_context                *ctx,
+                  riak_get_clientid_response **response) {
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    if (rev == NULL) {
+        return ERIAK_EVENT;
+    }
+    riak_error err = riak_encode_get_clientid_request(rev, &(rev->request));
+    if (err) {
+        return err;
+    }
+    err = riak_synchronous_request(rev, (void**)response);
+    if (err) {
+        return err;
+    }
+
+    return ERIAK_OK;
+}
+
+riak_error
+riak_set_clientid(riak_context                *ctx,
+                  riak_binary                 *clientid,
+                  riak_set_clientid_response **response) {
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    if (rev == NULL) {
+        return ERIAK_EVENT;
+    }
+    riak_error err = riak_encode_set_clientid_request(rev, clientid, &(rev->request));
+    if (err) {
+        return err;
+    }
+    err = riak_synchronous_request(rev, (void**)response);
+    if (err) {
+        return err;
+    }
+
+    return ERIAK_OK;
+}

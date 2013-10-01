@@ -35,7 +35,11 @@
 #define MSG_RPBPINGRESP             2
 
 #define MSG_RPBGETCLIENTIDREQ       3
+
+// 0 length
 #define MSG_RPBGETCLIENTIDRESP      4
+
+// 0 length
 #define MSG_RPBSETCLIENTIDREQ       5
 #define MSG_RPBSETCLIENTIDRESP      6
 #define MSG_RPBGETSERVERINFOREQ     7
@@ -116,6 +120,20 @@ riak_free_error_response(riak_context         *ctx,
 riak_error
 riak_encode_ping_request(riak_event       *rev,
                          riak_pb_message **req);
+
+/**
+ * @brief Convert PBC error response into user-readable data type
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer response from Riak
+ * @param resp Returned error structure
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_ping_response(riak_event          *rev,
+                          riak_pb_message     *pbresp,
+                          riak_ping_response **resp,
+                          riak_boolean_t      *done);
 
 /**
  * @brief Free memory from response
@@ -398,5 +416,85 @@ riak_print_listkeys_response(riak_listkeys_response *response,
 void
 riak_free_listkeys_response(riak_context            *ctx,
                             riak_listkeys_response **resp);
+
+/**
+ * @brief Build a client id request
+ * @param rev Riak Event
+ * @param req Created PB message
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_get_clientid_request(riak_event       *rev,
+                                 riak_pb_message **req);
+
+/**
+ * @brief Translate PBC message to Riak message
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer message
+ * @param done Returned flag set to true if finished streaming
+ * @param resp Returned Get message
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_get_clientid_response(riak_event                  *rev,
+                                  riak_pb_message             *pbresp,
+                                  riak_get_clientid_response **resp,
+                                  riak_boolean_t              *done);
+
+/**
+ * @brief Print a summary of a `riak_get_clientid_response`
+ * @param response Result from a client id request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_get_clientid_response(riak_get_clientid_response *response,
+                                 char                       *target,
+                                 riak_size_t                 len);
+
+/**
+ * @brief Free memory from response
+ * @param ctx Riak Context
+ * @param resp client id PBC Response
+ */
+void
+riak_free_get_clientid_response(riak_context              *ctx,
+                              riak_get_clientid_response **resp);
+
+/**
+ * @brief Build a client id request
+ * @param rev Riak Event
+ * @param clientid Client id for current connection
+ * @param req Created PB message
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_set_clientid_request(riak_event       *rev,
+                                 riak_binary      *clientid,
+                                 riak_pb_message **req);
+
+/**
+ * @brief Translate PBC message to Riak message
+ * @param rev Riak Event
+ * @param pbresp Protocol Buffer message
+ * @param done Returned flag set to true if finished streaming
+ * @param resp Returned set message
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_set_clientid_response(riak_event                  *rev,
+                                  riak_pb_message             *pbresp,
+                                  riak_set_clientid_response **resp,
+                                  riak_boolean_t              *done);
+
+/**
+ * @brief Free memory from response
+ * @param ctx Riak Context
+ * @param resp client id PBC Response
+ */
+void
+riak_free_set_clientid_response(riak_context              *ctx,
+                              riak_set_clientid_response **resp);
+
 
 #endif

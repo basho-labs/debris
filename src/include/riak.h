@@ -200,6 +200,26 @@ typedef struct _riak_delete_response {
 // Nothing to see here
 } riak_delete_response;
 
+// Based on RpbGetClientIdResp
+typedef struct _riak_get_clientid_response
+{
+    riak_binary client_id;
+
+    RpbGetClientIdResp *_internal;
+} riak_get_clientid_response;
+
+// Based on RpbSetClientIdReq
+typedef struct _riak_get_clientid_request
+{
+    riak_binary client_id;
+} riak_get_clientid_request;
+
+// Placeholder
+typedef struct _riak_set_clientid_response
+{
+// Empty
+} riak_set_clientid_response;
+
 
 typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);
 
@@ -214,6 +234,10 @@ typedef void (*riak_delete_response_callback)(riak_delete_response *response, vo
 typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *response, void *ptr);
 
 typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response, void *ptr);
+
+typedef void (*riak_get_clientid_response_callback)(riak_get_clientid_response *response, void *ptr);
+
+typedef void (*riak_set_clientid_response_callback)(riak_set_clientid_response *response, void *ptr);
 
 //
 // Basic Synchronous Operations
@@ -305,17 +329,31 @@ riak_listkeys(riak_context            *ctx,
               riak_uint32_t            timeout,
               riak_listkeys_response **repsonse);
 
+/**
+ * @brief Synchronous setting of client ID request
+ * @param ctx Riak Context
+ * @param response Returned Fetched data
+ * @returns Error code
+ */
+riak_error
+riak_get_clientid(riak_context                *ctx,
+                  riak_get_clientid_response **response);
+
+/**
+ * @brief Synchronous fetching of client ID request
+ * @param ctx Riak Context
+ * @param clientid Name of client id for current connection
+ * @param response Returned Fetched data
+ * @returns Error code
+ */
+riak_error
+riak_set_clientid(riak_context                *ctx,
+                  riak_binary                 *clientid,
+                  riak_set_clientid_response **response);
+
 void riak_bucket_set_props(riak_context*);
 
 void riak_bucket_get_props(riak_context*);
-
-int riak_list_buckets(riak_context *ctx);
-
-void riak_list_keys(riak_context*);
-
-void riak_set_client_id(riak_context*);
-
-void riak_get_client_id(riak_context*);
 
 void riak_query_2i(riak_context*);
 

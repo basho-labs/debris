@@ -43,7 +43,7 @@
 void usage(FILE *fp, char *progname) {
     fprintf(fp, "Usage:\n");
     fprintf(fp, "%s "
-            "[--ping|--get|--put|--list-buckets|--delete|--set-clident|--get-clident|\n"
+            "[--ping|--get|--put|--list-buckets|--delete|--set-clientid|--get-clientid|\n"
             " --server-info|--list-keys|--get-bucket|--set-bucket|--map-reduce|--index|\n"
             " --search] [--bucket <name>] [--key <name>] [--value <name>]\n"
             "[--host <localhost>] [--port 10017] [--iterate <n>] [--timeout <secs>]\n", progname);
@@ -97,7 +97,7 @@ riak_parse_args(int        argc,
             // These options set a flag.
             {"delete",       no_argument, &operation, MSG_RPBDELREQ},
             {"get-bucket",   no_argument, &operation, MSG_RPBGETBUCKETREQ},
-            {"get-clident",  no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
+            {"get-clientid", no_argument, &operation, MSG_RPBGETCLIENTIDREQ},
             {"get",          no_argument, &operation, MSG_RPBGETREQ},
             {"index",        no_argument, &operation, MSG_RPBINDEXRESP},
             {"list-buckets", no_argument, &operation, MSG_RPBLISTBUCKETSREQ},
@@ -108,7 +108,7 @@ riak_parse_args(int        argc,
             {"search",       no_argument, &operation, MSG_RPBSEARCHQUERYREQ},
             {"server-info",  no_argument, &operation, MSG_RPBGETSERVERINFOREQ},
             {"set-bucket",   no_argument, &operation, MSG_RPBSETBUCKETREQ},
-            {"set-clident",  no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
+            {"set-clientid", no_argument, &operation, MSG_RPBSETCLIENTIDREQ},
 
             // These options don't set a flag.
             // We distinguish them by their indices.
@@ -252,6 +252,7 @@ main(int   argc,
     riak_event  *rev;
     riak_object *obj;
     riak_put_options put_options;
+    char output[10240];
     int it;
 
     for(it = 0; it < args.iterate; it++) {
@@ -259,8 +260,10 @@ main(int   argc,
 
         riak_binary bucket_bin;
         riak_binary key_bin;
+        riak_binary value_bin;
         riak_binary_from_string(bucket_bin, args.bucket); // Not copied
         riak_binary_from_string(key_bin, args.key); // Not copied
+        riak_binary_from_string(value_bin, args.value); // Not copied
 
         if (args.async) {
             rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
@@ -287,7 +290,6 @@ main(int   argc,
                 riak_event_set_response_cb(rev, (riak_response_callback)serverinfo_cb);
                 riak_encode_serverinfo_request(rev, &(rev->request));
             } else {
-                char output[10240];
                 riak_serverinfo_response *serverinfo_response;
                 err = riak_serverinfo(ctx, &serverinfo_response);
                 if (err) {
@@ -303,7 +305,6 @@ main(int   argc,
                 riak_event_set_response_cb(rev, (riak_response_callback)get_cb);
                 riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &(rev->request));
             } else {
-                char output[10240];
                 riak_get_response *get_response;
                 err = riak_get(ctx, &bucket_bin, &key_bin, NULL, &get_response);
                 if (err) {
@@ -332,7 +333,6 @@ main(int   argc,
                 riak_encode_put_request(rev, obj, &put_options, &(rev->request));
             } else {
                 riak_put_response *put_response;
-                char output[10240];
                 err = riak_put(ctx, obj, &put_options, &put_response);
                 if (err) {
                     fprintf(stderr, "Put Problems\n");
@@ -359,7 +359,6 @@ main(int   argc,
                 riak_encode_listbuckets_request(rev, &(rev->request));
             } else {
                 riak_listbuckets_response *bucket_response;
-                char output[10240];
                 err = riak_listbuckets(ctx, &bucket_response);
                 if (err) {
                     fprintf(stderr, "List buckets Problems\n");
@@ -367,7 +366,7 @@ main(int   argc,
                 riak_print_listbuckets_response(bucket_response, output, sizeof(output));
                 riak_log_context(ctx, RIAK_LOG_DEBUG, "%s", output);
                 riak_free_listbuckets_response(ctx, &bucket_response);
-           }
+            }
             break;
         case MSG_RPBLISTKEYSREQ:
             if (args.async) {
@@ -375,7 +374,6 @@ main(int   argc,
                 riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &(rev->request));
             } else {
                 riak_listkeys_response *key_response;
-                char output[10240];
                 err = riak_listkeys(ctx, &bucket_bin, args.timeout * 1000, &key_response);
                 if (err) {
                     fprintf(stderr, "List keys Problems\n");
@@ -383,6 +381,34 @@ main(int   argc,
                 riak_print_listkeys_response(key_response, output, sizeof(output));
                 riak_log_context(ctx, RIAK_LOG_DEBUG, "%s", output);
                 riak_free_listkeys_response(ctx, &key_response);
+            }
+            break;
+        case MSG_RPBGETCLIENTIDREQ:
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)getclientid_cb);
+                riak_encode_get_clientid_request(rev, &(rev->request));
+            } else {
+                riak_get_clientid_response *getcli_response;
+                err = riak_get_clientid(ctx, &getcli_response);
+                if (err) {
+                    fprintf(stderr, "Get ClientId Problems\n");
+                }
+                riak_print_get_clientid_response(getcli_response, output, sizeof(output));
+                printf("%s\n", output);
+                riak_free_get_clientid_response(ctx, &getcli_response);
+            }
+            break;
+        case MSG_RPBSETCLIENTIDREQ:
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)setclientid_cb);
+                riak_encode_set_clientid_request(rev, &value_bin, &(rev->request));
+            } else {
+                riak_set_clientid_response *setcli_response;
+                err = riak_set_clientid(ctx, &value_bin, &setcli_response);
+                if (err) {
+                    fprintf(stderr, "Set ClientId Problems\n");
+                }
+                riak_free_set_clientid_response(ctx, &setcli_response);
             }
             break;
         default:
