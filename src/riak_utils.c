@@ -56,6 +56,25 @@ riak_strlcat(char       *dst,
     return len;
 }
 
+void**
+riak_array_realloc(riak_context *ctx,
+                   void       ***from,
+                   riak_size_t   size,
+                   riak_uint32_t oldnum,
+                   riak_uint32_t newnum) {
+    void** new_array = (void**)(ctx->malloc_fn)(newnum*size);
+    if (new_array == NULL) {
+        return NULL;
+    }
+    // Just for good measure, clear out memory
+    memset((void*)new_array, '\0', newnum*size);
+    memcpy((void*)new_array, (void*)(*from), oldnum*size);
+    riak_free_ptr(ctx, from);
+    *from = new_array;
+    return (*from);
+}
+
+
 void riak_free_internal(riak_context *ctx, void **pp) {
     if(pp != NULL && *pp != NULL) {
         (ctx->free_fn)(*pp);

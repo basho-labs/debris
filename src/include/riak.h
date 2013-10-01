@@ -141,7 +141,7 @@ typedef struct _riak_listbuckets_response {
     riak_boolean_t       done;
 
     riak_uint32_t        n_responses;
-    RpbListBucketsResp *_internal;
+    RpbListBucketsResp **_internal; // Array for many responses
 } riak_listbuckets_response;
 
 // Based on RpbListKeysResp
@@ -151,7 +151,7 @@ typedef struct _riak_listkeys_response {
     riak_boolean_t    done;
 
     riak_uint32_t     n_responses;
-    RpbListKeysResp **_internal;
+    RpbListKeysResp **_internal; // Array for many responses
 } riak_listkeys_response;
 
 // Based on RpbErrorResp

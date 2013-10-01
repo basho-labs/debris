@@ -343,10 +343,13 @@ main(int   argc,
                 riak_encode_listbuckets_request(rev, &(rev->request));
             } else {
                 riak_listbuckets_response *bucket_response;
+                char output[10240];
                 err = riak_listbuckets(ctx, &bucket_response);
                 if (err) {
                     fprintf(stderr, "List buckets Problems\n");
                 }
+                riak_print_listbuckets_response(bucket_response, output, sizeof(output));
+                riak_log_context(ctx, RIAK_LOG_DEBUG, "%s", output);
                 riak_free_listbuckets_response(ctx, &bucket_response);
            }
             break;

@@ -45,6 +45,21 @@ riak_strlcat(char       *dst,
              const char *src,
              size_t      size);
 
+/**
+ * @brief Use Riak Context to reallocate memory
+ * @param ctx Riak Context
+ * @param from Location of old array pointer to reallocate
+ * @param size Size of new unit to allocate
+ * @param oldnum Number of old units allocated
+ * @param newnum Number of new units to allocate
+ * @return Address of new location or NULL on failure
+ */
+void**
+riak_array_realloc(riak_context *ctx,
+                   void       ***from,
+                   riak_size_t   size,
+                   riak_uint32_t oldnum,
+                   riak_uint32_t newnum);
 
 // Use void** to allow reassigning pointer to NULL
 #define riak_free(ctx,p) riak_free_internal((ctx),(void**)&(p))

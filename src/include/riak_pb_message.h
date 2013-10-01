@@ -317,6 +317,16 @@ riak_decode_listbuckets_response(riak_event                 *rev,
                                  riak_boolean_t             *done);
 
 /**
+ * @brief Print a summary of a `riak_listbuckets_response`
+ * @param response Result from a List buckets request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_listbuckets_response(riak_listbuckets_response *response,
+                                char                      *target,
+                                riak_size_t                len);
+/**
  * @brief Free listbuckets response
  * @param ctx Riak Context
  * @param resp List buckets message to be cleaned up

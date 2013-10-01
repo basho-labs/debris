@@ -584,38 +584,105 @@ riak_decode_listbuckets_response(riak_event                 *rev,
     riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_listbuckets_response");
     RpbListBucketsResp *listbucketresp = rpb_list_buckets_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     int i;
-    riak_listbuckets_response *response = (ctx->malloc_fn)(sizeof(riak_listbuckets_response));
-    response->buckets = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary*)*listbucketresp->n_buckets);
-    if (response->buckets == NULL) {
-        return ERIAK_OUT_OF_MEMORY;
+    // Initialize from an existing response
+    riak_listbuckets_response *response = *resp;
+    // If this is NULL, there was no previous message
+    if (response == NULL) {
+        riak_log(rev, RIAK_LOG_DEBUG, "Initializing listbucket response");
+        response = (ctx->malloc_fn)(sizeof(riak_listbuckets_response));
+        if (response == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+        memset((void*)response, '\0', sizeof(riak_listbuckets_response));
     }
-    response->n_buckets = listbucketresp->n_buckets;
-    for(i = 0; i < listbucketresp->n_buckets; i++) {
-        ProtobufCBinaryData binary = listbucketresp->buckets[i];
-        response->buckets[i] = riak_binary_new(ctx, binary.len, binary.data);
-        if (response->buckets[i] == NULL) {
+    // Existing buckets need some expansion, so copy the pointers
+    // of the old buckets to a new, larger array
+    // TODO: Geometric reallocation to minimize extra mallocs, maybe?
+    riak_uint32_t existing_buckets   = response->n_buckets;
+    riak_uint32_t additional_buckets = listbucketresp->n_buckets;
+    if (response->buckets != NULL) {
+        if (riak_array_realloc(ctx,
+                               (void***)&(response->buckets),
+                               sizeof(riak_binary*),
+                               existing_buckets,
+                               (additional_buckets+existing_buckets)) == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+    } else {
+        response->buckets = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary*)*additional_buckets);
+        if (response->buckets == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+    }
+    response->n_buckets += additional_buckets;
+    for(i = 0; i < additional_buckets; i++) {
+        ProtobufCBinaryData *binary = &(listbucketresp->buckets[i]);
+        response->buckets[i+existing_buckets] = riak_binary_new(ctx, binary->len, binary->data);
+        if (response->buckets[i+existing_buckets]->data == NULL) {
             int j;
             rpb_list_buckets_resp__free_unpacked(listbucketresp, ctx->pb_allocator);
             for(j = 0; j < i; j++) {
-                riak_free(ctx, response->buckets[j]);
+                riak_free(ctx, response->buckets[j+existing_buckets]);
             }
             riak_free(ctx, response->buckets);
             riak_free(ctx, response);
+
             return ERIAK_OUT_OF_MEMORY;
         }
     }
     response->done = RIAK_FALSE;
-    if (listbucketresp->has_done == RIAK_TRUE) {
+    if (listbucketresp->has_done) {
         riak_log(rev, RIAK_LOG_DEBUG, "HAS DONE");
         response->done = listbucketresp->done;
     }
-    response->_internal = listbucketresp;
-    *resp = response;
     *done = response->done;
+
+    // Expand the vector of internal RpbListBucketsResp links as necessary
+    riak_uint32_t existing_pbs = response->n_responses;
+    if (existing_pbs > 0) {
+        if (riak_array_realloc(ctx,
+                               (void***)&(response->_internal),
+                               sizeof(RpbListBucketsResp*),
+                               existing_pbs,
+                               (existing_pbs+1)) == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+    } else {
+        response->_internal = (RpbListBucketsResp **)(ctx->malloc_fn)(sizeof(RpbListBucketsResp*));
+        if (response->_internal == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
+    }
+    response->_internal[existing_pbs] = listbucketresp;
+    response->n_responses++;
+    *resp = response;
 
     return ERIAK_OK;
 }
 
+void
+riak_print_listbuckets_response(riak_listbuckets_response *response,
+                                char                      *target,
+                                riak_size_t                len) {
+    int i;
+    riak_size_t wrote = 0;
+    riak_int32_t left_to_write = len;
+    char name[2048];
+    if (left_to_write > 0) {
+        wrote = snprintf(target, left_to_write, "n_buckets = %d\n", response->n_buckets);
+        left_to_write -= wrote;
+        target += wrote;
+    }
+    for(i = 0; (left_to_write > 0) && (i < response->n_buckets); i++) {
+        riak_binary_print_ptr(response->buckets[i], name, sizeof(name));
+        wrote = snprintf(target, left_to_write, "%d - %s\n", i, name);
+        left_to_write -= wrote;
+        target += wrote;
+    }
+    if (left_to_write > 0) {
+        snprintf(target, left_to_write, "done = %d", response->done);
+    }
+}
 
 void
 riak_free_listbuckets_response(riak_context               *ctx,
@@ -625,11 +692,12 @@ riak_free_listbuckets_response(riak_context               *ctx,
     for(i = 0; i < response->n_buckets; i++) {
         riak_free(ctx, response->buckets[i]);
     }
-    if (response->buckets) {
-        riak_free(ctx, response->buckets);
-    }
-    if (response->_internal) {
-        rpb_list_buckets_resp__free_unpacked(response->_internal, ctx->pb_allocator);
+    riak_free(ctx, response->buckets);
+    if (response->n_responses > 0) {
+        for(i = 0; i < response->n_responses; i++) {
+            rpb_list_buckets_resp__free_unpacked(response->_internal[i], ctx->pb_allocator);
+        }
+        riak_free(ctx, response->_internal);
     }
     riak_free_ptr(ctx, resp);
 }
@@ -693,17 +761,14 @@ riak_decode_listkeys_response(riak_event              *rev,
     riak_uint32_t existing_keys   = response->n_keys;
     riak_uint32_t additional_keys = listkeyresp->n_keys;
     if (response->keys != NULL) {
-        riak_log(rev, RIAK_LOG_DEBUG, "Reallocing listkey key array (total %d)", (additional_keys+existing_keys));
-        //TODO: realloc() anyone?
-        riak_binary** new_keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary*)*(additional_keys+existing_keys));
-        if (new_keys == NULL) {
+        if (riak_array_realloc(ctx,
+                               (void***)&(response->keys),
+                               sizeof(riak_binary*),
+                               existing_keys,
+                               (additional_keys+existing_keys)) == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
-        memcpy((void*)new_keys, (void*)response->keys, existing_keys*sizeof(riak_binary*));
-        riak_free(ctx, response->keys);
-        response->keys = new_keys;
     } else {
-        riak_log(rev, RIAK_LOG_DEBUG, "Initializing listkey key array");
         response->keys = (riak_binary**)(ctx->malloc_fn)(sizeof(riak_binary*)*additional_keys);
         if (response->keys == NULL) {
             return ERIAK_OUT_OF_MEMORY;
@@ -735,17 +800,14 @@ riak_decode_listkeys_response(riak_event              *rev,
     // Expand the vector of internal RpbListKeysResp links as necessary
     riak_uint32_t existing_pbs = response->n_responses;
     if (existing_pbs > 0) {
-        riak_log(rev, RIAK_LOG_DEBUG, "Reallocing RpbListKeysResp cache to %d", existing_pbs+1);
-        // TODO: realloc()
-        RpbListKeysResp **new_internal = (RpbListKeysResp**)(ctx->malloc_fn)(sizeof(RpbListKeysResp*)*(existing_pbs+1));
-        if (new_internal == NULL) {
+        if (riak_array_realloc(ctx,
+                               (void***)&(response->_internal),
+                               sizeof(RpbListKeysResp*),
+                               existing_pbs,
+                               (existing_pbs+1)) == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
-        memcpy((void*)new_internal, (void*)response->_internal, sizeof(RpbListKeysResp*)*existing_pbs);
-        riak_free(ctx, response->_internal);
-        response->_internal = new_internal;
     } else {
-        riak_log(rev, RIAK_LOG_DEBUG, "Initializing RpbListKeysResp cache");
         response->_internal = (RpbListKeysResp **)(ctx->malloc_fn)(sizeof(RpbListKeysResp*));
         if (response->_internal == NULL) {
             return ERIAK_OUT_OF_MEMORY;

@@ -53,15 +53,10 @@ void ping_cb(riak_ping_response *response, void *ptr) {
 void listbucket_cb(riak_listbuckets_response *response, void *ptr) {
     riak_event *rev = (riak_event*)ptr;
     riak_log(rev, RIAK_LOG_DEBUG, "listbucket_cb");
-    riak_log(rev, RIAK_LOG_DEBUG, "n_buckets = %d", response->n_buckets);
-    int i;
-    char name[1024];
-    for(i = 0; i < response->n_buckets; i++) {
-        riak_binary_print_ptr(response->buckets[i], name, 1024);
-        riak_log(rev, RIAK_LOG_DEBUG, "%d - %s", i, name);
-    }
-    riak_log(rev, RIAK_LOG_DEBUG, "done = %d", response->done);
-    // TODO: Grow streaming objects
+    char output[10240];
+    riak_print_listbuckets_response(response, output, sizeof(output));
+    riak_log(rev, RIAK_LOG_DEBUG, "%s", output);
+    fflush(stdout);
     riak_free_listbuckets_response(rev->context, &response);
 }
 
