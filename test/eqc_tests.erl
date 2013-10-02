@@ -26,6 +26,15 @@ join_with_fn_prefix(List, Fn) ->
                 [global, {return, list}]).
 
 
+exclude_from_obj_list(List, Atom) ->
+  lists:filter(fun (F) ->
+                  case re:run(F, erlang:atom_to_list(Atom) ++ "\.o") of
+                    nomatch -> true;
+                    _ -> false
+                  end 
+               end, List).
+
+
 eqc_helper() ->
     eqc_helper(?NUM_TESTS).
 
@@ -58,26 +67,17 @@ eqc_helper(NumTests) ->
                 join_with_fn_prefix(Deps,
                           fun (L) -> 
                             os:cmd("pkg-config --cflags-only-I " ++ L) end),
-    Objs = filelib:wildcard("../build/riak_*.o") ++
-           filelib:wildcard("../build/call_backs.o"),
-    Params = [ {c_src,"../src/riak.c"},
-               definitions_only,
-               {additional_files, Objs},
-               {cflags, DashL ++ " " ++ Libs},
-               {cppflags, Incs}],
-    io:format(user,"~p~n", [Params]),
+    Objs = filelib:wildcard("../build/*.o"),
 
-    Mods = [riak_error,
-            riak_object,
-            riak_pb_message,
-            riak_utils,
-            riak_log,
-            riak_network,
-            riak_event,
-            riak,
-            riak_binary,
-            riak_context],
+    Mods = [riak_error, riak_object, riak_pb_message, riak_utils, riak_log, riak_network, riak_event, riak, riak_binary, riak_context],
     lists:foreach(fun (M) ->
+                    TheseObjs = exclude_from_obj_list( exclude_from_obj_list(Objs, M), main),
+                    Params = [ {c_src,"../src/" ++ erlang:atom_to_list(M) ++ ".c"},
+                        definitions_only,
+                        {additional_files, TheseObjs},
+                        {cflags, DashL ++ " " ++ Libs},
+                        {cppflags, Incs}],
+                    io:format(user,"~p~n", [Params]),
                     io:format(user, "Gen eqc_c bindings for ~p~n",[M]),
                     eqc_c:start(M, Params)
                     end, Mods),
