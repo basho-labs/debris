@@ -65,8 +65,22 @@ eqc_helper(NumTests) ->
                {additional_files, Objs},
                {cflags, DashL ++ " " ++ Libs},
                {cppflags, Incs}],
-    io:format(user,"~p", [Params]),
-    eqc_c:start(riak, Params),
+    io:format(user,"~p~n", [Params]),
+
+    Mods = [riak_error,
+            riak_object,
+            riak_pb_message,
+            riak_utils,
+            riak_log,
+            riak_network,
+            riak_event,
+            riak,
+            riak_binary,
+            riak_context],
+    lists:foreach(fun (M) ->
+                    io:format(user, "Gen eqc_c bindings for ~p~n",[M]),
+                    eqc_c:start(M, Params)
+                    end, Mods),
     eqc:quickcheck(eqc:numtests(NumTests, prop_main())).
 
 
