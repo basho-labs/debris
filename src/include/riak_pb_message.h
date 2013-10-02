@@ -26,53 +26,80 @@
 #include "riak.h"
 #include "riak_kv.pb-c.h"
 
-#define MSG_RPBERRORRESP            0
+#define MSG_RPBERRORRESP              0
 
 // 0 length
-#define MSG_RPBPINGREQ              1
+#define MSG_RPBPINGREQ                1
 
 // 0 length
-#define MSG_RPBPINGRESP             2
+#define MSG_RPBPINGRESP               2
 
-#define MSG_RPBGETCLIENTIDREQ       3
-
-// 0 length
-#define MSG_RPBGETCLIENTIDRESP      4
+#define MSG_RPBGETCLIENTIDREQ         3
 
 // 0 length
-#define MSG_RPBSETCLIENTIDREQ       5
-#define MSG_RPBSETCLIENTIDRESP      6
-#define MSG_RPBGETSERVERINFOREQ     7
-#define MSG_RPBGETSERVERINFORESP    8
-#define MSG_RPBGETREQ               9
-#define MSG_RPBGETRESP              10
-#define MSG_RPBPUTREQ               11
-#define MSG_RPBPUTRESP              12
-#define MSG_RPBDELREQ               13
-#define MSG_RPBDELRESP              14
-#define MSG_RPBLISTBUCKETSREQ       15
+#define MSG_RPBGETCLIENTIDRESP        4
+
+// 0 length
+#define MSG_RPBSETCLIENTIDREQ         5
+#define MSG_RPBSETCLIENTIDRESP        6
+#define MSG_RPBGETSERVERINFOREQ       7
+#define MSG_RPBGETSERVERINFORESP      8
+#define MSG_RPBGETREQ                 9
+#define MSG_RPBGETRESP                10
+#define MSG_RPBPUTREQ                 11
+#define MSG_RPBPUTRESP                12
+#define MSG_RPBDELREQ                 13
+#define MSG_RPBDELRESP                14
+#define MSG_RPBLISTBUCKETSREQ         15
 
 // streaming
-#define MSG_RPBLISTBUCKETSRESP      16
-#define MSG_RPBLISTKEYSREQ          17
+#define MSG_RPBLISTBUCKETSRESP        16
+#define MSG_RPBLISTKEYSREQ            17
 
 // streaming
-#define MSG_RPBLISTKEYSRESP         18
+#define MSG_RPBLISTKEYSRESP           18
 
-#define MSG_RPBGETBUCKETREQ         19
-#define MSG_RPBGETBUCKETRESP        20
-#define MSG_RPBSETBUCKETREQ         21
-#define MSG_RPBSETBUCKETRESP        22
-#define MSG_RPBMAPREDREQ            23
+#define MSG_RPBGETBUCKETREQ           19
+#define MSG_RPBGETBUCKETRESP          20
+#define MSG_RPBSETBUCKETREQ           21
+#define MSG_RPBSETBUCKETRESP          22
+#define MSG_RPBMAPREDREQ              23
 
 // streaming
-#define MSG_RPBMAPREDRESP           24
+#define MSG_RPBMAPREDRESP             24
 
-#define MSG_RPBINDEXREQ             25
-#define MSG_RPBINDEXRESP            26
-#define MSG_RPBSEARCHQUERYREQ       27
-#define MSG_RBPSEARCHQUERYRESP      28
-
+#define MSG_RPBINDEXREQ               25
+#define MSG_RPBINDEXRESP              26
+#define MSG_RPBSEARCHQUERYREQ         27
+#define MSG_RBPSEARCHQUERYRESP        28
+#define MSG_RPBRESETBUCKETREQ         29
+#define MSG_RPBRESETBUCKETRESP        30
+#define MSG_RPBGETBUCKETTYPEREQ       31
+#define MSG_RPBSETBUCKETTYPEREQ       32
+#define MSG_RPBRESETBUCKETTYPEREQ     33
+#define MSG_RPBCSBUCKETREQ            40
+#define MSG_RPBCSBUCKETRESP           41
+#define MSG_RPBCOUNTERUPDATEREQ       50
+#define MSG_RPBCOUNTERUPDATERESP      51
+#define MSG_RPBCOUNTERGETREQ          52
+#define MSG_RPBCOUNTERGETRESP         53
+// Yokozuna Search
+#define MSG_RPBYOKOZUNAINDEXGETREQ    54
+#define MSG_RPBYOKOZUNAINDEXGETRESP   55
+#define MSG_RPBYOKOZUNAINDEXPUTREQ    56
+#define MSG_RPBYOKOZUNAINDEXDELETEREQ 57
+#define MSG_RPBYOKOZUNASCHEMAGETREQ   58
+#define MSG_RPBYOKOZUNASCHEMAGETRESP  59
+#define MSG_RPBYOKOZUNASCHEMAPUTREQ   60
+// CRDTs
+#define MSG_DTFETCHREQ                80
+#define MSG_DTFETCHRESP               81
+#define MSG_DTUPDATEREQ               82
+#define MSG_DTUPDATERESP              83
+// internal message codes, grow downwards from 255
+#define MSG_RPBAUTHREQ                253
+#define MSG_RPBAUTHRESP               254
+#define MSG_RPBSTARTTLS               255
 
 typedef struct _riak_pb_message {
     riak_uint32_t len;
