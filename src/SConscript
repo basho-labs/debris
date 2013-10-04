@@ -8,31 +8,35 @@ env = Environment(
     LIBPATH=['.'],
     toolpath=['tools'],
     tools=['default', 'protoc'])
+env.ParseConfig("pkg-config --libs libevent libprotobuf-c protobuf")
+env.ParseConfig("pkg-config --cflags libevent libprotobuf-c protobuf")
+
 riak_pb = env.Protoc(
     [],
     "proto/riak.proto",
     PROTOCPROTOPATH=['.'],
+    RPROTOCPROTOPATH=['build/proto'],
     PROTOCOUTDIR = '.', # defaults to same directory as .proto
 )
-env.ParseConfig("pkg-config --libs libevent libprotobuf-c protobuf")
-env.ParseConfig("pkg-config --cflags libevent libprotobuf-c protobuf")
-
 riak_kv_pb = env.Protoc(
     [],
     "proto/riak_kv.proto",
     PROTOCPROTOPATH=['.','build/proto'],
+    RPROTOCPROTOPATH=['build/proto'],
     PROTOCOUTDIR = '.', # defaults to same directory as .proto
 )
 riak_search_pb = env.Protoc(
     [],
     "proto/riak_search.proto",
     PROTOCPROTOPATH=['.','build/proto'],
+    RPROTOCPROTOPATH=['build/proto'],
     PROTOCOUTDIR = '.', # defaults to same directory as .proto
 )
 riak_yokozuna_pb = env.Protoc(
     [],
     "proto/riak_yokozuna.proto",
     PROTOCPROTOPATH=['.','build/proto'],
+    RPROTOCPROTOPATH=['build/proto'],
     PROTOCOUTDIR = '.', # defaults to same directory as .proto
 )
 lib_files = [riak_pb[0], riak_kv_pb[0], riak_search_pb[0], riak_yokozuna_pb[0], Split('riak.c riak_utils.c riak_binary.c riak_context.c riak_event.c riak_pb_message.c riak_log.c riak_error.c riak_network.c riak_object.c riak_call_backs.c')]

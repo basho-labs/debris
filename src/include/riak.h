@@ -300,10 +300,10 @@ riak_put(riak_context       *ctx,
  * @returns Error code
  */
 riak_error
-riak_delete(riak_context     *ctx,
-         riak_binary         *bucket,
-         riak_binary         *key,
-         riak_delete_options *opts);
+riak_delete(riak_context        *ctx,
+            riak_binary         *bucket,
+            riak_binary         *key,
+            riak_delete_options *opts);
 
 /**
  * @brief List all of the buckets on a server

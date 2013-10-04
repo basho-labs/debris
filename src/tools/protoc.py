@@ -28,7 +28,7 @@
 Based on http://scons.org/wiki/ProtocBuilder
 protoc.py: Protoc-c Builder for SCons
 
-This Builder invokes protoc-c to generate C
+This Builder invokes protoc-c to generate C and Ruby
 from a .proto file.  
 
 NOTE: Java is not currently supported."""
@@ -46,6 +46,7 @@ from SCons.Script import File, Dir
 import os.path
 
 protocs = 'protoc-c'
+rprotoc = 'rprotoc'
 
 ProtocAction = SCons.Action.Action('$PROTOCCOM', '$PROTOCCOMSTR')
 def ProtocEmitter(target, source, env):
@@ -67,7 +68,7 @@ def ProtocEmitter(target, source, env):
 
         if env['PROTOCOUTDIR']:            
             base = os.path.join(env['PROTOCOUTDIR'] , modulename)
-            target.extend( [ base + '.pb-c.c', base + '.pb-c.h' ] )
+            target.extend( [ base + '.pb-c.c', base + '.pb-c.h', base + '.rb' ] )
         
     try:
         target.append(env['PROTOCFDSOUT'])
@@ -92,9 +93,11 @@ def generate(env):
         env['BUILDERS']['Protoc'] = bld
         
     env['PROTOC']        = env.Detect(protocs) or 'protoc-c'
+    env['RPROTOC']       = env.Detect(rprotoc) or 'rprotoc'
     env['PROTOCFLAGS']   = SCons.Util.CLVar('')
     env['PROTOCPROTOPATH'] = SCons.Util.CLVar('')
     env['PROTOCCOM']     = '$PROTOC ${["-I%s"%x for x in PROTOCPROTOPATH]} $PROTOCFLAGS --c_out=$PROTOCCPPOUTFLAGS$PROTOCOUTDIR ${PROTOCFDSOUT and ("-o"+PROTOCFDSOUT) or ""} ${SOURCES}'
+    env['PROTOCCOM']    += '; $RPROTOC --proto_path $RPROTOCPROTOPATH --out $RPROTOCPROTOPATH ${SOURCES}'
     env['PROTOCOUTDIR'] = '${SOURCE.dir}'
     env['PROTOCSRCSUFFIX']  = '.proto'
 
