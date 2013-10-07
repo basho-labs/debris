@@ -6,28 +6,11 @@
 
 
 test_all() ->
-    eqc:quickcheck(prop_fixed_array()).
+    ok.
 
-%% ---------------------------------------------------------------------------
-%% @doc Generate a fixed size array of size Size, fill it with ListData,
-%%     then fill the rest of the array with Filler
-%%     This fn makes it convenient to populate a fixed size C character array
-%%     from an Erlang string
-%% ---------------------------------------------------------------------------
-fixed_length_array_from_list(Size, ListData, Filler) ->
-    FillerLen = Size - length(ListData),
-    array:from_list(ListData ++ lists:duplicate(FillerLen, Filler)).
-
-
-prop_fixed_array() ->
-    ?FORALL({L, FillerLen},
-            {list(int), ?SUCHTHAT(N, int(), N > 0)},
-            begin
-              NewA = fixed_length_array_from_list(length(L) + FillerLen, L, 0),
-              array:size(NewA) == (length(L) + FillerLen)
-            end).
-
-%% ---------------------------------------------------------------------------
+%% @doc This is used to send character arrays to eqc_c
+padded_string(S, Length, Padding) ->
+  S ++ lists:duplicate(Length - length(S),Padding).
 
 join_with_prefix(List, Prefix) ->
     re:replace(string:join(lists:map(fun (I) ->
@@ -47,7 +30,6 @@ exclude_from_obj_list(List, Atom) ->
                     _ -> false
                   end 
                end, List).
-
 
 generate_stubs() ->
     Deps = ["libevent",
