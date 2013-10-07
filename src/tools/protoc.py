@@ -97,7 +97,7 @@ def generate(env):
     env['PROTOCFLAGS']   = SCons.Util.CLVar('')
     env['PROTOCPROTOPATH'] = SCons.Util.CLVar('')
     env['PROTOCCOM']     = '$PROTOC ${["-I%s"%x for x in PROTOCPROTOPATH]} $PROTOCFLAGS --c_out=$PROTOCCPPOUTFLAGS$PROTOCOUTDIR ${PROTOCFDSOUT and ("-o"+PROTOCFDSOUT) or ""} ${SOURCES}'
-    env['PROTOCCOM']    += '; $RPROTOC --proto_path $RPROTOCPROTOPATH --out $RPROTOCPROTOPATH ${SOURCES}'
+#    env['PROTOCCOM']    += '; $RPROTOC --proto_path $RPROTOCPROTOPATH --out $RPROTOCPROTOPATH ${SOURCES}'
     env['PROTOCOUTDIR'] = '${SOURCE.dir}'
     env['PROTOCSRCSUFFIX']  = '.proto'
 
