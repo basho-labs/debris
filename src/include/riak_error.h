@@ -34,19 +34,6 @@ typedef enum riak_error_enum {
     ERIAK_LAST_ERRORNUM
 } riak_error;
 
-#ifdef _RIAK_ERROR_DEFINE_MSGS
-static const char* errmsgs[] = {
-    "No Error",
-    "Problems resolving host name/port number",
-    "Out of Memory",
-    "Write error",
-    "Riak Event error",
-    "Ping failure error",
-    "Logging failure",
-    "SENTINEL FOR LAST ERROR MESSAGE"
-};
-#endif
-
 const char*
 riak_strerror(riak_error err);
 

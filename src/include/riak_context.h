@@ -85,8 +85,18 @@ riak_context_new(riak_context    **context,
                  riak_pb_free_fn   pb_free,
                  const char       *logging_category);
 
-// By default use system's built-in memory management utilities (malloc/free)
-#define riak_context_new_default(C,H,P) riak_context_new((C),(H),(P),NULL,NULL,NULL,NULL,NULL,NULL)
+/**
+ * @brief Construct a Riak Context with system memory
+ * management utils * (malloc/free)
+ * @param context Spanking new `riak_context` struct
+ * @param hostname Name of Riak server
+ * @param portnum Riak PBC port number
+ * @return Error code
+ */
+riak_error
+riak_context_new_default(riak_context** context,
+                         char* hostname,
+                         char* portnum);
 
 /**
  * @brief Gets the underlying event base

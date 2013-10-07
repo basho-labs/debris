@@ -15,14 +15,33 @@
 
 test_all() ->
     eqc_test_utils:generate_stubs(),
-    test_context().
+    riak_context_op(fun (CtxPP, _CtxP) ->
+                      _Result = riak:riak_ping(CtxPP),
+                      %%io:format("Result = ~p~n", [Result])
+                      ok
+                    end).
 
 
-test_context() ->
-    Ctx = create_context("localhost", "10017"),
-    RawCtx = eqc_c:alloc("riak_context", Ctx),
-    io:format("~p~n",[ eqc_c:deref(RawCtx)]),
-    0.
+riak_context_op(Fn) ->
+    {CtxPP, CtxP, HostnameP, PortP, Err} = make_context("localhost", "10017"),
+    io:format("Result = ~p~n", [Err]),
+    Result = Fn(CtxPP, CtxP),
+    eqc_c:free(PortP),
+    eqc_c:free(HostnameP),
+    eqc_c:free(CtxP),
+    eqc_c:free(CtxPP),
+    %riak_context:riak_context_free(CtxPP),
+    Result.
+
+
+make_context(Hostname, Port) ->
+    CtxPP   = eqc_c:alloc({ptr, "riak_context"}),
+    CtxP     = eqc_c:alloc("riak_context"),
+    eqc_c:store(CtxPP, CtxP),
+    HostnameP = eqc_c:create_string(Hostname),
+    PortP     = eqc_c:create_string(Port),
+    Err = riak_context:riak_context_new_default(CtxPP, Hostname, Port),
+    {CtxPP, CtxP, HostnameP, PortP, Err}.
 
 term_string(S, Length) ->
     eqc_test_utils:padded_string(S, Length, 0).

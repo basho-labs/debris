@@ -26,7 +26,7 @@
 
 const char* riak_strerror(riak_error err) {
     if (err >= ERIAK_OK && err < ERIAK_LAST_ERRORNUM) {
-        return errmsgs[err];
+        return 0;
     }
     return "<Unknown Error>";
 }

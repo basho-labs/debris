@@ -100,6 +100,14 @@ riak_context_new(riak_context    **context,
     return ERIAK_OK;
 }
 
+riak_error
+riak_context_new_default(riak_context** context,
+                         char* hostname,
+                         char* portnum) {
+  return riak_context_new(context, hostname, portnum,
+                          NULL,NULL,NULL,NULL,NULL,NULL);
+}
+
 riak_event_base*
 riak_context_get_base(riak_context *ctx) {
     return ctx->base;

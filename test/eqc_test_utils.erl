@@ -6,6 +6,7 @@
 
 
 test_all() ->
+    generate_stubs(),
     ok.
 
 %% @doc This is used to send character arrays to eqc_c
@@ -67,6 +68,7 @@ generate_stubs() ->
                     TheseObjs = exclude_from_obj_list( exclude_from_obj_list(Objs, M), main),
                     Params = [ {c_src,"../src/" ++ erlang:atom_to_list(M) ++ ".c"},
                         definitions_only,
+                              keep_files,
                         {additional_files, TheseObjs},
                         {cflags, DashL ++ " " ++ Libs},
                         {cppflags, Incs}],
