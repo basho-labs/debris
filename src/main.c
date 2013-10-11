@@ -43,14 +43,30 @@
 #include "riak_object-internal.h"
 #include "riak-internal.h"
 
-void usage(FILE *fp, char *progname) {
+void usage(FILE       *fp,
+           const char *usage_string) {
     fprintf(fp, "Usage:\n");
-    fprintf(fp, "%s "
-            "[--ping|--get|--put|--list-buckets|--delete|--set-clientid|--get-clientid|\n"
-            " --server-info|--list-keys|--get-bucket|--set-bucket|--map-reduce|--index|\n"
-            " --search] [--bucket <name>] [--key <name>] [--value <name>]\n"
-            "[--host <localhost>] [--port 10017] [--iterate <n>] [--timeout <secs>]\n", progname);
+    fprintf(fp, "%s\n", usage_string);
     exit(1);
+}
+
+void build_usage(struct option long_options[],
+                 char         *target,
+                 riak_int32_t  len) {
+    int i;
+    riak_uint32_t written = 0;
+    for(i = 0; long_options[i].name != NULL; i++) {
+        switch (long_options[i].has_arg) {
+        case no_argument:
+            written = snprintf(target, len, "  --%s\n", long_options[i].name);
+            target += written;
+            break;
+        case required_argument:
+            written = snprintf(target, len, "  --%s <arg>\n", long_options[i].name);
+            target += written;
+            break;
+        }
+    }
 }
 
 typedef struct {
@@ -66,6 +82,7 @@ typedef struct {
     char portnum[6];
     char key[1024];
     char value[1024];
+    char usage[2048];
 } riak_args;
 
 /**
@@ -130,6 +147,7 @@ riak_parse_args(int        argc,
 
         c = getopt_long (argc, argv, "ab:h:i:k:p:t:v:",
                         long_options, &option_index);
+        build_usage(long_options, args->usage, sizeof(args->usage));
 
          // Detect the end of the options.
         if (c == -1)
@@ -192,7 +210,7 @@ riak_parse_args(int        argc,
 
             case '?':
                 /* getopt_long already printed an error message. */
-                usage(stderr, argv[0]);
+                usage(stderr, args->usage);
                 break;
 
             default:
@@ -415,7 +433,7 @@ main(int   argc,
             }
             break;
         default:
-            usage(stderr, argv[0]);
+            usage(stderr, args.usage);
         }
 
         if (args.async) {
