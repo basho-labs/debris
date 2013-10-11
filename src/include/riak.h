@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * riak_types.h: Riak C Client Types
+ * riak.h: Riak C Client Types
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
@@ -40,185 +40,23 @@
 #include "riak_context.h"
 #include "riak_event.h"
 #include "riak_log.h"
-
-// TOP level structures
-
-// Based off of ProtobufCBinaryData
-typedef struct _riak_binary {
-    riak_size_t   len;
-    riak_uint8_t *data;
-} riak_binary;
-
+#include "riak_binary.h"
 #include "riak_object.h"
 
-// Based on RpbGetServerInfoResp
-typedef struct _riak_serverinfo_response
-{
-    riak_boolean_t        has_node;
-    riak_binary           node;
-    riak_boolean_t        has_server_version;
-    riak_binary           server_version;
-
-    RpbGetServerInfoResp *_internal;
-} riak_serverinfo_response;
-
-// Based on RpbGetResp
-typedef struct _riak_get_response {
-    riak_boolean_t has_vclock;
-    riak_binary    vclock;
-    riak_boolean_t has_unmodified;
-    riak_boolean_t unmodified;
-    riak_boolean_t deleted;
-    riak_int32_t   n_content;
-    riak_object  **content; // Array of pointers to allow expansion
-
-    RpbGetResp    *_internal;
-} riak_get_response;
-
-// Based on RpbGetReq
-typedef struct _riak_get_options {
-    riak_boolean_t has_r;
-    riak_uint32_t  r;
-    riak_boolean_t has_pr;
-    riak_uint32_t  pr;
-    riak_boolean_t has_basic_quorum;
-    riak_boolean_t basic_quorum;
-    riak_boolean_t has_notfound_ok;
-    riak_boolean_t notfound_ok;
-    riak_boolean_t has_if_modified;
-    riak_binary    if_modified;
-    riak_boolean_t has_head;
-    riak_boolean_t head;
-    riak_boolean_t has_deletedvclock;
-    riak_boolean_t deletedvclock;
-    riak_boolean_t has_timeout;
-    riak_uint32_t  timeout;
-    riak_boolean_t has_sloppy_quorum;
-    riak_boolean_t sloppy_quorum;
-    riak_boolean_t has_n_val;
-    riak_uint32_t  n_val;
-} riak_get_options;
-
-// Based on RpbPutResp
-typedef struct _riak_put_response {
-    riak_uint32_t  n_content;
-    riak_object  **content; // Array of pointers to match Get
-    riak_boolean_t has_vclock;
-    riak_binary    vclock;
-    riak_boolean_t has_key;
-    riak_binary    key;
-
-    RpbPutResp   *_internal;
-} riak_put_response;
-
-// Based on RpbPutReq
-typedef struct _riak_put_options {
-    // KEY is in riak_object, so is this copy needed?
-    //riak_boolean_t has_key;
-    //riak_binary    key;
-    riak_boolean_t has_vclock;
-    riak_binary    vclock;
-    //RpbContent *content;
-    riak_boolean_t has_w;
-    riak_uint32_t  w;
-    riak_boolean_t has_dw;
-    riak_uint32_t  dw;
-    riak_boolean_t has_return_body;
-    riak_boolean_t return_body;
-    riak_boolean_t has_pw;
-    riak_uint32_t  pw;
-    riak_boolean_t has_if_not_modified;
-    riak_boolean_t if_not_modified;
-
-    riak_boolean_t has_if_none_match;
-    riak_boolean_t if_none_match;
-    riak_boolean_t has_return_head;
-    riak_boolean_t return_head;
-    riak_boolean_t has_timeout;
-    riak_uint32_t  timeout;
-    riak_boolean_t has_asis;
-    riak_boolean_t asis;
-    riak_boolean_t has_sloppy_quorum;
-    riak_boolean_t sloppy_quorum;
-    riak_boolean_t has_n_val;
-    riak_uint32_t  n_val;
-} riak_put_options;
-
-
-// Based on RpbListBucketsResp
-typedef struct _riak_listbuckets_response {
-    riak_uint32_t        n_buckets;
-    riak_binary        **buckets; // Array of pointers to allow growth
-    riak_boolean_t       done;
-
-    riak_uint32_t        n_responses;
-    RpbListBucketsResp **_internal; // Array for many responses
-} riak_listbuckets_response;
-
-// Based on RpbListKeysResp
-typedef struct _riak_listkeys_response {
-    riak_uint32_t     n_keys;
-    riak_binary     **keys; // Array of pointers to allow growth
-    riak_boolean_t    done;
-
-    riak_uint32_t     n_responses;
-    RpbListKeysResp **_internal; // Array for many responses
-} riak_listkeys_response;
-
-// Based on RpbErrorResp
-typedef struct _riak_error_response {
-    riak_uint32_t errcode;
-    riak_binary   errmsg;
-
-    RpbErrorResp *_internal;
-} riak_error_response;
-
-typedef struct _riak_ping_response {
-    riak_boolean_t success;
-} riak_ping_response;
-
-// Based on RpbDelReq
-typedef struct _riak_delete_options
-{
-    riak_boolean_t has_vclock;
-    riak_binary    vclock;
-    riak_boolean_t has_w;
-    riak_uint32_t  w;
-    riak_boolean_t has_dw;
-    riak_uint32_t  dw;
-    riak_boolean_t has_pw;
-    riak_uint32_t  pw;
-    riak_boolean_t has_timeout;
-    riak_uint32_t  timeout;
-    riak_boolean_t has_sloppy_quorum;
-    riak_boolean_t sloppy_quorum;
-    riak_boolean_t has_n_val;
-    riak_uint32_t  n_val;
-} riak_delete_options;
-
-typedef struct _riak_delete_response {
-// Nothing to see here
-} riak_delete_response;
-
-// Based on RpbGetClientIdResp
-typedef struct _riak_get_clientid_response
-{
-    riak_binary client_id;
-
-    RpbGetClientIdResp *_internal;
-} riak_get_clientid_response;
-
-// Based on RpbSetClientIdReq
-typedef struct _riak_get_clientid_request
-{
-    riak_binary client_id;
-} riak_get_clientid_request;
-
-// Placeholder
-typedef struct _riak_set_clientid_response
-{
-// Empty
-} riak_set_clientid_response;
+typedef struct _riak_serverinfo_response riak_serverinfo_response;
+typedef struct _riak_get_response riak_get_response;
+typedef struct _riak_get_options riak_get_options;
+typedef struct _riak_put_response riak_put_response;
+typedef struct _riak_put_options riak_put_options;
+typedef struct _riak_listbuckets_response riak_listbuckets_response;
+typedef struct _riak_listkeys_response riak_listkeys_response;
+typedef struct _riak_error_response riak_error_response;
+typedef struct _riak_ping_response riak_ping_response;
+typedef struct _riak_delete_options riak_delete_options;
+typedef struct _riak_delete_response riak_delete_response;
+typedef struct _riak_get_clientid_response riak_get_clientid_response;
+typedef struct _riak_get_clientid_request riak_get_clientid_request;
+typedef struct _riak_set_clientid_response riak_set_clientid_response;
 
 
 typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);

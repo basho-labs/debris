@@ -23,63 +23,9 @@
 #ifndef RIAK_OBJECT_H_
 #define RIAK_OBJECT_H_
 
-// Based off of RpbLink
-typedef struct _riak_link
-{
-    riak_boolean_t has_bucket;
-    riak_binary    bucket;
-    riak_boolean_t has_key;
-    riak_binary    key;
-    riak_boolean_t has_tag;
-    riak_binary    tag;
-} riak_link;
-
-// Based off of RpbPair
-typedef struct _riak_pair
-{
-    riak_binary    key;
-    riak_boolean_t has_value;
-    riak_binary    value;
-} riak_pair;
-
-// Based off of RpbContent
-typedef struct _riak_object {
-    riak_binary bucket;
-
-    riak_boolean_t has_key;
-    riak_binary key;
-
-    riak_binary value;
-
-    riak_boolean_t has_charset;
-    riak_binary charset;
-
-    riak_boolean_t has_last_mod;
-    riak_uint32_t last_mod;
-
-    riak_boolean_t has_last_mod_usecs;
-    riak_uint32_t last_mod_usecs;
-
-    riak_boolean_t has_content_type;
-    riak_binary content_type;
-
-    riak_boolean_t has_content_encoding;
-    riak_binary encoding;
-
-    riak_boolean_t has_deleted;
-    riak_boolean_t deleted;
-
-    riak_boolean_t has_vtag;
-    riak_binary vtag;
-
-    riak_int32_t n_links;
-    riak_link **links;
-
-    riak_int32_t   n_usermeta;
-    riak_pair    **usermeta;
-    riak_int32_t   n_indexes;
-    riak_pair    **indexes;
-} riak_object;
+typedef struct _riak_link riak_link;
+typedef struct _riak_pair riak_pair;
+typedef struct _riak_object riak_object;
 
 /**
  * @brief Construct a new Riak Object

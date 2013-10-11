@@ -24,6 +24,8 @@
 #ifndef RIAK_BINARY_H_
 #define RIAK_BINARY_H_
 
+typedef struct _riak_binary riak_binary;
+
 /**
  * @brief Allocate a new `riak_binary` struct
  * @param len Length of binary in bytes

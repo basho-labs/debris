@@ -39,6 +39,7 @@
 #include "riak.pb-c.h"
 #include "riak_kv.pb-c.h"
 #include "riak_call_backs.h"
+#include "riak-internal.h"
 
 //
 // TEST CALLBACKS

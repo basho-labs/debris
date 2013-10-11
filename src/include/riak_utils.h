@@ -65,9 +65,6 @@ riak_array_realloc(riak_context *ctx,
 #define riak_free(ctx,p) riak_free_internal((ctx),(void**)&(p))
 #define riak_free_ptr(ctx,p) riak_free_internal((ctx),(void**)(p))
 void riak_free_internal(riak_context *ctx, void **p);
-// helper fn's
-riak_get_response *riak_get_response_new(riak_context *ctx);
-void riak_get_response_free(riak_context *ctx, riak_get_response*);
 
 // TODO: NOT CHARSET SAFE, need iconv
 

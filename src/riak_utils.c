@@ -82,28 +82,6 @@ void riak_free_internal(riak_context *ctx, void **pp) {
     }
 }
 
-riak_get_response*
-riak_get_response_new(riak_context *ctx) {
-    riak_get_response* r = (riak_get_response*)(ctx->malloc_fn)(sizeof(riak_get_response));
-    if (r) memset(r, '\0', sizeof(riak_get_response));
-    return r;
-}
-
-void
-riak_get_response_free(riak_context      *ctx,
-                       riak_get_response *r) {
-    if(r == 0) {
-        return;
-    }
-    if(r->n_content > 0) {
-        //for(i = 0; i < r->object_count; i++) {
-        //  free_riak_object(&r->objects[i]);
-        //}
-    }
-    riak_free(ctx, r);
-}
-
-
 riak_error
 riak_send_req(riak_event      *rev,
               riak_pb_message *req) {

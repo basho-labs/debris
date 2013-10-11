@@ -39,6 +39,9 @@
 #include "riak_kv.pb-c.h"
 #include "riak_network.h"
 #include "riak_call_backs.h"
+#include "riak_binary-internal.h"
+#include "riak_object-internal.h"
+#include "riak-internal.h"
 
 void usage(FILE *fp, char *progname) {
     fprintf(fp, "Usage:\n");

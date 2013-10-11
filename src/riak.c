@@ -21,6 +21,7 @@
  *********************************************************************/
 
 #include "riak.h"
+#include "riak-internal.h"
 #include "riak_pb_message.h"
 #include "riak_kv.pb-c.h"
 #include "riak_utils.h"
