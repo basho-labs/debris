@@ -61,11 +61,6 @@ riak_array_realloc(riak_context *ctx,
                    riak_uint32_t oldnum,
                    riak_uint32_t newnum);
 
-// Use void** to allow reassigning pointer to NULL
-#define riak_free(ctx,p) riak_free_internal((ctx),(void**)&(p))
-#define riak_free_ptr(ctx,p) riak_free_internal((ctx),(void**)(p))
-void riak_free_internal(riak_context *ctx, void **p);
-
 // TODO: NOT CHARSET SAFE, need iconv
 
 /**

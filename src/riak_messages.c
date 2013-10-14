@@ -46,8 +46,8 @@ riak_pb_message_new(riak_context *ctx,
 void
 riak_pb_message_free(riak_context     *ctx,
                      riak_pb_message **pb) {
-    riak_free(ctx, (*pb)->data);
-    riak_free(ctx, (*pb));
+    riak_free(ctx, &((*pb)->data));
+    riak_free(ctx, pb);
 }
 
 riak_error
@@ -81,7 +81,7 @@ riak_free_error_response(riak_context         *ctx,
                          riak_error_response **resp) {
     riak_error_response *response = *resp;
     rpb_error_resp__free_unpacked(response->_internal, ctx->pb_allocator);
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -119,7 +119,7 @@ riak_decode_ping_response(riak_event          *rev,
 void
 riak_free_ping_response(riak_context        *ctx,
                         riak_ping_response **resp) {
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -195,7 +195,7 @@ riak_free_serverinfo_response(riak_context              *ctx,
                               riak_serverinfo_response **resp) {
     riak_serverinfo_response *response = *resp;
     rpb_get_server_info_resp__free_unpacked(response->_internal, ctx->pb_allocator);
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -285,7 +285,7 @@ riak_decode_get_response(riak_event         *rev,
     if (rpbresp->n_content > 0) {
         riak_error err = riak_object_new_array(ctx, &(response->content), rpbresp->n_content);
         if (err != ERIAK_OK) {
-            riak_free(ctx, response);
+            riak_free(ctx, &response);
             return 1;
         }
         response->n_content = rpbresp->n_content;
@@ -294,7 +294,7 @@ riak_decode_get_response(riak_event         *rev,
             // If any object allocation fails, clean up all previously allocated ones
             if (err != ERIAK_OK) {
                 riak_object_free_array(ctx, &(response->content), i);
-                riak_free(ctx, response);
+                riak_free(ctx, &response);
                 return err;
             }
         }
@@ -346,7 +346,7 @@ riak_free_get_response(riak_context       *ctx,
         riak_object_free_array(ctx, &(response->content), response->n_content);
     }
     rpb_get_resp__free_unpacked(response->_internal, ctx->pb_allocator);
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 
@@ -446,7 +446,7 @@ riak_free_put_request(riak_context       *ctx,
                       riak_put_response **resp) {
     riak_put_response *response = *resp;
     rpb_put_resp__free_unpacked(response->_internal, ctx->pb_allocator);
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -479,7 +479,7 @@ riak_decode_put_response(riak_event         *rev,
     if (rpbresp->n_content > 0) {
         riak_error err = riak_object_new_array(ctx, &(response->content), rpbresp->n_content);
         if (err != ERIAK_OK) {
-            riak_free(ctx, response);
+            riak_free(ctx, &response);
             return err;
         }
         response->n_content = rpbresp->n_content;
@@ -488,7 +488,7 @@ riak_decode_put_response(riak_event         *rev,
             // If any object allocation fails, clean up all previously allocated ones
             if (err != ERIAK_OK) {
                 riak_object_free_array(ctx, &(response->content), i);
-                riak_free(ctx, response);
+                riak_free(ctx, &response);
                 return err;
             }
         }
@@ -538,7 +538,7 @@ riak_free_put_response(riak_context       *ctx,
         riak_object_free_array(ctx, &(response->content), response->n_content);
     }
     rpb_put_resp__free_unpacked(response->_internal, ctx->pb_allocator);
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -624,7 +624,7 @@ riak_decode_delete_response(riak_event            *rev,
 void
 riak_free_delete_response(riak_context           *ctx,
                           riak_delete_response **resp) {
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -642,7 +642,7 @@ riak_encode_listbuckets_request(riak_event       *rev,
     rpb_list_buckets_req__pack(&listbucketsreq, msgbuf);
     riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBLISTBUCKETSREQ, msglen, msgbuf);
     if (request == NULL) {
-        riak_free(ctx, msgbuf);
+        riak_free(ctx, &msgbuf);
         return ERIAK_OUT_OF_MEMORY;
     }
     *req = request;
@@ -699,10 +699,10 @@ riak_decode_listbuckets_response(riak_event                 *rev,
             int j;
             rpb_list_buckets_resp__free_unpacked(listbucketresp, ctx->pb_allocator);
             for(j = 0; j < i; j++) {
-                riak_free(ctx, response->buckets[j+existing_buckets]);
+                riak_free(ctx, &(response->buckets[j+existing_buckets]));
             }
-            riak_free(ctx, response->buckets);
-            riak_free(ctx, response);
+            riak_free(ctx, &(response->buckets));
+            riak_free(ctx, resp);
 
             return ERIAK_OUT_OF_MEMORY;
         }
@@ -767,16 +767,16 @@ riak_free_listbuckets_response(riak_context               *ctx,
     riak_listbuckets_response *response = *resp;
     int i;
     for(i = 0; i < response->n_buckets; i++) {
-        riak_free(ctx, response->buckets[i]);
+        riak_free(ctx, &(response->buckets[i]));
     }
-    riak_free(ctx, response->buckets);
+    riak_free(ctx, &(response->buckets));
     if (response->n_responses > 0) {
         for(i = 0; i < response->n_responses; i++) {
             rpb_list_buckets_resp__free_unpacked(response->_internal[i], ctx->pb_allocator);
         }
-        riak_free(ctx, response->_internal);
+        riak_free(ctx, &(response->_internal));
     }
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 
@@ -859,10 +859,10 @@ riak_decode_listkeys_response(riak_event              *rev,
             int j;
             rpb_list_keys_resp__free_unpacked(listkeyresp, ctx->pb_allocator);
             for(j = 0; j < i; j++) {
-                riak_free(ctx, response->keys[j+existing_keys]);
+                riak_free(ctx, &(response->keys[j+existing_keys]));
             }
-            riak_free(ctx, response->keys);
-            riak_free(ctx, response);
+            riak_free(ctx, &(response->keys));
+            riak_free(ctx, resp);
 
             return ERIAK_OUT_OF_MEMORY;
         }
@@ -927,16 +927,16 @@ riak_free_listkeys_response(riak_context            *ctx,
     riak_listkeys_response *response = *resp;
     int i;
     for(i = 0; i < response->n_keys; i++) {
-        riak_free(ctx, response->keys[i]);
+        riak_free(ctx, &(response->keys[i]));
     }
-    riak_free(ctx, response->keys);
+    riak_free(ctx, &(response->keys));
     if (response->n_responses > 0) {
         for(i = 0; i < response->n_responses; i++) {
             rpb_list_keys_resp__free_unpacked(response->_internal[i], ctx->pb_allocator);
         }
-        riak_free(ctx, response->_internal);
+        riak_free(ctx, &(response->_internal));
     }
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 
@@ -997,7 +997,7 @@ void
 riak_free_get_clientid_response(riak_context                *ctx,
                                 riak_get_clientid_response **resp) {
     rpb_get_client_id_resp__free_unpacked((*resp)->_internal, ctx->pb_allocator);
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 riak_error
@@ -1045,7 +1045,7 @@ riak_encode_set_clientid_request(riak_event       *rev,
 void
 riak_free_set_clientid_response(riak_context                *ctx,
                                 riak_set_clientid_response **resp) {
-    riak_free_ptr(ctx, resp);
+    riak_free(ctx, resp);
 }
 
 

@@ -72,13 +72,14 @@ riak_array_realloc(riak_context *ctx,
     // Just for good measure, clear out memory
     memset((void*)new_array, '\0', newnum*size);
     memcpy((void*)new_array, (void*)(*from), oldnum*size);
-    riak_free_ptr(ctx, from);
+    riak_free(ctx, from);
     *from = new_array;
     return (*from);
 }
 
 
-void riak_free_internal(riak_context *ctx, void **pp) {
+void
+riak_free_internal(riak_context *ctx, void **pp) {
     if(pp != NULL && *pp != NULL) {
         (ctx->free_fn)(*pp);
         *pp = NULL;

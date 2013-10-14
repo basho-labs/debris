@@ -64,8 +64,12 @@ riak_binary_populate(riak_context *ctx,
  * @brief Free allocated memory used by `riak_binary`
  */
 void
-riak_binary_free(riak_context *ctx,
-                 riak_binary  *bin);
+riak_binary_free(riak_context  *ctx,
+                 riak_binary  **bin);
+void
+riak_binary_deep_free(riak_context  *ctx,
+                      riak_binary  **bin);
+
 void
 riak_binary_copy(riak_binary *to,
                  riak_binary *from);

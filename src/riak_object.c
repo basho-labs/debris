@@ -64,10 +64,9 @@ riak_pairs_free_pb(riak_context *ctx,
     RpbPair **pbpair = *pbpair_target;
     int i;
     for(i = 0; i < num_pairs; i++) {
-        riak_free(ctx, pbpair[i]);
+        riak_free(ctx, &(pbpair[i]));
     }
-    riak_free(ctx, pbpair);
-    *pbpair_target = NULL;
+    riak_free(ctx, pbpair_target);
 }
 
 static int
@@ -104,10 +103,9 @@ riak_pairs_free(riak_context *ctx,
     riak_pair **pair = *pair_target;
     int i;
     for(i = 0; i < num_pairs; i++) {
-        riak_free(ctx, pair[i]);
+        riak_free(ctx, &(pair[i]));
     }
-    riak_free(ctx, pair);
-    *pair_target = NULL;
+    riak_free(ctx, pair_target);
 }
 
 //
@@ -149,16 +147,15 @@ riak_links_copy_to_pb(riak_context *ctx,
 }
 
 static void
-riak_links_free_pb(riak_context* ctx,
-                   RpbLink*** pblink_target,
-                   int num_links) {
+riak_links_free_pb(riak_context *ctx,
+                   RpbLink    ***pblink_target,
+                   int           num_links) {
     RpbLink **pblink = *pblink_target;
     int i;
     for(i = 0; i < num_links; i++) {
-        riak_free(ctx, pblink[i]);
+        riak_free(ctx, &(pblink[i]));
     }
-    riak_free(ctx, pblink);
-    *pblink_target = NULL;
+    riak_free(ctx, pblink_target);
 }
 
 static riak_error
@@ -203,10 +200,9 @@ riak_links_free(riak_context *ctx,
     riak_link **link = *link_target;
     int i;
     for(i = 0; i < num_links; i++) {
-        riak_free(ctx, link[i]);
+        riak_free(ctx, &(link[i]));
     }
-    riak_free(ctx, link);
-    *link_target = NULL;
+    riak_free(ctx, &link_target);
 }
 
 int
@@ -274,9 +270,9 @@ riak_object_free_array(riak_context  *ctx,
         if (obj->n_indexes > 0) riak_pairs_free(ctx, &(obj->indexes), obj->n_indexes);
         if (obj->n_usermeta > 0) riak_pairs_free(ctx, &(obj->usermeta), obj->n_usermeta);
         if (obj->n_links > 0) riak_links_free(ctx, &(obj->links), obj->n_links);
-        riak_free_ptr(ctx, obj);
+        riak_free(ctx, &obj);
     }
-    riak_free_ptr(ctx, array);
+    riak_free(ctx, array);
 }
 
 int

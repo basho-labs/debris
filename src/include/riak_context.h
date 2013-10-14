@@ -76,4 +76,15 @@ riak_context_get_base(riak_context *ctx);
 void
 riak_context_free(riak_context **ctx);
 
+/**
+ * @brief Generic memory de-allocation function
+ * @param ctx Riak Context
+ * @param p Pointer to pointer to memory to free
+ * @note p is NULLed after it is freed
+ */
+void
+riak_free_internal(riak_context *ctx,
+                   void        **p);
+#define riak_free(C,P)  riak_free_internal((C),(void**)(P))
+
 #endif /* RIAK_CONTEXT_H_ */
