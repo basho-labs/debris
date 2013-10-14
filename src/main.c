@@ -20,29 +20,15 @@
  *
  *********************************************************************/
 
-#include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <event2/event.h>
-
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
-#include "riak_error.h"
-#include "riak_binary.h"
-#include "riak.pb-c.h"
-#include "riak_kv.pb-c.h"
-#include "riak_network.h"
-#include "riak_call_backs.h"
+#include "riak_messages-internal.h"
 #include "riak_binary-internal.h"
-#include "riak_object-internal.h"
-#include "riak-internal.h"
 #include "riak_command.h"
+#include "riak_call_backs-internal.h"
+#include "riak_event.h"
+#include "riak_event-internal.h"
+#include "riak_object-internal.h"
+#include "riak_utils-internal.h"
 
 int
 main(int   argc,
@@ -50,41 +36,6 @@ main(int   argc,
 {
     riak_args args;
     int operation = riak_parse_args(argc, argv, &args);
-
-    // These options require a bucket
-    switch (operation) {
-    case MSG_RPBGETREQ:
-    case MSG_RPBPUTREQ:
-    case MSG_RPBDELREQ:
-    case MSG_RPBLISTKEYSREQ:
-    case MSG_RPBGETBUCKETREQ:
-    case MSG_RPBSETBUCKETREQ:
-        if (!args.has_bucket) {
-            fprintf(stderr, "--bucket parameter required\n");
-            return 1;
-        }
-    }
-
-    // These operations require a key
-    switch (operation) {
-    case MSG_RPBGETREQ:
-    case MSG_RPBDELREQ:
-        if (!args.has_key ) {
-            fprintf(stderr, "--key parameter required\n");
-            return 1;
-        }
-    }
-
-    // These operations require a value
-    switch (operation) {
-    case MSG_RPBPUTREQ:
-    case MSG_RPBSETCLIENTIDREQ:
-    case MSG_RPBSEARCHQUERYREQ:
-        if (!args.has_value) {
-            fprintf(stderr, "--value parameter required\n");
-            return 1;
-        }
-    }
 
     event_enable_debug_mode();
 //    event_use_pthreads();
@@ -111,7 +62,7 @@ main(int   argc,
         riak_binary_from_string(value_bin, args.value); // Not copied
 
         if (args.async) {
-            rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+            rev = riak_event_new(ctx, NULL, NULL, NULL);
             if (rev == NULL) {
                 return 1;
             }
@@ -122,7 +73,7 @@ main(int   argc,
         case MSG_RPBPINGREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)ping_cb);
-                riak_encode_ping_request(rev, &(rev->request));
+                riak_encode_ping_request(rev, &(rev->pb_request));
             } else {
                 err = riak_ping(ctx);
                 if (err) {
@@ -133,7 +84,7 @@ main(int   argc,
         case MSG_RPBGETSERVERINFOREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)serverinfo_cb);
-                riak_encode_serverinfo_request(rev, &(rev->request));
+                riak_encode_serverinfo_request(rev, &(rev->pb_request));
             } else {
                 riak_serverinfo_response *serverinfo_response;
                 err = riak_serverinfo(ctx, &serverinfo_response);
@@ -148,7 +99,7 @@ main(int   argc,
         case MSG_RPBGETREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)get_cb);
-                riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &(rev->request));
+                riak_encode_get_request(rev, &bucket_bin, &key_bin, NULL, &(rev->pb_request));
             } else {
                 riak_get_response *get_response;
                 err = riak_get(ctx, &bucket_bin, &key_bin, NULL, &get_response);
@@ -175,7 +126,7 @@ main(int   argc,
             put_options.return_body = RIAK_TRUE;
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)put_cb);
-                riak_encode_put_request(rev, obj, &put_options, &(rev->request));
+                riak_encode_put_request(rev, obj, &put_options, &(rev->pb_request));
             } else {
                 riak_put_response *put_response;
                 err = riak_put(ctx, obj, &put_options, &put_response);
@@ -190,7 +141,7 @@ main(int   argc,
         case MSG_RPBDELREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)delete_cb);
-                riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &(rev->request));
+                riak_encode_delete_request(rev, &bucket_bin, &key_bin, NULL, &(rev->pb_request));
             } else {
                 err = riak_delete(ctx, &bucket_bin, &key_bin, NULL);
                 if (err) {
@@ -201,7 +152,7 @@ main(int   argc,
         case MSG_RPBLISTBUCKETSREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)listbucket_cb);
-                riak_encode_listbuckets_request(rev, &(rev->request));
+                riak_encode_listbuckets_request(rev, &(rev->pb_request));
             } else {
                 riak_listbuckets_response *bucket_response;
                 err = riak_listbuckets(ctx, &bucket_response);
@@ -216,7 +167,7 @@ main(int   argc,
         case MSG_RPBLISTKEYSREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)listkey_cb);
-                riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &(rev->request));
+                riak_encode_listkeys_request(rev, &bucket_bin, args.timeout * 1000, &(rev->pb_request));
             } else {
                 riak_listkeys_response *key_response;
                 err = riak_listkeys(ctx, &bucket_bin, args.timeout * 1000, &key_response);
@@ -231,7 +182,7 @@ main(int   argc,
         case MSG_RPBGETCLIENTIDREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)getclientid_cb);
-                riak_encode_get_clientid_request(rev, &(rev->request));
+                riak_encode_get_clientid_request(rev, &(rev->pb_request));
             } else {
                 riak_get_clientid_response *getcli_response;
                 err = riak_get_clientid(ctx, &getcli_response);
@@ -246,7 +197,7 @@ main(int   argc,
         case MSG_RPBSETCLIENTIDREQ:
             if (args.async) {
                 riak_event_set_response_cb(rev, (riak_response_callback)setclientid_cb);
-                riak_encode_set_clientid_request(rev, &value_bin, &(rev->request));
+                riak_encode_set_clientid_request(rev, &value_bin, &(rev->pb_request));
             } else {
                 riak_set_clientid_response *setcli_response;
                 err = riak_set_clientid(ctx, &value_bin, &setcli_response);
@@ -261,7 +212,7 @@ main(int   argc,
         }
 
         if (args.async) {
-            err = riak_send_req(rev, rev->request);
+            err = riak_send_req(rev, rev->pb_request);
             if (err) {
                 riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
                 exit(1);

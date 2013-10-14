@@ -21,11 +21,11 @@
  *********************************************************************/
 #include <time.h>
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
-#include "riak_binary.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
 #include "riak_binary-internal.h"
 #include "riak_object-internal.h"
+#include "riak_context-internal.h"
 
 //
 // P A I R S

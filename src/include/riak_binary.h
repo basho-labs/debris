@@ -29,10 +29,24 @@ typedef struct _riak_binary riak_binary;
 /**
  * @brief Allocate a new `riak_binary` struct
  * @param len Length of binary in bytes
- * @param data Pointer to binary data
+ * @param data Pointer to binary data (shallow copy)
  * @returns pointer to newly created `riak_binary` struct
  */
-riak_binary *riak_binary_new(riak_context *ctx, riak_size_t len, riak_uint8_t *data);
+riak_binary*
+riak_binary_new(riak_context *ctx,
+                riak_size_t   len,
+                riak_uint8_t *data);
+
+/**
+ * @brief Allocate a new `riak_binary` struct
+ * @param len Length of binary in bytes
+ * @param data Pointer to binary data (shallow copy)
+ * @returns pointer to newly created `riak_binary` struct
+ */
+riak_binary*
+riak_binary_deep_new(riak_context *ctx,
+                     riak_size_t   len,
+                     riak_uint8_t *data);
 
 /**
  * @brief Allocate a new riak_binary and populate from data pointer
@@ -40,29 +54,43 @@ riak_binary *riak_binary_new(riak_context *ctx, riak_size_t len, riak_uint8_t *d
  * @param len Length of binary in bytes
  * @param data Source of binary to be copied to bin
  */
-void riak_binary_populate(riak_context *ctx, riak_binary *bin, riak_size_t len, riak_uint8_t *data);
+void
+riak_binary_populate(riak_context *ctx,
+                     riak_binary  *bin,
+                     riak_size_t   len,
+                     riak_uint8_t *data);
 
 /**
  * @brief Free allocated memory used by `riak_binary`
  */
-void riak_binary_free(riak_context *ctx, riak_binary *bin);
-void riak_binary_copy_ptr(riak_binary* to, riak_binary* from);
-#define riak_binary_copy(A,B) riak_binary_copy_ptr(&(A),&(B))
-riak_error riak_binary_deep_copy(riak_context *ctx, riak_binary *to, riak_binary *from);
-void riak_binary_to_pb_copy_ptr(ProtobufCBinaryData* to, riak_binary* from);
-#define riak_binary_to_pb_copy(A,B) riak_binary_to_pb_copy_ptr(&(A),&(B))
-riak_error riak_binary_to_pb_deep_copy(riak_context *ctx, ProtobufCBinaryData *to, riak_binary *from);
-void riak_binary_from_pb_copy_ptr(riak_binary* to, ProtobufCBinaryData* from);
-#define riak_binary_from_pb_copy(A,B) riak_binary_from_pb_copy_ptr(&(A),&(B))
-riak_error riak_binary_from_pb_deep_copy_ptr(riak_context *ctx, riak_binary *to, ProtobufCBinaryData *from);
-#define riak_binary_from_pb_deep_copy(A,B,C) riak_binary_from_pb_deep_copy_ptr((A),&(B),&(C))
-int riak_binary_print_ptr(riak_binary *bin, char* target, riak_uint32_t len);
+void
+riak_binary_free(riak_context *ctx,
+                 riak_binary  *bin);
+void
+riak_binary_copy(riak_binary *to,
+                 riak_binary *from);
+riak_error
+riak_binary_deep_copy(riak_context *ctx,
+                      riak_binary  *to,
+                      riak_binary  *from);
+int
+riak_binary_print_ptr(riak_binary  *bin,
+                      char         *target,
+                      riak_uint32_t len);
 #define riak_binary_print(A,B,C) riak_binary_print_ptr(&(A),(B),(C))
-int riak_binary_hex_print_ptr(riak_binary *bin, char* target, riak_uint32_t len);
+int
+riak_binary_hex_print_ptr(riak_binary  *bin,
+                          char         *target,
+                          riak_uint32_t len);
 #define riak_binary_hex_print(A,B,C) riak_binary_hex_print_ptr(&(A),(B),(C))
-void riak_binary_from_string_ptr(riak_binary *to, const char *from);
+void
+riak_binary_from_string_ptr(riak_binary *to,
+                            const char  *from);
 #define riak_binary_from_string(A,B) riak_binary_from_string_ptr(&(A),B)
-riak_error riak_binary_from_string_deep_copy_ptr(riak_context *ctx, riak_binary *to, const char *from);
+riak_error
+riak_binary_from_string_deep_copy_ptr(riak_context *ctx,
+                                      riak_binary  *to,
+                                      const char   *from);
 #define riak_binary_from_string_deep_copy(A,B,C) riak_binary_from_string(A,&(B),C)
 
 #endif /* RIAK_BINARY_H_ */

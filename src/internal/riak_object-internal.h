@@ -81,4 +81,39 @@ struct _riak_object {
     riak_pair    **indexes;
 };
 
+/**
+ * @brief Shallow copy a Riak Object from a protocol buffer
+ * @param ctx Riak Context
+ * @param to Allocated `riak_object` returned to caller
+ * @param from Riak-supplied Protocol buffer source
+ *
+ * @returns Error code
+ */
+riak_error
+riak_object_new_from_pb(riak_context *ctx,
+                        riak_object** to,
+                        RpbContent* from);
+
+/**
+ * @brief Copy a Riak Object to a protocol buffer
+ * @param ctx Riak Context
+ * @param to Protocol buffer target
+ * @param from User-supplied `riak_object`
+ *
+ * @returns Error code
+ */
+int riak_object_to_pb_copy(riak_context *ctx,
+                           RpbContent *to,
+                           riak_object *from);
+
+/**
+ * @brief Release claimed memory used by PB Riak Object
+ * @param ctx Riak Context
+ * @param obj PB Riak Object to be freed
+ */
+void
+riak_object_free_pb(riak_context *ctx,
+                    RpbContent   *obj);
+
+
 #endif /* RIAK_OBJECT_H_ */

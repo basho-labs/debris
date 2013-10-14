@@ -20,11 +20,11 @@
  *
  *********************************************************************/
 
-#include <log4c.h>
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
 #include "riak_network.h"
+#include "riak_context-internal.h"
 
 extern ProtobufCAllocator protobuf_c_default_allocator;
 

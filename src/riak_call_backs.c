@@ -20,26 +20,12 @@
  *
  *********************************************************************/
 
-#include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <stdint.h>
-#include <event2/event.h>
-#include <event2/bufferevent.h>
-
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
-#include "riak_binary.h"
-#include "riak.pb-c.h"
-#include "riak_kv.pb-c.h"
-#include "riak_call_backs.h"
-#include "riak-internal.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
+#include "riak_event-internal.h"
+#include "riak_call_backs-internal.h"
+#include "riak_context-internal.h"
 
 //
 // TEST CALLBACKS

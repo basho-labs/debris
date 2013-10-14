@@ -21,11 +21,11 @@
  *********************************************************************/
 
 #include "riak.h"
-#include "riak-internal.h"
-#include "riak_pb_message.h"
-#include "riak_kv.pb-c.h"
-#include "riak_utils.h"
-#include "riak_call_backs.h"
+#include "riak_call_backs-internal.h"
+#include "riak_event.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
+#include "riak_event-internal.h"
 
 static riak_error
 riak_synchronous_request(riak_event *rev,
@@ -35,7 +35,7 @@ riak_synchronous_request(riak_event *rev,
     wrapper.rev = rev;
     riak_event_set_cb_data(rev, &wrapper);
 
-    riak_error err = riak_send_req(rev, rev->request);
+    riak_error err = riak_send_req(rev, rev->pb_request);
     if (err) {
         riak_log(rev, RIAK_LOG_FATAL, "Could not send request");
         return err;
@@ -51,12 +51,12 @@ riak_synchronous_request(riak_event *rev,
 
 riak_error
 riak_ping(riak_context  *ctx) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
     riak_ping_response *response = NULL;
-    riak_error err = riak_encode_ping_request(rev, &(rev->request));
+    riak_error err = riak_encode_ping_request(rev, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -73,11 +73,11 @@ riak_ping(riak_context  *ctx) {
 riak_error
 riak_serverinfo(riak_context              *ctx,
                 riak_serverinfo_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_serverinfo_request(rev, &(rev->request));
+    riak_error err = riak_encode_serverinfo_request(rev, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -96,11 +96,11 @@ riak_get(riak_context      *ctx,
          riak_binary       *key,
          riak_get_options  *opts,
          riak_get_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_get_request(rev, bucket, key, opts, &(rev->request));
+    riak_error err = riak_encode_get_request(rev, bucket, key, opts, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -117,11 +117,11 @@ riak_put(riak_context      *ctx,
          riak_object       *obj,
          riak_put_options  *opts,
          riak_put_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_put_request(rev, obj, opts, &(rev->request));
+    riak_error err = riak_encode_put_request(rev, obj, opts, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -138,11 +138,11 @@ riak_delete(riak_context      *ctx,
          riak_binary          *bucket,
          riak_binary          *key,
          riak_delete_options  *opts) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_delete_request(rev, bucket, key, opts, &(rev->request));
+    riak_error err = riak_encode_delete_request(rev, bucket, key, opts, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -158,11 +158,11 @@ riak_delete(riak_context      *ctx,
 riak_error
 riak_listbuckets(riak_context               *ctx,
                  riak_listbuckets_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_listbuckets_request(rev, &(rev->request));
+    riak_error err = riak_encode_listbuckets_request(rev, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -178,11 +178,11 @@ riak_listkeys(riak_context            *ctx,
               riak_binary             *bucket,
               riak_uint32_t            timeout,
               riak_listkeys_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_listkeys_request(rev, bucket, timeout, &(rev->request));
+    riak_error err = riak_encode_listkeys_request(rev, bucket, timeout, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -196,11 +196,11 @@ riak_listkeys(riak_context            *ctx,
 riak_error
 riak_get_clientid(riak_context                *ctx,
                   riak_get_clientid_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_get_clientid_request(rev, &(rev->request));
+    riak_error err = riak_encode_get_clientid_request(rev, &(rev->pb_request));
     if (err) {
         return err;
     }
@@ -216,11 +216,11 @@ riak_error
 riak_set_clientid(riak_context                *ctx,
                   riak_binary                 *clientid,
                   riak_set_clientid_response **response) {
-    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL, NULL);
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
     if (rev == NULL) {
         return ERIAK_EVENT;
     }
-    riak_error err = riak_encode_set_clientid_request(rev, clientid, &(rev->request));
+    riak_error err = riak_encode_set_clientid_request(rev, clientid, &(rev->pb_request));
     if (err) {
         return err;
     }

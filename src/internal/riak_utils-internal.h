@@ -20,8 +20,8 @@
  *
  *********************************************************************/
 
-#ifndef RIAK_UTILS_H
-#define RIAK_UTILS_H
+#ifndef RIAK_UTILS_INTERNAL_H
+#define RIAK_UTILS_INTERNAL_H
 
 /**
  * @brief Since strlcpy is not standard everywhere, write our own

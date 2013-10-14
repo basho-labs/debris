@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <string.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <event2/dns.h>
 #include <event2/bufferevent.h>
@@ -34,48 +35,13 @@
 #include <event2/util.h>
 #include <event2/event.h>
 #include "riak_types.h"
-#include "riak.pb-c.h"
-#include "riak_kv.pb-c.h"
 #include "riak_error.h"
 #include "riak_context.h"
-#include "riak_event.h"
-#include "riak_log.h"
 #include "riak_binary.h"
+#include "riak_event.h"
 #include "riak_object.h"
-
-typedef struct _riak_serverinfo_response riak_serverinfo_response;
-typedef struct _riak_get_response riak_get_response;
-typedef struct _riak_get_options riak_get_options;
-typedef struct _riak_put_response riak_put_response;
-typedef struct _riak_put_options riak_put_options;
-typedef struct _riak_listbuckets_response riak_listbuckets_response;
-typedef struct _riak_listkeys_response riak_listkeys_response;
-typedef struct _riak_error_response riak_error_response;
-typedef struct _riak_ping_response riak_ping_response;
-typedef struct _riak_delete_options riak_delete_options;
-typedef struct _riak_delete_response riak_delete_response;
-typedef struct _riak_get_clientid_response riak_get_clientid_response;
-typedef struct _riak_get_clientid_request riak_get_clientid_request;
-typedef struct _riak_set_clientid_response riak_set_clientid_response;
-
-
-typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);
-
-typedef void (*riak_serverinfo_response_callback)(riak_serverinfo_response *response, void *ptr);
-
-typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
-
-typedef void (*riak_put_response_callback)(riak_put_response *response, void *ptr);
-
-typedef void (*riak_delete_response_callback)(riak_delete_response *response, void *ptr);
-
-typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *response, void *ptr);
-
-typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response, void *ptr);
-
-typedef void (*riak_get_clientid_response_callback)(riak_get_clientid_response *response, void *ptr);
-
-typedef void (*riak_set_clientid_response_callback)(riak_set_clientid_response *response, void *ptr);
+#include "riak_messages.h"
+#include "riak_log.h"
 
 //
 // Basic Synchronous Operations
@@ -87,7 +53,7 @@ typedef void (*riak_set_clientid_response_callback)(riak_set_clientid_response *
  * @return ERIAK_OK on Pong response
  */
 riak_error
-riak_ping(riak_context  *ctx);
+riak_ping(riak_context *ctx);
 
 /**
  * @brief Send a Server Info Request

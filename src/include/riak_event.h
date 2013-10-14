@@ -23,53 +23,20 @@
 #ifndef RIAK_EVENT_H_
 #define RIAK_EVENT_H_
 
+typedef struct _riak_event riak_event;
+
 // Generic placeholder for message-specific callbacks
 typedef void (*riak_response_callback)(void *response, void *ptr);
-
-// Forward declarations
-struct _riak_event;
-struct _riak_pb_message;
-
-// Template for message-specific decoder
-typedef riak_error (*riak_response_decoder)(struct _riak_event      *rev,
-                                            struct _riak_pb_message *pbresp,
-                                            void                   **response,
-                                            riak_boolean_t          *done);
-
-// Essentially the state of the current event
-typedef struct _riak_event {
-    riak_context            *context;
-    riak_event_base         *base;
-    riak_bufferevent        *bevent;
-    riak_response_decoder    decoder;
-    riak_response_callback   response_cb;
-    riak_response_callback   error_cb;
-    void                    *cb_data;
-    riak_socket_t            fd;
-
-    // Current message being decoded
-    riak_uint32_t            position;
-    riak_uint32_t            msglen;
-    riak_uint8_t            *msgbuf;
-    riak_boolean_t           msglen_complete;
-
-    // Results of message translation
-    struct _riak_pb_message *request;
-    void                    *response;
-} riak_event;
-
 
 /**
  * @brief Construct a Riak event
  * @param ctx Riak context for memory allocation
- * @param decoder Pointer to function to decode response
  * @param response_cb Reaponse callback function (user-supplied)
  * @param cb_data Pointer passed to `response_cb` when it is called
  * @returns Spanking new `riak_event` struct
  */
 riak_event*
 riak_event_new(riak_context          *ctx,
-               riak_response_decoder  decoder,
                riak_response_callback response_cb,
                riak_response_callback error_cb,
                void                  *cb_data);
@@ -80,8 +47,8 @@ riak_event_new(riak_context          *ctx,
  * @param cb_data Pointer to data used in user's callback
  */
 void
-riak_event_set_cb_data(riak_event *rev,
-                       void       *cb_data);
+riak_event_set_cb_data(riak_event         *rev,
+                       void               *cb_data);
 
 /**
  * @brief Set the event's response callback
@@ -100,15 +67,6 @@ riak_event_set_response_cb(riak_event             *rev,
 void
 riak_event_set_error_cb(riak_event             *rev,
                         riak_response_callback  cb);
-
-/**
- * @brief Set the event's message decoding function
- * @param rev Riak Event
- * @param decoder Function pointer to message translator
- */
-void
-riak_event_set_response_decoder(riak_event             *rev,
-                                riak_response_decoder   decoder);
 
 /**
  * @brief Cleanup memory used by a Riak Event

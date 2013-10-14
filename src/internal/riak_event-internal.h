@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * call_backs.h: Riak C Message Test Callbacks
+ * riak_event-internal.h: Management of the Riak event
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
@@ -20,47 +20,36 @@
  *
  *********************************************************************/
 
-#ifndef CALL_BACKS_H_
-#define CALL_BACKS_H_
+#ifndef RIAK_EVENT_INTERNAL_H_
+#define RIAK_EVENT_INTERNAL_H_
 
-void
-ping_cb(riak_ping_response *response,
-        void *ptr);
-void
-serverinfo_cb(riak_serverinfo_response *response,
-              void *ptr);
-void
-get_cb(riak_get_response *response,
-       void *ptr);
-void
-put_cb(riak_put_response *response,
-       void *ptr);
-void
-delete_cb(riak_delete_response *response,
-          void *ptr);
-void
-listbucket_cb(riak_listbuckets_response *response,
-             void *ptr);
-void
-listkey_cb(riak_listkeys_response *response,
-           void *ptr);
+typedef riak_error (*riak_response_decoder)(struct _riak_event      *rev,
+                                            struct _riak_pb_message *pbresp,
+                                            void                   **response,
+                                            riak_boolean_t          *done);
 
-void
-getclientid_cb(riak_get_clientid_response *response,
-               void *ptr);
+// Essentially the state of the current event
+struct _riak_event {
+    riak_context            *context;
+    riak_event_base         *base;
+    riak_bufferevent        *bevent;
+    riak_response_decoder    decoder;
+    riak_response_callback   response_cb;
+    riak_response_callback   error_cb;
+    void                    *cb_data;
+    riak_socket_t            fd;
 
-void
-setclientid_cb(riak_set_clientid_response *response,
-               void *ptr);
+    // Current message being decoded
+    riak_uint32_t            position;
+    riak_uint32_t            msglen;
+    riak_uint8_t            *msgbuf;
+    riak_boolean_t           msglen_complete;
 
-typedef struct _riak_sync_wrapper {
-    riak_event    *rev;
-    void          *response;
-} riak_sync_wrapper;
-
-void
-riak_sync_cb(void *response,
-             void *ptr);
+    // Results of message translation
+    struct _riak_pb_message *pb_request;
+    struct _riak_pb_message *pb_response;
+    void                    *response;
+};
 
 /**
  * @brief Called by libevent when event posts
@@ -90,5 +79,14 @@ void
 riak_read_result_callback(riak_bufferevent *bev,
                           void             *ptr);
 
+/**
+ * @brief Set the event's message decoding function
+ * @param rev Riak Event
+ * @param decoder Function pointer to message translator
+ */
+void
+riak_event_set_response_decoder(riak_event           *rev,
+                                riak_response_decoder decoder);
 
-#endif /* CALL_BACKS_H_ */
+
+#endif

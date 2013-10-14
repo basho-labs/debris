@@ -23,11 +23,6 @@
 #ifndef RIAK_CONTEXT_H_
 #define RIAK_CONTEXT_H_
 
-// TODO: one day make this configurable?
-#define RIAK_LOGGING_DEFAULT_CATEGORY   "com.basho.client.c"
-#define RIAK_LOGGING_MAX_LEN            256
-#define RIAK_HOST_MAX_LEN               256
-
 // per-thread
 // do we need a *shared* context to complement?
 
@@ -37,29 +32,7 @@ typedef void (*riak_free_fn)(void *ptr);
 typedef void *(*riak_pb_alloc_fn)(void *allocator_data, size_t size);
 typedef void (*riak_pb_free_fn)(void *allocator_data, void *pointer);
 
-/* --- memory management --- */
-//typedef struct _ProtobufCAllocator ProtobufCAllocator;
-//struct _ProtobufCAllocator
-//{
-//  void *(*alloc)(void *allocator_data, size_t size);
-//  void (*free)(void *allocator_data, void *pointer);
-//  void *(*tmp_alloc)(void *allocator_data, size_t size);
-//  unsigned max_alloca;
-//  void *allocator_data;
-//};
-
-typedef struct _riak_context {
-    riak_alloc_fn       malloc_fn;
-    riak_realloc_fn     realloc_fn;
-    riak_free_fn        free_fn;
-    ProtobufCAllocator *pb_allocator;
-    char                logging_category[RIAK_LOGGING_MAX_LEN];
-    riak_event_base    *base; // Is this the right location? One per thread, so probably
-    char                hostname[RIAK_HOST_MAX_LEN];
-    char                portnum[RIAK_HOST_MAX_LEN]; // Keep as a string for debugging
-    riak_addrinfo      *addrinfo;
-} riak_context;
-
+typedef struct _riak_context riak_context;
 
 /**
  * @brief Construct a Riak Context

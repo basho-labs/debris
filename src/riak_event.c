@@ -20,18 +20,16 @@
  *
  *********************************************************************/
 
-#include <log4c.h>
-#include <unistd.h>
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
 #include "riak_event.h"
+#include "riak_context-internal.h"
+#include "riak_event-internal.h"
 #include "riak_network.h"
-#include "riak_call_backs.h"
 
 riak_event*
 riak_event_new(riak_context          *ctx,
-               riak_response_decoder  decoder,
                riak_response_callback response_cb,
                riak_response_callback error_cb,
                void                  *cb_data) {
@@ -43,7 +41,7 @@ riak_event_new(riak_context          *ctx,
     }
     rev->base = riak_context_get_base(ctx); // Keep a copy until interface has settled
     rev->context = ctx;
-    rev->decoder = decoder;
+    rev->decoder = NULL;
     rev->response_cb = response_cb;
     rev->error_cb = error_cb;
     rev->cb_data = cb_data;
@@ -51,7 +49,8 @@ riak_event_new(riak_context          *ctx,
     rev->msglen = 0;
     rev->msgbuf = NULL;
     rev->msglen_complete = RIAK_FALSE;
-    rev->request = NULL;
+    rev->pb_request = NULL;
+    rev->pb_response = NULL;
     rev->response = NULL;
 
     // TODO: Implement retry logic
@@ -110,8 +109,8 @@ void riak_event_free(riak_event** re) {
         //bufferevent_disable(rev->bevent, EV_READ|EV_WRITE);
         bufferevent_free(rev->bevent);
     }
-    if (rev->request) {
-        riak_pb_message_free(rev->context, &(rev->request));
+    if (rev->pb_request) {
+        riak_pb_message_free(rev->context, &(rev->pb_request));
     }
     if (rev->fd) close(rev->fd);
     (freer)(*re);

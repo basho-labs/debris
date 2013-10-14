@@ -21,13 +21,13 @@
  *********************************************************************/
 
 #include <unistd.h>
-#include "riak_pb_message.h"
-#include "riak-internal.h"
+#include "riak.h"
+#include "riak_messages.h"
+#include "riak_messages-internal.h"
 #include "riak_object-internal.h"
-#include "riak_utils.h"
-#include "riak_binary.h"
-#include "riak.pb-c.h"
-#include "riak_kv.pb-c.h"
+#include "riak_utils-internal.h"
+#include "riak_context-internal.h"
+#include "riak_event-internal.h"
 
 riak_pb_message*
 riak_pb_message_new(riak_context *ctx,

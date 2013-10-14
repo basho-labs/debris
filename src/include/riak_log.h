@@ -24,6 +24,7 @@
 #define RIAK_LOG_H_
 
 #include <stdarg.h>
+#include <log4c.h>
 
 // Pulled from log4c/priority.h but correspond to log levels from syslog(3)
 typedef enum {

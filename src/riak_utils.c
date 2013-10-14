@@ -21,8 +21,11 @@
  *********************************************************************/
 
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
+#include "riak_binary-internal.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
+#include "riak_context-internal.h"
+#include "riak_event-internal.h"
 
 size_t
 riak_strlcpy(char       *dst,

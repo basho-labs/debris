@@ -20,6 +20,8 @@
  *
  *********************************************************************/
 
+#include "riak_kv.pb-c.h"
+#include "riak.pb-c.h"
 
 #ifndef RIAK_BINARY_INTERNAL_H_
 #define RIAK_BINARY_INTERNAL_H_
@@ -29,5 +31,23 @@ struct _riak_binary {
     riak_size_t   len;
     riak_uint8_t *data;
 };
+
+void
+riak_binary_to_pb_copy_ptr(ProtobufCBinaryData *to,
+                           riak_binary         *from);
+#define riak_binary_to_pb_copy(A,B) riak_binary_to_pb_copy_ptr(&(A),&(B))
+riak_error
+riak_binary_to_pb_deep_copy(riak_context        *ctx,
+                            ProtobufCBinaryData *to,
+                            riak_binary         *from);
+void
+riak_binary_from_pb_copy_ptr(riak_binary        *to,
+                            ProtobufCBinaryData *from);
+#define riak_binary_from_pb_copy(A,B) riak_binary_from_pb_copy_ptr(&(A),&(B))
+riak_error
+riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
+                                  riak_binary         *to,
+                                  ProtobufCBinaryData *from);
+#define riak_binary_from_pb_deep_copy(A,B,C) riak_binary_from_pb_deep_copy_ptr((A),&(B),&(C))
 
 #endif /* RIAK_BINARY_H_ */

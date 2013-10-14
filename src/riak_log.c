@@ -20,10 +20,11 @@
  *
  *********************************************************************/
 
-#include <log4c.h>
 #include "riak.h"
-#include "riak_context.h"
 #include "riak_log.h"
+#include "riak_messages-internal.h"
+#include "riak_context-internal.h"
+#include "riak_event-internal.h"
 
 const log4c_priority_level_t map_level_to_priority[] = {
     LOG4C_PRIORITY_FATAL,

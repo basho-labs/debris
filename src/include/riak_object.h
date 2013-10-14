@@ -45,15 +45,6 @@ riak_object_free(riak_context *ctx,
                  riak_object  *obj);
 
 /**
- * @brief Release claimed memory used by PB Riak Object
- * @param ctx Riak Context
- * @param obj PB Riak Object to be freed
- */
-void
-riak_object_free_pb(riak_context *ctx,
-                    RpbContent   *obj);
-
-/**
  * @brief Print contents of a Riak Object to a string
  * @param obj Object to print
  * @param target Location to write formatted string
@@ -64,16 +55,6 @@ int
 riak_object_print(riak_object  *obj,
                   char         *target,
                   riak_uint32_t len);
-
-/**
- * @brief Copy a Riak Object to a protocol buffer
- * @param ctx Riak Context
- * @param to Protocol buffer target
- * @param from User-supplied `riak_object`
- *
- * @returns Error code
- */
-int riak_object_to_pb_copy(riak_context *ctx, RpbContent *to, riak_object *from);
 
 /**
  * @brief Allocate an array of `riak_object` pointers
@@ -98,15 +79,5 @@ void
 riak_object_free_array(riak_context  *ctx,
                        riak_object ***array,
                        riak_size_t    len);
-/**
- * @brief Shallow copy a Riak Object from a protocol buffer
- * @param ctx Riak Context
- * @param to Allocated `riak_object` returned to caller
- * @param from Riak-supplied Protocol buffer source
- *
- * @returns Error code
- */
-riak_error
-riak_object_new_from_pb(riak_context *ctx, riak_object** to, RpbContent* from);
 
 #endif /* RIAK_OBJECT_H_ */

@@ -22,8 +22,8 @@
 
 #include <errno.h>
 #include "riak.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
 
 riak_error
 riak_resolve_address(riak_context   *ctx,

@@ -23,22 +23,35 @@
 #include "riak.h"
 #include "riak_binary.h"
 #include "riak_binary-internal.h"
-#include "riak_pb_message.h"
-#include "riak_utils.h"
+#include "riak_messages-internal.h"
+#include "riak_utils-internal.h"
+#include "riak_context-internal.h"
 
-// RIAK_BINARY
 riak_binary*
 riak_binary_new(riak_context *ctx,
                 riak_size_t   len,
                 riak_uint8_t *data) {
-      riak_binary *b = (riak_binary*)(ctx->malloc_fn)(sizeof(riak_binary));
-      if (b == NULL) return NULL;
-      b->len  = len;
-      b->data = data;
-      //b->data = (riak_uint8_t*)(ctx->malloc_fn)(len);
-      //memcpy((void*)b->data, (void*)data, len);
-      return b;
+    riak_binary *b = (riak_binary*)(ctx->malloc_fn)(sizeof(riak_binary));
+    if (b == NULL) return NULL;
+    b->len  = len;
+    b->data = data;
+
+    return b;
 }
+
+riak_binary*
+riak_binary_deep_new(riak_context *ctx,
+                    riak_size_t    len,
+                    riak_uint8_t  *data) {
+
+    riak_binary *b = riak_binary_new(ctx, len, data);
+    if (b) {
+        b->data = (riak_uint8_t*)(ctx->malloc_fn)(len);
+        memcpy((void*)b->data, (void*)data, len);
+    }
+    return b;
+}
+
 
 void
 riak_binary_populate(riak_context *ctx,
@@ -62,8 +75,8 @@ riak_binary_free(riak_context *ctx,
 }
 
 void
-riak_binary_copy_ptr(riak_binary* to,
-                     riak_binary* from) {
+riak_binary_copy(riak_binary* to,
+                 riak_binary* from) {
     to->len  = from->len;
     to->data = from->data;
 }
