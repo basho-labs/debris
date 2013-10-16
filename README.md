@@ -14,6 +14,8 @@ This is a **basho-labs** project, therefore it is NOT ready to use in a producti
 * protobuf-c
 * pthreads
 * log4c
+* doxygen (if you are building docs)
+
 
 # Building
 
@@ -39,6 +41,13 @@ git clone git@github.com:/basho-labs/debris.git
 cd debris
 scons
 ```
+
+
+### Building docs
+
+To build documentation, you'll need `doxygen` installed. 
+
+	scons docs
 
 # Using
 
