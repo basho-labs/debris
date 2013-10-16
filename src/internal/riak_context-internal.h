@@ -20,7 +20,7 @@
  *
  *********************************************************************/
 
-#ifndef RIAK_CONTEXT_INTERNAL__H_
+#ifndef RIAK_CONTEXT_INTERNAL_H_
 #define RIAK_CONTEXT_INTERNAL_H_
 
 // TODO: one day make this configurable?
