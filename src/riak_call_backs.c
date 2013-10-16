@@ -239,8 +239,7 @@ riak_read_result_callback(riak_bufferevent *bev,
             result = riak_decode_error_response(rev, pbresp, &err_response, &done_streaming);
             // Convert error response to a null-terminated string
             char errmsg[2048];
-            size_t len = (err_response->errmsg.len > sizeof(errmsg)-1) ? sizeof(errmsg)-1 : err_response->errmsg.len;
-            riak_strlcpy(errmsg, (const char*)err_response->errmsg.data, len);
+            riak_binary_print(err_response->errmsg, errmsg, sizeof(errmsg));
             riak_log(rev, RIAK_LOG_FATAL, "ERR #%d - %s\n", err_response->errcode, errmsg);
             if (rev->error_cb) (rev->error_cb)(err_response, rev->cb_data);
             exit(1);

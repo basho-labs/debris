@@ -42,7 +42,7 @@ riak_object_new(riak_context *ctx);
  */
 void
 riak_object_free(riak_context *ctx,
-                 riak_object  *obj);
+                 riak_object **obj);
 
 /**
  * @brief Print contents of a Riak Object to a string

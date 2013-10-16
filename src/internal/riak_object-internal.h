@@ -27,53 +27,53 @@
 struct _riak_link
 {
     riak_boolean_t has_bucket;
-    riak_binary    bucket;
+    riak_binary   *bucket;
     riak_boolean_t has_key;
-    riak_binary    key;
+    riak_binary   *key;
     riak_boolean_t has_tag;
-    riak_binary    tag;
+    riak_binary   *tag;
 };
 
 // Based off of RpbPair
 struct _riak_pair
 {
-    riak_binary    key;
+    riak_binary   *key;
     riak_boolean_t has_value;
-    riak_binary    value;
+    riak_binary   *value;
 };
 
 // Based off of RpbContent
 struct _riak_object {
-    riak_binary bucket;
+    riak_binary   *bucket;
 
     riak_boolean_t has_key;
-    riak_binary key;
+    riak_binary   *key;
 
-    riak_binary value;
+    riak_binary   *value;
 
     riak_boolean_t has_charset;
-    riak_binary charset;
+    riak_binary   *charset;
 
     riak_boolean_t has_last_mod;
-    riak_uint32_t last_mod;
+    riak_uint32_t  last_mod;
 
     riak_boolean_t has_last_mod_usecs;
-    riak_uint32_t last_mod_usecs;
+    riak_uint32_t  last_mod_usecs;
 
     riak_boolean_t has_content_type;
-    riak_binary content_type;
+    riak_binary   *content_type;
 
     riak_boolean_t has_content_encoding;
-    riak_binary encoding;
+    riak_binary   *encoding;
 
     riak_boolean_t has_deleted;
     riak_boolean_t deleted;
 
     riak_boolean_t has_vtag;
-    riak_binary vtag;
+    riak_binary   *vtag;
 
-    riak_int32_t n_links;
-    riak_link **links;
+    riak_int32_t   n_links;
+    riak_link    **links;
 
     riak_int32_t   n_usermeta;
     riak_pair    **usermeta;
@@ -91,8 +91,8 @@ struct _riak_object {
  */
 riak_error
 riak_object_new_from_pb(riak_context *ctx,
-                        riak_object** to,
-                        RpbContent* from);
+                        riak_object **to,
+                        RpbContent   *from);
 
 /**
  * @brief Copy a Riak Object to a protocol buffer
@@ -103,8 +103,8 @@ riak_object_new_from_pb(riak_context *ctx,
  * @returns Error code
  */
 int riak_object_to_pb_copy(riak_context *ctx,
-                           RpbContent *to,
-                           riak_object *from);
+                           RpbContent   *to,
+                           riak_object  *from);
 
 /**
  * @brief Release claimed memory used by PB Riak Object

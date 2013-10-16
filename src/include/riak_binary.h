@@ -37,6 +37,7 @@ riak_binary_new(riak_context *ctx,
                 riak_size_t   len,
                 riak_uint8_t *data);
 
+
 /**
  * @brief Allocate a new `riak_binary` struct
  * @param len Length of binary in bytes
@@ -50,15 +51,12 @@ riak_binary_deep_new(riak_context *ctx,
 
 /**
  * @brief Allocate a new riak_binary and populate from data pointer
- * @param bin Existing `riak_binary` to be populated
- * @param len Length of binary in bytes
- * @param data Source of binary to be copied to bin
+ * @param bin Existing `riak_binary` to be shallow copied
+ * @returns pointer to newly created `riak_binary` struct
  */
-void
+riak_binary*
 riak_binary_populate(riak_context *ctx,
-                     riak_binary  *bin,
-                     riak_size_t   len,
-                     riak_uint8_t *data);
+                     riak_binary  *bin);
 
 /**
  * @brief Free allocated memory used by `riak_binary`
@@ -70,6 +68,22 @@ void
 riak_binary_deep_free(riak_context  *ctx,
                       riak_binary  **bin);
 
+/**
+ * @brief Return the length of the binary object
+ * @param bin Riak Binary
+ * @returns Length in bytes
+ */
+riak_size_t
+riak_binary_len(riak_binary *bin);
+
+/**
+ * @brief Get the encapsulated data
+ * @param bin Riak Binary
+ * @returns Pointer to underlying data
+ */
+riak_uint8_t*
+riak_binary_data(riak_binary *bin);
+
 void
 riak_binary_copy(riak_binary *to,
                  riak_binary *from);
@@ -78,23 +92,22 @@ riak_binary_deep_copy(riak_context *ctx,
                       riak_binary  *to,
                       riak_binary  *from);
 int
-riak_binary_print_ptr(riak_binary  *bin,
+riak_binary_print(riak_binary  *bin,
+                  char         *target,
+                  riak_uint32_t len);
+int
+riak_binary_hex_print(riak_binary  *bin,
                       char         *target,
                       riak_uint32_t len);
-#define riak_binary_print(A,B,C) riak_binary_print_ptr(&(A),(B),(C))
-int
-riak_binary_hex_print_ptr(riak_binary  *bin,
-                          char         *target,
-                          riak_uint32_t len);
-#define riak_binary_hex_print(A,B,C) riak_binary_hex_print_ptr(&(A),(B),(C))
 void
-riak_binary_from_string_ptr(riak_binary *to,
-                            const char  *from);
-#define riak_binary_from_string(A,B) riak_binary_from_string_ptr(&(A),B)
+riak_binary_from_string(riak_binary *to,
+                        const char  *from);
 riak_error
-riak_binary_from_string_deep_copy_ptr(riak_context *ctx,
-                                      riak_binary  *to,
-                                      const char   *from);
-#define riak_binary_from_string_deep_copy(A,B,C) riak_binary_from_string(A,&(B),C)
+riak_binary_from_string_deep_copy(riak_context *ctx,
+                                  riak_binary  *to,
+                                  const char   *from);
+riak_binary*
+riak_binary_new_from_string(riak_context *ctx,
+                            const char   *from);
 
 #endif /* RIAK_BINARY_H_ */

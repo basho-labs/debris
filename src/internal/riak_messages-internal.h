@@ -104,9 +104,9 @@
 struct _riak_serverinfo_response
 {
     riak_boolean_t  has_node;
-    riak_binary     node;
+    riak_binary    *node;
     riak_boolean_t  has_server_version;
-    riak_binary     server_version;
+    riak_binary    *server_version;
 
     RpbGetServerInfoResp *_internal;
 };
@@ -114,7 +114,7 @@ struct _riak_serverinfo_response
 // Based on RpbGetResp
 struct _riak_get_response {
     riak_boolean_t has_vclock;
-    riak_binary    vclock;
+    riak_binary   *vclock;
     riak_boolean_t has_unmodified;
     riak_boolean_t unmodified;
     riak_boolean_t deleted;
@@ -135,7 +135,7 @@ struct _riak_get_options {
     riak_boolean_t has_notfound_ok;
     riak_boolean_t notfound_ok;
     riak_boolean_t has_if_modified;
-    riak_binary    if_modified;
+    riak_binary   *if_modified;
     riak_boolean_t has_head;
     riak_boolean_t head;
     riak_boolean_t has_deletedvclock;
@@ -153,9 +153,9 @@ struct _riak_put_response {
     riak_uint32_t  n_content;
     riak_object  **content; // Array of pointers to match Get
     riak_boolean_t has_vclock;
-    riak_binary    vclock;
+    riak_binary   *vclock;
     riak_boolean_t has_key;
-    riak_binary    key;
+    riak_binary   *key;
 
     RpbPutResp   *_internal;
 };
@@ -166,7 +166,7 @@ struct _riak_put_options {
     //riak_boolean_t has_key;
     //riak_binary    key;
     riak_boolean_t has_vclock;
-    riak_binary    vclock;
+    riak_binary   *vclock;
     //RpbContent *content;
     riak_boolean_t has_w;
     riak_uint32_t  w;
@@ -217,7 +217,7 @@ struct _riak_listkeys_response {
 // Based on RpbErrorResp
 struct _riak_error_response {
     riak_uint32_t errcode;
-    riak_binary   errmsg;
+    riak_binary  *errmsg;
 
     RpbErrorResp *_internal;
 };
@@ -230,7 +230,7 @@ struct _riak_ping_response {
 struct _riak_delete_options
 {
     riak_boolean_t has_vclock;
-    riak_binary    vclock;
+    riak_binary   *vclock;
     riak_boolean_t has_w;
     riak_uint32_t  w;
     riak_boolean_t has_dw;
@@ -252,7 +252,7 @@ struct _riak_delete_response {
 // Based on RpbGetClientIdResp
 struct _riak_get_clientid_response
 {
-    riak_binary client_id;
+    riak_binary *client_id;
 
     RpbGetClientIdResp *_internal;
 };
@@ -260,7 +260,7 @@ struct _riak_get_clientid_response
 // Based on RpbSetClientIdReq
 struct _riak_get_clientid_request
 {
-    riak_binary client_id;
+    riak_binary *client_id;
 };
 
 // Placeholder

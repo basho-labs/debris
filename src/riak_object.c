@@ -48,7 +48,7 @@ riak_pairs_copy_to_pb(riak_context *ctx,
         memset(pbpair[i], '\0', sizeof(RpbPair));
         if (pair[i]->has_value) {
             pbpair[i]->has_value = RIAK_TRUE;
-            riak_binary_to_pb_copy(pbpair[i]->value, pair[i]->value);
+            riak_binary_to_pb_copy(&(pbpair[i]->value), pair[i]->value);
         }
     }
     // Finally assign the pointer to the list of pair pointers
@@ -84,10 +84,17 @@ riak_pairs_copy_from_pb(riak_context *ctx,
         if (pair[i] == NULL) {
             return ERIAK_OUT_OF_MEMORY;
         }
+        pair[i]->key = riak_binary_populate_from_pb(ctx, &(pbpair[i]->key));
+        if (pair[i]->key == NULL) {
+            return ERIAK_OUT_OF_MEMORY;
+        }
         memset(pair[i], '\0', sizeof(riak_pair));
         if (pbpair[i]->has_value) {
             pair[i]->has_value = RIAK_TRUE;
-            riak_binary_from_pb_copy(pair[i]->value, pbpair[i]->value);
+            pair[i]->value = riak_binary_populate_from_pb(ctx, &(pbpair[i]->value));
+            if (pair[i]->value == NULL) {
+                return ERIAK_OUT_OF_MEMORY;
+            }
         }
     }
     // Finally assign the pointer to the list of pair pointers
@@ -103,6 +110,8 @@ riak_pairs_free(riak_context *ctx,
     riak_pair **pair = *pair_target;
     int i;
     for(i = 0; i < num_pairs; i++) {
+        riak_free(ctx, &(pair[i]->key));
+        riak_free(ctx, &(pair[i]->value));
         riak_free(ctx, &(pair[i]));
     }
     riak_free(ctx, pair_target);
@@ -129,15 +138,15 @@ riak_links_copy_to_pb(riak_context *ctx,
         memset(pblink[i], '\0', sizeof(RpbLink));
         if (link[i]->has_bucket) {
             pblink[i]->has_bucket = RIAK_TRUE;
-            riak_binary_to_pb_copy(pblink[i]->bucket, link[i]->bucket);
+            riak_binary_to_pb_copy(&(pblink[i]->bucket), link[i]->bucket);
         }
         if (link[i]->has_key) {
             pblink[i]->has_key = RIAK_TRUE;
-            riak_binary_to_pb_copy(pblink[i]->key, link[i]->key);
+            riak_binary_to_pb_copy(&(pblink[i]->key), link[i]->key);
         }
         if (link[i]->has_tag) {
             pblink[i]->has_tag = RIAK_TRUE;
-            riak_binary_to_pb_copy(pblink[i]->tag, link[i]->tag);
+            riak_binary_to_pb_copy(&(pblink[i]->tag), link[i]->tag);
         }
     }
     // Finally assign the pointer to the list of link pointers
@@ -176,15 +185,24 @@ riak_links_copy_from_pb(riak_context *ctx,
         memset(link[i], '\0', sizeof(riak_link));
         if (pblink[i]->has_bucket) {
             link[i]->has_bucket = RIAK_TRUE;
-            riak_binary_from_pb_copy(link[i]->bucket, pblink[i]->bucket);
+            link[i]->bucket = riak_binary_populate_from_pb(ctx, &(pblink[i]->bucket));
+            if (link[i]->bucket == NULL) {
+                return ERIAK_OUT_OF_MEMORY;
+            }
         }
         if (pblink[i]->has_key) {
             pblink[i]->has_key = RIAK_TRUE;
-            riak_binary_from_pb_copy(link[i]->key, pblink[i]->key);
+            link[i]->key = riak_binary_populate_from_pb(ctx, &(pblink[i]->key));
+            if (link[i]->key == NULL) {
+                return ERIAK_OUT_OF_MEMORY;
+            }
         }
         if (pblink[i]->has_tag) {
             pblink[i]->has_tag = RIAK_TRUE;
-            riak_binary_from_pb_copy(link[i]->tag, pblink[i]->tag);
+            link[i]->tag = riak_binary_populate_from_pb(ctx, &(pblink[i]->tag));
+            if (link[i]->tag == NULL) {
+                return ERIAK_OUT_OF_MEMORY;
+            }
         }
     }
     // Finally assign the pointer to the list of link pointers
@@ -200,9 +218,12 @@ riak_links_free(riak_context *ctx,
     riak_link **link = *link_target;
     int i;
     for(i = 0; i < num_links; i++) {
+        riak_free(ctx, &(link[i]->bucket));
+        riak_free(ctx, &(link[i]->key));
+        riak_free(ctx, &(link[i]->tag));
         riak_free(ctx, &(link[i]));
     }
-    riak_free(ctx, &link_target);
+    riak_free(ctx, *link_target);
 }
 
 int
@@ -266,11 +287,7 @@ riak_object_free_array(riak_context  *ctx,
                        riak_size_t    len) {
     int i;
     for(i = 0; i < len; i++) {
-        riak_object *obj = (*array)[i];
-        if (obj->n_indexes > 0) riak_pairs_free(ctx, &(obj->indexes), obj->n_indexes);
-        if (obj->n_usermeta > 0) riak_pairs_free(ctx, &(obj->usermeta), obj->n_usermeta);
-        if (obj->n_links > 0) riak_links_free(ctx, &(obj->links), obj->n_links);
-        riak_free(ctx, &obj);
+        riak_object_free(ctx, array[i]);
     }
     riak_free(ctx, array);
 }
@@ -282,18 +299,18 @@ riak_object_to_pb_copy(riak_context *ctx,
 
     rpb_content__init(to);
 
-    riak_binary_to_pb_copy(to->value, from->value);
+    riak_binary_to_pb_copy(&(to->value), from->value);
     if (from->has_charset) {
         to->has_charset = RIAK_TRUE;
-        riak_binary_to_pb_copy(to->charset, from->charset);
+        riak_binary_to_pb_copy(&(to->charset), from->charset);
     }
     if (from->has_content_encoding) {
         to->has_content_encoding = RIAK_TRUE;
-        riak_binary_to_pb_copy(to->content_encoding, from->encoding);
+        riak_binary_to_pb_copy(&(to->content_encoding), from->encoding);
     }
     if (from->has_content_type) {
         to->has_content_type = RIAK_TRUE;
-        riak_binary_to_pb_copy(to->content_type, from->content_type);
+        riak_binary_to_pb_copy(&(to->content_type), from->content_type);
     }
     if (from->has_deleted) {
         to->has_deleted = RIAK_TRUE;
@@ -309,7 +326,7 @@ riak_object_to_pb_copy(riak_context *ctx,
     }
     if (from->has_vtag) {
         to->has_vtag = RIAK_TRUE;
-        riak_binary_to_pb_copy(to->vtag, from->vtag);
+        riak_binary_to_pb_copy(&(to->vtag), from->vtag);
     }
 
     // Indexes
@@ -353,18 +370,34 @@ riak_object_new_from_pb(riak_context *ctx,
     }
     riak_object *to = *target;
 
-    riak_binary_from_pb_copy(to->value, from->value);
+    to->value = riak_binary_populate_from_pb(ctx, &(from->value));
+    if (to->value == NULL) {
+        riak_free(ctx, target);
+        return ERIAK_OUT_OF_MEMORY;
+    }
     if (from->has_charset) {
         to->has_charset = RIAK_TRUE;
-        riak_binary_from_pb_copy(to->charset, from->charset);
+        to->charset= riak_binary_populate_from_pb(ctx, &(from->charset));
+        if (to->charset == NULL) {
+            riak_free(ctx, target);
+            return ERIAK_OUT_OF_MEMORY;
+        }
     }
     if (from->has_content_encoding) {
         to->has_content_encoding = RIAK_TRUE;
-        riak_binary_from_pb_copy(to->encoding, from->content_encoding);
+        to->encoding = riak_binary_populate_from_pb(ctx, &(from->content_encoding));
+        if (to->encoding == NULL) {
+            riak_free(ctx, target);
+            return ERIAK_OUT_OF_MEMORY;
+        }
     }
     if (from->has_content_type) {
         to->has_content_type = RIAK_TRUE;
-        riak_binary_from_pb_copy(to->content_type, from->content_type);
+        to->content_type = riak_binary_populate_from_pb(ctx, &(from->content_type));
+        if (to->content_type == NULL) {
+            riak_free(ctx, target);
+            return ERIAK_OUT_OF_MEMORY;
+        }
     }
     if (from->has_deleted) {
         to->has_deleted = RIAK_TRUE;
@@ -380,7 +413,11 @@ riak_object_new_from_pb(riak_context *ctx,
     }
     if (from->has_vtag) {
         to->has_vtag = RIAK_TRUE;
-        riak_binary_from_pb_copy(to->vtag, from->vtag);
+        to->vtag = riak_binary_populate_from_pb(ctx, &(from->vtag));
+        if (to->vtag == NULL) {
+            riak_free(ctx, target);
+            return ERIAK_OUT_OF_MEMORY;
+        }
     }
 
     // Indexes
@@ -497,10 +534,19 @@ riak_object_print(riak_object  *obj,
 
 void
 riak_object_free(riak_context *ctx,
-                 riak_object  *obj) {
-    riak_pairs_free(ctx, &(obj->indexes), obj->n_indexes);
-    riak_pairs_free(ctx, &(obj->usermeta), obj->n_usermeta);
-    riak_links_free(ctx, &(obj->links), obj->n_links);
+                 riak_object **obj) {
+    riak_object* object = *obj;
+    riak_free(ctx, &(object->bucket));
+    riak_free(ctx, &(object->charset));
+    riak_free(ctx, &(object->content_type));
+    riak_free(ctx, &(object->encoding));
+    riak_free(ctx, &(object->key));
+    riak_free(ctx, &(object->value));
+    riak_free(ctx, &(object->vtag));
+    riak_pairs_free(ctx, &(object->indexes), object->n_indexes);
+    riak_pairs_free(ctx, &(object->usermeta), object->n_usermeta);
+    riak_links_free(ctx, &(object->links), object->n_links);
+    riak_free(ctx, obj);
 }
 
 void

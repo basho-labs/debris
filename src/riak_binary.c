@@ -53,15 +53,27 @@ riak_binary_deep_new(riak_context *ctx,
 }
 
 
-void
+riak_binary*
 riak_binary_populate(riak_context *ctx,
-                     riak_binary  *b,
-                     riak_size_t   len,
-                     riak_uint8_t *data) {
-      b->len  = len;
-      b->data = (uint8_t*)(ctx->malloc_fn)(len);
-      // TODO: Check malloc return status
-      memcpy((void*)b->data, (void*)data, len);
+                     riak_binary  *b) {
+    return riak_binary_new(ctx, b->len, b->data);
+}
+
+riak_binary*
+riak_binary_populate_from_pb(riak_context        *ctx,
+                             ProtobufCBinaryData *b) {
+    return riak_binary_new(ctx, b->len, b->data);
+}
+
+
+riak_size_t
+riak_binary_len(riak_binary *bin) {
+    return bin->len;
+}
+
+riak_uint8_t*
+riak_binary_data(riak_binary *bin) {
+    return bin->data;
 }
 
 void
@@ -102,8 +114,8 @@ riak_binary_deep_copy(riak_context *ctx,
 }
 
 void
-riak_binary_to_pb_copy_ptr(ProtobufCBinaryData *to,
-                           riak_binary         *from) {
+riak_binary_to_pb_copy(ProtobufCBinaryData *to,
+                       riak_binary         *from) {
     to->len  = from->len;
     to->data = from->data;
 }
@@ -120,16 +132,16 @@ riak_binary_to_pb_deep_copy(riak_context        *ctx,
 }
 
 void
-riak_binary_from_pb_copy_ptr(riak_binary         *to,
-                             ProtobufCBinaryData *from) {
+riak_binary_from_pb_copy(riak_binary         *to,
+                         ProtobufCBinaryData *from) {
     to->len  = from->len;
     to->data = from->data;
 }
 
 riak_error
-riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
-                                  riak_binary         *to,
-                                  ProtobufCBinaryData *from) {
+riak_binary_from_pb_deep_copy(riak_context        *ctx,
+                              riak_binary         *to,
+                              ProtobufCBinaryData *from) {
     to->len  = from->len;
     to->data = (riak_uint8_t*)(ctx->malloc_fn)(from->len);
     if (to->data == NULL) return ERIAK_OUT_OF_MEMORY;
@@ -139,11 +151,11 @@ riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
 
 //TODO: Figure out clean way to print UTF-8 encoding
 int
-riak_binary_print_ptr(riak_binary *bin,
-                     char         *target,
-                     riak_uint32_t len) {
+riak_binary_print(riak_binary *bin,
+                  char         *target,
+                  riak_uint32_t len) {
     int i = 0;
-    for( ; i < (bin->len) && i < (len-1); i++) {
+    for( ; (bin) && (i < (bin->len)) && i < (len-1); i++) {
         char c = '.';
         // Non-printable characters are replaced by a dot
         if (bin->data[i] >= 32) c = bin->data[i];
@@ -156,9 +168,9 @@ riak_binary_print_ptr(riak_binary *bin,
 }
 
 int
-riak_binary_hex_print_ptr(riak_binary  *bin,
-                          char         *target,
-                          riak_uint32_t len) {
+riak_binary_hex_print(riak_binary  *bin,
+                      char         *target,
+                      riak_uint32_t len) {
     int count = 0;
     static char hex[] = "0123456789abcdef";
     if (bin != NULL) {
@@ -175,21 +187,31 @@ riak_binary_hex_print_ptr(riak_binary  *bin,
 }
 
 void
-riak_binary_from_string_ptr(riak_binary *to,
-                            const char  *from) {
+riak_binary_from_string(riak_binary *to,
+                        const char  *from) {
     to->data = (riak_uint8_t*)from;
     to->len = strlen(from);
 }
 
 riak_error
-riak_binary_from_string_deep_copy_ptr(riak_context *ctx,
-                                      riak_binary  *to,
-                                      const char   *from) {
+riak_binary_from_string_deep_copy(riak_context *ctx,
+                                  riak_binary  *to,
+                                  const char   *from) {
 
     to->len = strlen(from);
     to->data = (riak_uint8_t*)(ctx->malloc_fn)(to->len);
     if (to->data == NULL) return ERIAK_OUT_OF_MEMORY;
     memcpy((void*)to->data, (void*)from, to->len);
     return ERIAK_OK;
+}
+
+riak_binary*
+riak_binary_new_from_string(riak_context *ctx,
+                            const char   *from) {
+    riak_binary *b = riak_binary_new(ctx, 0, NULL);
+    if (b != NULL) {
+        riak_binary_from_string(b, from);
+    }
+    return b;
 }
 

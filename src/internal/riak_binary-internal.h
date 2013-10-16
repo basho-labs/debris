@@ -32,22 +32,28 @@ struct _riak_binary {
     riak_uint8_t *data;
 };
 
+/**
+ * @brief Allocate a new riak_binary and populate from data pointer
+ * @param bin Existing `ProtobufCBinaryData` to be shallow copied
+ * @returns pointer to newly created `riak_binary` struct
+ */
+riak_binary*
+riak_binary_populate_from_pb(riak_context *ctx,
+                             ProtobufCBinaryData  *bin);
+
 void
-riak_binary_to_pb_copy_ptr(ProtobufCBinaryData *to,
-                           riak_binary         *from);
-#define riak_binary_to_pb_copy(A,B) riak_binary_to_pb_copy_ptr(&(A),&(B))
+riak_binary_to_pb_copy(ProtobufCBinaryData *to,
+                       riak_binary         *from);
 riak_error
 riak_binary_to_pb_deep_copy(riak_context        *ctx,
                             ProtobufCBinaryData *to,
                             riak_binary         *from);
 void
-riak_binary_from_pb_copy_ptr(riak_binary        *to,
-                            ProtobufCBinaryData *from);
-#define riak_binary_from_pb_copy(A,B) riak_binary_from_pb_copy_ptr(&(A),&(B))
+riak_binary_from_pb_copy(riak_binary        *to,
+                         ProtobufCBinaryData *from);
 riak_error
-riak_binary_from_pb_deep_copy_ptr(riak_context        *ctx,
-                                  riak_binary         *to,
-                                  ProtobufCBinaryData *from);
-#define riak_binary_from_pb_deep_copy(A,B,C) riak_binary_from_pb_deep_copy_ptr((A),&(B),&(C))
+riak_binary_from_pb_deep_copy(riak_context        *ctx,
+                              riak_binary         *to,
+                              ProtobufCBinaryData *from);
 
 #endif /* RIAK_BINARY_H_ */
