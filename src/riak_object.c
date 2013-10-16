@@ -30,6 +30,28 @@
 //
 // P A I R S
 //
+
+riak_pair*
+riak_pair_new(riak_context *ctx) {
+    riak_pair *lnk = (riak_pair*)(ctx->malloc_fn)(sizeof(riak_pair));
+    if (lnk) memset(lnk, '\0', sizeof(riak_pair));
+    return lnk;
+}
+
+riak_error
+riak_pair_new_array(riak_context  *ctx,
+                    riak_pair  ***array,
+                    riak_size_t    len) {
+    riak_pair **result = (riak_pair**)(ctx->malloc_fn)(sizeof(riak_pair)*len);
+    if (result == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    memset((void*)result, '\0', sizeof(riak_pair)*len);
+    *array = result;
+
+    return ERIAK_OK;
+}
+
 static riak_error
 riak_pairs_copy_to_pb(riak_context *ctx,
                       RpbPair    ***pbpair_target,
@@ -103,7 +125,7 @@ riak_pairs_copy_from_pb(riak_context *ctx,
     return ERIAK_OK;
 }
 
-static void
+void
 riak_pairs_free(riak_context *ctx,
                 riak_pair  ***pair_target,
                 int           num_pairs) {
@@ -120,6 +142,14 @@ riak_pairs_free(riak_context *ctx,
 //
 // L I N K S
 //
+
+riak_link*
+riak_link_new(riak_context *ctx) {
+    riak_link *lnk = (riak_link*)(ctx->malloc_fn)(sizeof(riak_link));
+    if (lnk) memset(lnk, '\0', sizeof(riak_link));
+    return lnk;
+}
+
 static riak_error
 riak_links_copy_to_pb(riak_context *ctx,
                       RpbLink    ***pblink_target,
@@ -211,7 +241,21 @@ riak_links_copy_from_pb(riak_context *ctx,
     return ERIAK_OK;
 }
 
-static void
+riak_error
+riak_link_new_array(riak_context  *ctx,
+                    riak_link  ***array,
+                    riak_size_t    len) {
+    riak_link **result = (riak_link**)(ctx->malloc_fn)(sizeof(riak_link)*len);
+    if (result == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    memset((void*)result, '\0', sizeof(riak_link)*len);
+    *array = result;
+
+    return ERIAK_OK;
+}
+
+void
 riak_links_free(riak_context *ctx,
                 riak_link  ***link_target,
                 int           num_links) {
@@ -556,3 +600,252 @@ riak_object_free_pb(riak_context *ctx,
     riak_pairs_free_pb(ctx, &(obj->usermeta), obj->n_usermeta);
     riak_links_free_pb(ctx, &(obj->links), obj->n_links);
 }
+
+//
+// ACCESSORS
+//
+riak_binary*
+riak_object_get_bucket(riak_object *obj)
+{
+    return obj->bucket;
+}
+riak_boolean_t
+riak_object_get_has_key(riak_object *obj)
+{
+    return obj->has_key;
+}
+riak_binary*
+riak_object_get_key(riak_object *obj)
+{
+    return obj->key;
+}
+riak_binary*
+riak_object_get_value(riak_object *obj)
+{
+    return obj->value;
+}
+riak_boolean_t
+riak_object_get_has_charset(riak_object *obj)
+{
+    return obj->has_charset;
+}
+riak_binary*
+riak_object_get_charset(riak_object *obj)
+{
+    return obj->charset;
+}
+riak_boolean_t
+riak_object_get_has_last_mod(riak_object *obj)
+{
+    return obj->has_last_mod;
+}
+riak_uint32_t
+riak_object_get_last_mod(riak_object *obj)
+{
+    return obj->last_mod;
+}
+riak_boolean_t
+riak_object_get_has_last_mod_usecs(riak_object *obj)
+{
+    return obj->has_last_mod_usecs;
+}
+riak_uint32_t
+riak_object_get_last_mod_usecs(riak_object *obj)
+{
+    return obj->last_mod_usecs;
+}
+riak_boolean_t
+riak_object_get_has_content_type(riak_object *obj)
+{
+    return obj->has_content_type;
+}
+riak_binary*
+riak_object_get_content_type(riak_object *obj)
+{
+    return obj->content_type;
+}
+riak_boolean_t
+riak_object_get_has_content_encoding(riak_object *obj)
+{
+    return obj->has_content_encoding;
+}
+riak_binary*
+riak_object_get_encoding(riak_object *obj)
+{
+    return obj->encoding;
+}
+riak_boolean_t
+riak_object_get_has_deleted(riak_object *obj)
+{
+    return obj->has_deleted;
+}
+riak_boolean_t
+riak_object_get_deleted(riak_object *obj)
+{
+    return obj->deleted;
+}
+riak_boolean_t
+riak_object_get_has_vtag(riak_object *obj)
+{
+    return obj->has_vtag;
+}
+riak_binary*
+riak_object_get_vtag(riak_object *obj)
+{
+    return obj->vtag;
+}
+riak_int32_t
+riak_object_get_n_links(riak_object *obj)
+{
+    return obj->n_links;
+}
+riak_link**
+riak_object_get_links(riak_object *obj)
+{
+    return obj->links;
+}
+riak_int32_t
+riak_object_get_n_usermeta(riak_object *obj)
+{
+    return obj->n_usermeta;
+}
+riak_pair**
+riak_object_get_usermeta(riak_object *obj)
+{
+    return obj->usermeta;
+}
+riak_int32_t
+riak_object_get_n_indexes(riak_object *obj)
+{
+    return obj->n_indexes;
+}
+riak_pair**
+riak_object_get_indexes(riak_object *obj)
+{
+    return obj->indexes;
+}
+
+void riak_object_set_bucket(riak_object *obj, riak_binary *value) {
+     obj->bucket = value;
+}
+void riak_object_set_key(riak_object *obj, riak_binary *value) {
+     obj->key = value;
+     obj->has_key = RIAK_TRUE;
+}
+void riak_object_set_value(riak_object *obj, riak_binary *value) {
+     obj->value = value;
+}
+void riak_object_set_charset(riak_object *obj, riak_binary *value) {
+     obj->charset = value;
+     obj->has_charset = RIAK_TRUE;
+}
+void riak_object_set_last_mod(riak_object *obj, riak_uint32_t value) {
+     obj->last_mod = value;
+     obj->has_last_mod = RIAK_TRUE;
+}
+void riak_object_set_last_mod_usecs(riak_object *obj, riak_uint32_t value) {
+     obj->last_mod_usecs = value;
+     obj->has_last_mod_usecs = RIAK_TRUE;
+}
+void riak_object_set_content_type(riak_object *obj, riak_binary *value) {
+     obj->content_type = value;
+     obj->has_content_type = RIAK_TRUE;
+}
+void riak_object_set_encoding(riak_object *obj, riak_binary *value) {
+     obj->encoding = value;
+     obj->has_content_encoding = RIAK_TRUE;
+}
+void riak_object_set_deleted(riak_object *obj, riak_boolean_t value) {
+     obj->deleted = value;
+     obj->has_deleted = RIAK_TRUE;
+}
+void riak_object_set_vtag(riak_object *obj, riak_binary *value) {
+     obj->vtag = value;
+     obj->has_vtag = RIAK_TRUE;
+}
+void riak_object_set_n_links(riak_object *obj, riak_int32_t value) {
+     obj->n_links = value;
+}
+void riak_object_set_links(riak_object *obj, riak_link **value) {
+     obj->links = value;
+}
+void riak_object_set_n_usermeta(riak_object *obj, riak_int32_t value) {
+     obj->n_usermeta = value;
+}
+void riak_object_set_usermeta(riak_object *obj, riak_pair **value) {
+     obj->usermeta = value;
+}
+void riak_object_set_n_indexes(riak_object *obj, riak_int32_t value) {
+     obj->n_indexes = value;
+}
+void riak_object_set_indexes(riak_object *obj, riak_pair **value) {
+     obj->indexes = value;
+}
+
+riak_boolean_t
+riak_link_get_has_bucket(riak_link *link)
+{
+    return link->has_bucket;
+}
+riak_binary*
+riak_link_get_bucket(riak_link *link)
+{
+    return link->bucket;
+}
+riak_boolean_t
+riak_link_get_has_key(riak_link *link)
+{
+    return link->has_key;
+}
+riak_binary*
+riak_link_get_key(riak_link *link)
+{
+    return link->key;
+}
+riak_boolean_t
+riak_link_get_has_tag(riak_link *link)
+{
+    return link->has_tag;
+}
+riak_binary*
+riak_link_get_tag(riak_link *link)
+{
+    return link->tag;
+}
+void riak_link_set_bucket(riak_link *link, riak_binary *value) {
+     link->bucket = value;
+     link->has_bucket = RIAK_TRUE;
+}
+void riak_link_set_key(riak_link *link, riak_binary *value) {
+     link->key = value;
+     link->has_key = RIAK_TRUE;
+}
+void riak_link_set_tag(riak_link *link, riak_binary *value) {
+     link->tag = value;
+     link->has_tag = RIAK_TRUE;
+}
+
+
+riak_binary*
+riak_pair_get_key(riak_pair *pair)
+{
+    return pair->key;
+}
+riak_boolean_t
+riak_pair_get_has_value(riak_pair *pair)
+{
+    return pair->has_value;
+}
+riak_binary*
+riak_pair_get_value(riak_pair *pair)
+{
+    return pair->value;
+}
+void riak_pair_set_key(riak_pair *pair, riak_binary *value) {
+    pair->key = value;
+}
+void riak_pair_set_value(riak_pair *pair, riak_binary *value) {
+    pair->value = value;
+    pair->has_value = RIAK_TRUE;
+}
+

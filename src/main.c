@@ -26,7 +26,6 @@
 #include "riak_call_backs-internal.h"
 #include "riak_event.h"
 #include "riak_event-internal.h"
-#include "riak_object-internal.h"
 #include "riak_utils-internal.h"
 
 int
@@ -119,10 +118,10 @@ main(int   argc,
                 riak_log(rev, RIAK_LOG_FATAL, "Could not allocate a Riak Object");
                 return 1;
             }
-            obj->bucket = riak_binary_new_from_string(ctx, args.bucket); // Not copied
-            obj->value  = riak_binary_new_from_string(ctx, args.value); // Not copied
-            if (obj->bucket == NULL ||
-                obj->value == NULL) {
+            riak_object_set_bucket(obj, riak_binary_new_from_string(ctx, args.bucket)); // Not copied
+            riak_object_set_value(obj, riak_binary_new_from_string(ctx, args.value)); // Not copied
+            if (riak_object_get_bucket(obj) == NULL ||
+                riak_object_get_value(obj) == NULL) {
                 fprintf(stderr, "Could not allocate bucket/value\n");
                 exit(1);
             }
