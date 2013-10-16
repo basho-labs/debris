@@ -40,6 +40,7 @@
 #include "riak_binary.h"
 #include "riak_event.h"
 #include "riak_object.h"
+#include "riak_bucket_props.h"
 #include "riak_messages.h"
 #include "riak_log.h"
 

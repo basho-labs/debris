@@ -23,7 +23,7 @@
 #include "riak_binary-internal.h"
 
 #ifndef RIAK_INTERNAL_MESSAGES_H
-#define RIAK_INTERNAL_MESSAGE_H
+#define RIAK_INTERNAL_MESSAGES_H
 
 #define MSG_RPBERRORRESP              0
 
@@ -268,6 +268,38 @@ struct _riak_set_clientid_response
 {
 // Empty
 };
+
+// Based on RpbGetBucketReq
+struct _riak_get_bucketprops_request
+{
+    riak_binary   *bucket;
+    riak_boolean_t has_type;
+    riak_binary   *type;
+};
+
+// Based on RpbGetBucketResp
+struct _riak_get_bucketprops_response
+{
+    riak_bucket_props *props;
+};
+
+// Based on RpbSetBucketReq
+struct _riak_set_bucketprops_request
+{
+    riak_binary       *bucket;
+    riak_bucket_props *props;
+    riak_boolean_t     has_type;
+    riak_binary       *type;
+};
+
+// Based on RpbResetBucketReq
+struct _riak_reset_bucketprops_request
+{
+    riak_binary   *bucket;
+    riak_boolean_t has_type;
+    riak_binary   *type;
+};
+
 
 typedef struct _riak_pb_message {
     riak_uint32_t len;
