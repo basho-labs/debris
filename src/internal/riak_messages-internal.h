@@ -281,6 +281,8 @@ struct _riak_get_bucketprops_request
 struct _riak_get_bucketprops_response
 {
     riak_bucket_props *props;
+
+    RpbGetBucketResp *_internal;
 };
 
 // Based on RpbSetBucketReq
@@ -723,5 +725,50 @@ void
 riak_free_set_clientid_response(riak_context              *ctx,
                               riak_set_clientid_response **resp);
 
+/**
+ * @brief Create a request to fetch bucket properies
+ * @param rev Riak Event
+ * @param bucket Name of Riak bucket
+ * @param req Returned bucket properies request
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_get_bucketprops_request(riak_event       *rev,
+                                    riak_binary      *bucket,
+                                    riak_pb_message **req);
+
+/**
+ * @brief Translate PBC get_bucketprops response into Riak structure
+ * @param rev Riak Event
+ * @param pbresp PBC response message
+ * @param resp Returned Riak response structure
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_get_bucketprops_response(riak_event                     *rev,
+                                     riak_pb_message                *pbresp,
+                                     riak_get_bucketprops_response **resp,
+                                     riak_boolean_t                 *done);
+
+/**
+ * @brief Print a summary of a `riak_get_bucketprops_response`
+ * @param response Result from a get_bucketprops request
+ * @param target Location of string to be formatted
+ * @param len Number of free bytes
+ */
+void
+riak_print_get_bucketprops_response(riak_get_bucketprops_response *response,
+                                    char                          *target,
+                                    riak_size_t                    len);
+
+/**
+ * @brief Free memory from response
+ * @param ctx Riak Context
+ * @param resp Bucket Properties PBC Response
+ */
+void
+riak_free_get_bucketprops_response(riak_context                   *ctx,
+                                   riak_get_bucketprops_response **resp);
 
 #endif

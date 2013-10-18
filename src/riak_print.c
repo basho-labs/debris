@@ -77,13 +77,29 @@ riak_print_binary(char         *name,
 }
 
 riak_int32_t
-riak_print_string(char         *value,
+riak_print_label(char         *value,
+                 char        **target,
+                 riak_int32_t *len,
+                 riak_int32_t *total) {
+    riak_int32_t wrote = 0;
+    if (*len > 0) {
+        wrote = snprintf(*target, *len, "%s\n", value);
+        *len -= wrote;
+        *target += wrote;
+        *total += wrote;
+    }
+    return wrote;
+}
+
+riak_int32_t
+riak_print_string(char         *name,
+                  char         *value,
                   char        **target,
                   riak_int32_t *len,
                   riak_int32_t *total) {
     riak_int32_t wrote = 0;
     if (*len > 0) {
-        wrote = snprintf(*target, *len, "%s\n", value);
+        wrote = snprintf(*target, *len, "%s: %s\n", name,value);
         *len -= wrote;
         *target += wrote;
         *total += wrote;

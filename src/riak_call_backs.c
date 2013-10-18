@@ -105,6 +105,16 @@ void setclientid_cb(riak_set_clientid_response *response, void *ptr) {
     riak_free_set_clientid_response(rev->context, &response);
 }
 
+void getbucketprops_cb(riak_get_bucketprops_response *response, void *ptr) {
+    riak_event *rev = (riak_event*)ptr;
+    riak_log(rev, RIAK_LOG_DEBUG, "getbucketprops_cb");
+    char output[10240];
+    riak_print_get_bucketprops_response(response, output, sizeof(output));
+    riak_log(rev, RIAK_LOG_DEBUG, "%s", output);
+    fflush(stdout);
+    riak_free_get_bucketprops_response(rev->context, (riak_get_bucketprops_response**)&(response));
+}
+
 //
 // SYNCHRONOUS CALLBACKS
 //

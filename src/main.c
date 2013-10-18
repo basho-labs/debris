@@ -213,6 +213,21 @@ main(int   argc,
                 riak_free_set_clientid_response(ctx, &setcli_response);
             }
             break;
+        case MSG_RPBGETBUCKETREQ:
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)getbucketprops_cb);
+                riak_encode_get_bucketprops_request(rev, bucket_bin, &(rev->pb_request));
+            } else {
+                riak_get_bucketprops_response *bucket_response;
+                err = riak_get_bucketprops(ctx, bucket_bin, &bucket_response);
+                if (err) {
+                    fprintf(stderr, "Get Bucket Properties Problems\n");
+                }
+                riak_print_get_bucketprops_response(bucket_response, output, sizeof(output));
+                riak_log_context(ctx, RIAK_LOG_DEBUG, "%s", output);
+                riak_free_get_bucketprops_response(ctx, &bucket_response);
+            }
+            break;
         default:
             usage(stderr, argv[0]);
         }

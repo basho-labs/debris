@@ -126,7 +126,7 @@ riak_listbuckets(riak_context               *ctx,
  * @param bucket Name of bucket
  * @param timeout How long to wait for a response
  * @param response Returned collection of key names
- * @return ERIAK_OK on Pong response
+ * @return Error code
  */
 riak_error
 riak_listkeys(riak_context            *ctx,
@@ -155,6 +155,18 @@ riak_error
 riak_set_clientid(riak_context                *ctx,
                   riak_binary                 *clientid,
                   riak_set_clientid_response **response);
+
+/**
+ * @brief List the properties associated with a bucket
+ * @param ctx Riak Context
+ * @param bucket Name of bucket
+ * @param response Returned bucket properties
+ * @return Error code
+ */
+riak_error
+riak_get_bucketprops(riak_context                   *ctx,
+                     riak_binary                    *bucket,
+                     riak_get_bucketprops_response **repsonse);
 
 void riak_bucket_set_props(riak_context*);
 

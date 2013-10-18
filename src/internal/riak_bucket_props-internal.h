@@ -93,5 +93,9 @@ struct _riak_bucket_props
     riak_binary              *yz_index;
 };
 
+riak_error
+riak_bucket_props_new_from_pb(riak_context       *ctx,
+                              riak_bucket_props **target,
+                              RpbBucketProps     *from);
 
 #endif //RIAK_INTERNAL_BUCKET_PROPS_H

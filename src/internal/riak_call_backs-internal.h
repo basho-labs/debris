@@ -53,6 +53,9 @@ void
 setclientid_cb(riak_set_clientid_response *response,
                void *ptr);
 
+void getbucketprops_cb(riak_get_bucketprops_response *response,
+                       void                          *ptr);
+
 typedef struct _riak_sync_wrapper {
     riak_event    *rev;
     void          *response;

@@ -28,6 +28,7 @@
 #include "riak_utils-internal.h"
 #include "riak_context-internal.h"
 #include "riak_event-internal.h"
+#include "riak_bucket_props-internal.h"
 
 riak_pb_message*
 riak_pb_message_new(riak_context *ctx,
@@ -1079,4 +1080,74 @@ riak_free_set_clientid_response(riak_context                *ctx,
     riak_free(ctx, resp);
 }
 
+riak_error
+riak_encode_get_bucketprops_request(riak_event       *rev,
+                                    riak_binary      *bucket,
+                                    riak_pb_message **req) {
+    riak_context *ctx = (riak_context*)(rev->context);
+    RpbGetBucketReq bucketreq;
+    rpb_get_bucket_req__init(&bucketreq);
 
+    riak_binary_to_pb_copy(&(bucketreq.bucket), bucket);
+    riak_size_t msglen = rpb_get_bucket_req__get_packed_size(&bucketreq);
+    riak_uint8_t *msgbuf = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
+    if (msgbuf == NULL) {
+        return 1;
+    }
+    rpb_get_bucket_req__pack(&bucketreq, msgbuf);
+
+    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBGETBUCKETREQ, msglen, msgbuf);
+    if (request == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_get_bucketprops_response);
+
+    return ERIAK_OK;
+
+}
+
+riak_error
+riak_decode_get_bucketprops_response(riak_event                     *rev,
+                                     riak_pb_message                *pbresp,
+                                     riak_get_bucketprops_response **resp,
+                                     riak_boolean_t                 *done) {
+    // decode the PB response etc
+    riak_context *ctx = (riak_context*)(rev->context);
+    RpbGetBucketResp *rpbresp = rpb_get_bucket_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
+    riak_log(rev, RIAK_LOG_DEBUG, "riak_decode_get_bucketprops_response len=%d/pb unpack = 0x%lx\n", pbresp->len, (long)(rpbresp));
+    *done = RIAK_TRUE;
+    if (rpbresp == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    riak_get_bucketprops_response *response = (riak_get_bucketprops_response*)(ctx->malloc_fn)(sizeof(riak_get_bucketprops_response));
+    if (response == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    memset(response, '\0', sizeof(riak_get_bucketprops_response));
+    response->_internal = rpbresp;
+
+    riak_error err = riak_bucket_props_new_from_pb(ctx, &(response->props), rpbresp->props);
+    if (err) {
+        rpb_get_bucket_resp__free_unpacked(rpbresp, ctx->pb_allocator);
+        riak_free(ctx, &response);
+    }
+    *resp = response;
+
+    return ERIAK_OK;
+}
+
+void
+riak_free_get_bucketprops_response(riak_context                   *ctx,
+                                   riak_get_bucketprops_response **resp) {
+    riak_get_bucketprops_response *response = *resp;
+    riak_bucket_props_free(ctx, &(response->props));
+    riak_free(ctx, resp);
+}
+
+void
+riak_print_get_bucketprops_response(riak_get_bucketprops_response *response,
+                                    char                          *target,
+                                    riak_size_t                    len) {
+    riak_bucket_props_print(response->props, target, len);
+}

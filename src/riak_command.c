@@ -46,7 +46,7 @@ struct _riak_command {
 static riak_command s_commands[] = {
     // These options set a flag.
     {"delete",       "Delete a key",                 NULL, MSG_RPBDELREQ,           RIAK_TRUE,  RIAK_TRUE,  RIAK_FALSE},
-    {"get-bucket",   "Fetch bucket properties",      NULL, MSG_RPBGETBUCKETREQ,     RIAK_TRUE,  RIAK_TRUE,  RIAK_FALSE},
+    {"get-bucket",   "Fetch bucket properties",      NULL, MSG_RPBGETBUCKETREQ,     RIAK_TRUE,  RIAK_FALSE, RIAK_FALSE},
     {"get-clientid", "Fetch client identifier",      NULL, MSG_RPBGETCLIENTIDREQ,   RIAK_FALSE, RIAK_FALSE, RIAK_FALSE},
     {"get",          "Fetch a key value",            NULL, MSG_RPBGETREQ,           RIAK_TRUE,  RIAK_TRUE,  RIAK_FALSE},
     {"index",        "Index a bucket",               NULL, MSG_RPBINDEXRESP,        RIAK_TRUE,  RIAK_FALSE, RIAK_FALSE},
