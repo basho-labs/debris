@@ -26,18 +26,18 @@
 #define RIAK_INTERNAL_BUCKET_PROPS_H
 
 // Based on RpbModFun
-struct _riak_bucket_mod_fun
+struct _riak_mod_fun
 {
     riak_binary *module;
     riak_binary *function;
 };
 
 // Based on RpbCommitHook
-struct _riak_bucket_commit_hook
+struct _riak_commit_hook
 {
-    riak_bucket_mod_fun *modfun;
-    riak_boolean_t       has_name;
-    riak_binary         *name;
+    riak_mod_fun   *modfun;
+    riak_boolean_t  has_name;
+    riak_binary    *name;
 };
 
 // Based on RpbBucketProps
@@ -50,15 +50,15 @@ struct _riak_bucket_props
     riak_boolean_t            has_last_write_wins;
     riak_boolean_t            last_write_wins;
     riak_size_t               n_precommit;
-    riak_bucket_commit_hook **precommit;
+    riak_commit_hook        **precommit;
     riak_boolean_t            has_has_precommit;
     riak_boolean_t            has_precommit;
     riak_size_t               n_postcommit;
-    riak_bucket_commit_hook **postcommit;
+    riak_commit_hook        **postcommit;
     riak_boolean_t            has_has_postcommit;
     riak_boolean_t            has_postcommit;
-    riak_bucket_mod_fun      *chash_keyfun;
-    riak_bucket_mod_fun      *linkfun;
+    riak_mod_fun             *chash_keyfun;
+    riak_mod_fun             *linkfun;
     riak_boolean_t            has_old_vclock;
     riak_uint32_t             old_vclock;
     riak_boolean_t            has_young_vclock;
@@ -90,7 +90,7 @@ struct _riak_bucket_props
     riak_boolean_t            has_repl;
     riak_bucket_repl_mode     repl;
     riak_boolean_t            has_yz_index;
-    riak_binary               yz_index;
+    riak_binary              *yz_index;
 };
 
 

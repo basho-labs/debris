@@ -120,4 +120,3 @@ riak_send_req(riak_event      *rev,
     fprintf(stdout, "\n");
     return ERIAK_OK;
 }
-
