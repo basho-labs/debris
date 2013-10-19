@@ -50,6 +50,9 @@ static riak_error
 riak_mod_fun_copy_to_pb(riak_context  *ctx,
                         RpbModFun    **pbmod_fun_target,
                         riak_mod_fun  *mod_fun) {
+    if (mod_fun == NULL) {
+        return ERIAK_OK;
+    }
     RpbModFun *pbmod_fun = (RpbModFun*)(ctx->malloc_fn)(sizeof(RpbModFun));
     if (pbmod_fun == NULL) {
         return ERIAK_OUT_OF_MEMORY;
@@ -175,6 +178,9 @@ riak_commit_hooks_copy_to_pb(riak_context      *ctx,
                              RpbCommitHook   ***pbhook_target,
                              riak_commit_hook **hook,
                              riak_uint32_t      num_hooks) {
+    if (hook == NULL) {
+        return ERIAK_OK;
+    }
     RpbCommitHook **pbhook = (RpbCommitHook**)(ctx->malloc_fn)(sizeof(RpbCommitHook*) * num_hooks);
     if (pbhook == NULL) {
         return ERIAK_OUT_OF_MEMORY;

@@ -271,3 +271,24 @@ riak_reset_bucketprops(riak_context                     *ctx,
 
     return ERIAK_OK;
 }
+
+riak_error
+riak_set_bucketprops(riak_context                   *ctx,
+                     riak_binary                    *bucket,
+                     riak_bucket_props              *props,
+                     riak_set_bucketprops_response **response) {
+    riak_event *rev = riak_event_new(ctx, NULL, NULL, NULL);
+    if (rev == NULL) {
+        return ERIAK_EVENT;
+    }
+    riak_error err = riak_encode_set_bucketprops_request(rev, bucket, props, &(rev->pb_request));
+    if (err) {
+        return err;
+    }
+    err = riak_synchronous_request(rev, (void**)response);
+    if (err) {
+        return err;
+    }
+
+    return ERIAK_OK;
+}

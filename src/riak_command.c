@@ -58,7 +58,7 @@ static riak_command s_commands[] = {
     {"reset-bucket", "Reset bucket properties",      NULL, MSG_RPBRESETBUCKETREQ,   RIAK_TRUE,  RIAK_FALSE, RIAK_FALSE},
     {"search",       "Use 2i Search",                NULL, MSG_RPBSEARCHQUERYREQ,   RIAK_TRUE,  RIAK_FALSE, RIAK_TRUE},
     {"server-info",  "Return server settings",       NULL, MSG_RPBGETSERVERINFOREQ, RIAK_FALSE, RIAK_FALSE, RIAK_FALSE},
-    {"set-bucket",   "Store bucket properties",      NULL, MSG_RPBSETBUCKETREQ,     RIAK_TRUE,  RIAK_FALSE, RIAK_TRUE},
+    {"set-bucket",   "Store bucket properties",      NULL, MSG_RPBSETBUCKETREQ,     RIAK_TRUE,  RIAK_FALSE, RIAK_FALSE},
     {"set-clientid", "Store client identifier",      NULL, MSG_RPBSETCLIENTIDREQ,   RIAK_FALSE, RIAK_FALSE, RIAK_TRUE},
 
     // These options don't set a flag.

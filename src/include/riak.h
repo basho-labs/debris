@@ -169,7 +169,7 @@ riak_get_bucketprops(riak_context                   *ctx,
                      riak_get_bucketprops_response **repsonse);
 
 /**
- * @brief List the properties associated with a bucket
+ * @brief Reset the properties associated with a bucket
  * @param ctx Riak Context
  * @param bucket Name of bucket
  * @param response Returned bucket properties
@@ -179,6 +179,20 @@ riak_error
 riak_reset_bucketprops(riak_context                     *ctx,
                        riak_binary                      *bucket,
                        riak_reset_bucketprops_response **response);
+
+/**
+ * @brief Update the properties associated with a bucket
+ * @param ctx Riak Context
+ * @param bucket Name of bucket
+ * @param props Properties to set
+ * @param response Returned bucket properties
+ * @return Error code
+ */
+riak_error
+riak_set_bucketprops(riak_context                   *ctx,
+                     riak_binary                    *bucket,
+                     riak_bucket_props              *props,
+                     riak_set_bucketprops_response **response);
 
 void riak_bucket_set_props(riak_context*);
 

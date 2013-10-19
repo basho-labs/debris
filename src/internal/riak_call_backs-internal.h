@@ -61,6 +61,10 @@ void
 resetbucketprops_cb(riak_reset_bucketprops_response *response,
                     void                            *ptr);
 
+void
+setbucketprops_cb(riak_set_bucketprops_response *response,
+                  void                          *ptr);
+
 typedef struct _riak_sync_wrapper {
     riak_event    *rev;
     void          *response;

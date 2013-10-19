@@ -45,6 +45,7 @@ main(int   argc,
     }
     riak_event  *rev;
     riak_object *obj;
+    riak_bucket_props *props;
     riak_put_options put_options;
     char output[10240];
     int it;
@@ -237,6 +238,24 @@ main(int   argc,
                  err = riak_reset_bucketprops(ctx, bucket_bin, &bucket_response);
                 if (err) {
                     fprintf(stderr, "Reset Bucket Properties Problems\n");
+                }
+            }
+            break;
+        case MSG_RPBSETBUCKETREQ:
+            props = riak_bucket_props_new(ctx);
+            if (obj == NULL) {
+                riak_log(rev, RIAK_LOG_FATAL, "Could not allocate a Riak Bucket Properties");
+                return 1;
+            }
+            riak_bucket_props_set_last_write_wins(props, RIAK_FALSE);
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)setbucketprops_cb);
+                riak_encode_set_bucketprops_request(rev, bucket_bin, props, &(rev->pb_request));
+            } else {
+                riak_set_bucketprops_response *bucket_response;
+                 err = riak_set_bucketprops(ctx, bucket_bin, props, &bucket_response);
+                if (err) {
+                    fprintf(stderr, "Set Bucket Properties Problems\n");
                 }
             }
             break;
