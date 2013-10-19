@@ -228,6 +228,18 @@ main(int   argc,
                 riak_free_get_bucketprops_response(ctx, &bucket_response);
             }
             break;
+        case MSG_RPBRESETBUCKETREQ:
+            if (args.async) {
+                riak_event_set_response_cb(rev, (riak_response_callback)resetbucketprops_cb);
+                riak_encode_reset_bucketprops_request(rev, bucket_bin, &(rev->pb_request));
+            } else {
+                riak_reset_bucketprops_response *bucket_response;
+                 err = riak_reset_bucketprops(ctx, bucket_bin, &bucket_response);
+                if (err) {
+                    fprintf(stderr, "Reset Bucket Properties Problems\n");
+                }
+            }
+            break;
         default:
             usage(stderr, argv[0]);
         }

@@ -41,6 +41,8 @@ typedef struct _riak_get_bucketprops_response riak_get_bucketprops_response;
 typedef struct _riak_set_clientid_response riak_set_clientid_response;
 typedef struct _riak_set_bucketprops_request riak_set_bucketprops_request;
 typedef struct _riak_set_bucketprops_response riak_set_bucketprops_response;
+typedef struct _riak_reset_bucketprops_request riak_reset_bucketprops_request;
+typedef struct _riak_reset_bucketprops_response riak_reset_bucketprops_response;
 typedef void (*riak_ping_response_callback)(riak_ping_response *response, void *ptr);
 typedef void (*riak_serverinfo_response_callback)(riak_serverinfo_response *response, void *ptr);
 typedef void (*riak_get_response_callback)(riak_get_response *response, void *ptr);
@@ -50,5 +52,8 @@ typedef void (*riak_listbuckets_response_callback)(riak_listbuckets_response *re
 typedef void (*riak_listkeys_response_callback)(riak_listkeys_response *response, void *ptr);
 typedef void (*riak_get_clientid_response_callback)(riak_get_clientid_response *response, void *ptr);
 typedef void (*riak_set_clientid_response_callback)(riak_set_clientid_response *response, void *ptr);
+typedef void (*riak_get_bucketprops_response_callback)(riak_get_bucketprops_response *response, void *ptr);
+typedef void (*riak_set_bucketprops_response_callback)(riak_set_bucketprops_response *response, void *ptr);
+typedef void (*riak_reset_bucketprops_response_callback)(riak_reset_bucketprops_response *response, void *ptr);
 
 #endif // RIAK_MESSAGES_H

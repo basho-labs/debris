@@ -115,6 +115,12 @@ void getbucketprops_cb(riak_get_bucketprops_response *response, void *ptr) {
     riak_free_get_bucketprops_response(rev->context, (riak_get_bucketprops_response**)&(response));
 }
 
+void resetbucketprops_cb(riak_reset_bucketprops_response *response, void *ptr) {
+    riak_event *rev = (riak_event*)ptr;
+    riak_log(rev, RIAK_LOG_DEBUG, "resetbucketprops_cb");
+    riak_free_reset_bucketprops_response(rev->context, (riak_reset_bucketprops_response**)&(response));
+}
+
 //
 // SYNCHRONOUS CALLBACKS
 //

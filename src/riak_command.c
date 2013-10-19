@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * riak_types.h: Riak C Main
+ * riak_command.h: Riak C Command Parser
  *
  * Copyright (c) 2007-2013 Basho Technologies, Inc.  All Rights Reserved.
  *
@@ -55,6 +55,7 @@ static riak_command s_commands[] = {
     {"map-reduce",   "Execute map/reduce",           NULL, MSG_RPBMAPREDREQ,        RIAK_TRUE,  RIAK_FALSE, RIAK_FALSE},
     {"ping",         "Look for signs of life",       NULL, MSG_RPBPINGREQ,          RIAK_FALSE, RIAK_FALSE, RIAK_FALSE},
     {"put",          "Store a value in a key",       NULL, MSG_RPBPUTREQ,           RIAK_TRUE,  RIAK_TRUE,  RIAK_TRUE},
+    {"reset-bucket", "Reset bucket properties",      NULL, MSG_RPBRESETBUCKETREQ,   RIAK_TRUE,  RIAK_FALSE, RIAK_FALSE},
     {"search",       "Use 2i Search",                NULL, MSG_RPBSEARCHQUERYREQ,   RIAK_TRUE,  RIAK_FALSE, RIAK_TRUE},
     {"server-info",  "Return server settings",       NULL, MSG_RPBGETSERVERINFOREQ, RIAK_FALSE, RIAK_FALSE, RIAK_FALSE},
     {"set-bucket",   "Store bucket properties",      NULL, MSG_RPBSETBUCKETREQ,     RIAK_TRUE,  RIAK_FALSE, RIAK_TRUE},

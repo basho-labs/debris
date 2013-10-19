@@ -294,12 +294,24 @@ struct _riak_set_bucketprops_request
     riak_binary       *type;
 };
 
+// Placeholder
+struct _riak_set_bucketprops_response
+{
+// Empty
+};
+
 // Based on RpbResetBucketReq
 struct _riak_reset_bucketprops_request
 {
     riak_binary   *bucket;
     riak_boolean_t has_type;
     riak_binary   *type;
+};
+
+// Placeholder
+struct _riak_reset_bucketprops_response
+{
+// Empty
 };
 
 
@@ -770,5 +782,40 @@ riak_print_get_bucketprops_response(riak_get_bucketprops_response *response,
 void
 riak_free_get_bucketprops_response(riak_context                   *ctx,
                                    riak_get_bucketprops_response **resp);
+
+/**
+ * @brief Create a request to reset bucket properties
+ * @param rev Riak Event
+ * @param bucket Name of Riak bucket
+ * @param req Returned bucket properties request
+ * @return Error if out of memory
+ */
+riak_error
+riak_encode_reset_bucketprops_request(riak_event       *rev,
+                                      riak_binary      *bucket,
+                                      riak_pb_message **req);
+
+/**
+ * @brief Translate PBC reset_bucketprops response into Riak structure
+ * @param rev Riak Event
+ * @param pbresp PBC response message
+ * @param resp Returned Riak response structure
+ * @param done Returned flag set to true if finished streaming
+ * @return Error if out of memory
+ */
+riak_error
+riak_decode_reset_bucketprops_response(riak_event                       *rev,
+                                       riak_pb_message                  *pbresp,
+                                       riak_reset_bucketprops_response **resp,
+                                       riak_boolean_t                   *done);
+
+/**
+ * @brief Free memory from response
+ * @param ctx Riak Context
+ * @param resp Bucket Properties PBC Response
+ */
+void
+riak_free_reset_bucketprops_response(riak_context                     *ctx,
+                                     riak_reset_bucketprops_response **resp);
 
 #endif

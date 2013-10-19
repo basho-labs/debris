@@ -1151,3 +1151,53 @@ riak_print_get_bucketprops_response(riak_get_bucketprops_response *response,
                                     riak_size_t                    len) {
     riak_bucket_props_print(response->props, target, len);
 }
+
+riak_error
+riak_encode_reset_bucketprops_request(riak_event          *rev,
+                                      riak_binary         *bucket,
+                                      riak_pb_message    **req) {
+
+    riak_context *ctx = (riak_context*)(rev->context);
+    RpbResetBucketReq resetmsg;
+    rpb_reset_bucket_req__init(&resetmsg);
+
+    riak_binary_to_pb_copy(&resetmsg.bucket, bucket);
+
+    riak_uint32_t msglen = rpb_reset_bucket_req__get_packed_size(&resetmsg);
+    riak_uint8_t* msgbuf = (riak_uint8_t*)(ctx->malloc_fn)(msglen);
+    if (msgbuf == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    rpb_reset_bucket_req__pack(&resetmsg, msgbuf);
+
+    riak_pb_message* request = riak_pb_message_new(ctx, MSG_RPBSETBUCKETREQ, msglen, msgbuf);
+    if (request == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *req = request;
+    riak_event_set_response_decoder(rev, (riak_response_decoder)riak_decode_reset_bucketprops_response);
+
+    return ERIAK_OK;
+}
+
+riak_error
+riak_decode_reset_bucketprops_response(riak_event                       *rev,
+                                       riak_pb_message                  *pbresp,
+                                       riak_reset_bucketprops_response **resp,
+                                       riak_boolean_t                   *done) {
+    riak_context *ctx = (riak_context*)(rev->context);
+    riak_reset_bucketprops_response *response = (riak_reset_bucketprops_response*)(ctx->malloc_fn)(sizeof(riak_reset_bucketprops_response));
+    *done = RIAK_TRUE;
+    if (response == NULL) {
+        return ERIAK_OUT_OF_MEMORY;
+    }
+    *resp = response;
+
+    return ERIAK_OK;
+}
+
+void
+riak_free_reset_bucketprops_response(riak_context                     *ctx,
+                                     riak_reset_bucketprops_response **resp) {
+    riak_free(ctx, resp);
+}
