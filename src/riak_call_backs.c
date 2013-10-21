@@ -135,8 +135,8 @@ void
 riak_sync_cb(void *response,
              void *ptr) {
     riak_sync_wrapper *wrapper = (riak_sync_wrapper*)ptr;
-    riak_event        *rev     = wrapper->rev;
-    riak_log(rev, RIAK_LOG_DEBUG, "riak_sync_cb");
+    riak_event       **rev     = wrapper->rev;
+    riak_log(*rev, RIAK_LOG_DEBUG, "riak_sync_cb");
     wrapper->response = response;
 }
 
@@ -148,7 +148,8 @@ riak_event_callback(riak_bufferevent *bev,
                     short             events,
                     void             *ptr)
 {
-    riak_event   *rev = (riak_event*)ptr;
+    riak_event   **rev_target = (riak_event**)ptr;
+    riak_event    *rev = *rev_target;
     if (events & BEV_EVENT_CONNECTED) {
          riak_log(rev, RIAK_LOG_DEBUG, "Connect okay.");
     } else if (events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
@@ -175,9 +176,12 @@ riak_event_callback(riak_bufferevent *bev,
 }
 
 
-void riak_write_callback(riak_bufferevent *bev, void *ptr)
+void
+riak_write_callback(riak_bufferevent *bev,
+                    void             *ptr)
 {
-    riak_event *rev = (riak_event*)ptr;
+    riak_event   **rev_target = (riak_event**)ptr;
+    riak_event    *rev = *rev_target;
     struct evbuffer *buf = bufferevent_get_output(bev);
     riak_log(rev, RIAK_LOG_DEBUG, "Ready for write with event %p.\n", (void*)buf);
 }
@@ -187,7 +191,8 @@ void riak_write_callback(riak_bufferevent *bev, void *ptr)
 void
 riak_read_result_callback(riak_bufferevent *bev,
                           void             *ptr) {
-    riak_event    *rev = (riak_event*)ptr;
+    riak_event   **rev_target = (riak_event**)ptr;
+    riak_event    *rev = *rev_target;
     riak_context  *ctx = (riak_context*)(rev->context);
     riak_boolean_t done_streaming = RIAK_FALSE;
     riak_size_t    buflen;
@@ -285,6 +290,6 @@ riak_read_result_callback(riak_bufferevent *bev,
     event_base_dump_events(rev->base, stdout);
 
     if (done_streaming) {
-        riak_event_free(&rev);
+        riak_event_free(rev_target);
     }
 }

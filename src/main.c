@@ -43,7 +43,7 @@ main(int   argc,
     if (err) {
         exit(1);
     }
-    riak_event  *rev;
+    riak_event  *rev = NULL;
     riak_object *obj;
     riak_bucket_props *props;
     riak_put_options put_options;
@@ -64,9 +64,10 @@ main(int   argc,
         riak_log_context(ctx, RIAK_LOG_DEBUG, "Loop %d", it);
 
         if (args.async) {
-            rev = riak_event_new(ctx, NULL, NULL, NULL);
-            if (rev == NULL) {
-                return 1;
+            riak_event *rev;
+            err = riak_event_new(ctx, &rev, NULL, NULL, NULL);
+            if (err) {
+                return err;
             }
             // For convenience have user callback know about its riak_event
             riak_event_set_cb_data(rev, rev);
@@ -278,7 +279,7 @@ main(int   argc,
 
     if (args.async) {
         // Terminates only on error or timeout
-        event_base_dispatch(riak_context_get_base(ctx));
+        riak_event_loop(ctx);
     }
 
     riak_free(ctx, &bucket_bin);

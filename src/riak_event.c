@@ -28,8 +28,9 @@
 #include "riak_event-internal.h"
 #include "riak_network.h"
 
-riak_event*
+riak_error
 riak_event_new(riak_context          *ctx,
+               riak_event           **rev_target,
                riak_response_callback response_cb,
                riak_response_callback error_cb,
                void                  *cb_data) {
@@ -37,8 +38,9 @@ riak_event_new(riak_context          *ctx,
     riak_event *rev = (riak_event*)(ctx->malloc_fn)(sizeof(riak_event));
     if (rev == NULL) {
         riak_log_context(ctx, RIAK_LOG_FATAL, "Could not allocate a riak_event");
-        return NULL;
+        return ERIAK_OUT_OF_MEMORY;
     }
+    *rev_target = rev;
     rev->base = riak_context_get_base(ctx); // Keep a copy until interface has settled
     rev->context = ctx;
     rev->decoder = NULL;
@@ -57,25 +59,25 @@ riak_event_new(riak_context          *ctx,
     rev->fd = riak_just_open_a_socket(ctx, ctx->addrinfo);
     if (rev->fd < 0) {
         riak_log_context(ctx, RIAK_LOG_FATAL, "Could not just open a socket");
-        return NULL;
+        return ERIAK_LOGGING;
     }
 
     // rev->bevent = bufferevent_socket_new(base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS|BEV_OPT_THREADSAFE);
     rev->bevent = bufferevent_socket_new(rev->base, rev->fd, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
     if (rev->bevent == NULL) {
         riak_log_context(ctx, RIAK_LOG_FATAL, "Could not create bufferevent [fd %d]", rev->fd);
-        return NULL;
+        return ERIAK_OUT_OF_MEMORY;
     }
     int enabled = bufferevent_enable(rev->bevent, EV_READ|EV_WRITE);
     if (enabled != 0) {
         riak_log_context(ctx, RIAK_LOG_FATAL, "Could not enable bufferevent [fd %d]", rev->fd);
-        return NULL;
+        return ERIAK_EVENT;
     }
 
     // Set the internal read and write callbacks
-    bufferevent_setcb(rev->bevent, riak_read_result_callback, riak_write_callback, riak_event_callback, rev);
+    bufferevent_setcb(rev->bevent, riak_read_result_callback, riak_write_callback, riak_event_callback, rev_target);
 
-    return rev;
+    return ERIAK_OK;
 }
 
 void
@@ -115,4 +117,9 @@ void riak_event_free(riak_event** re) {
     if (rev->fd) close(rev->fd);
     (freer)(*re);
     *re = NULL;
+}
+
+void
+riak_event_loop(riak_context *ctx) {
+    event_base_dispatch(riak_context_get_base(ctx));
 }

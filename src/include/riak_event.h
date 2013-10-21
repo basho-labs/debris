@@ -31,12 +31,14 @@ typedef void (*riak_response_callback)(void *response, void *ptr);
 /**
  * @brief Construct a Riak event
  * @param ctx Riak context for memory allocation
+ * @param rev Riak Event
  * @param response_cb Reaponse callback function (user-supplied)
  * @param cb_data Pointer passed to `response_cb` when it is called
- * @returns Spanking new `riak_event` struct
+ * @returns Error code
  */
-riak_event*
+riak_error
 riak_event_new(riak_context          *ctx,
+               riak_event             **rev,
                riak_response_callback response_cb,
                riak_response_callback error_cb,
                void                  *cb_data);
@@ -74,5 +76,12 @@ riak_event_set_error_cb(riak_event             *rev,
  */
 void
 riak_event_free(riak_event** re);
+
+/**
+ * @brief Fire up an event loop
+ * @param ctx Riak Context
+ */
+void
+riak_event_loop(riak_context *ctx);
 
 #endif
