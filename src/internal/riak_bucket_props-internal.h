@@ -98,4 +98,9 @@ riak_bucket_props_new_from_pb(riak_context       *ctx,
                               riak_bucket_props **target,
                               RpbBucketProps     *from);
 
+riak_error
+riak_bucket_props_to_pb_copy(riak_context      *ctx,
+                             RpbBucketProps    *to,
+                             riak_bucket_props *from);
+
 #endif //RIAK_INTERNAL_BUCKET_PROPS_H
