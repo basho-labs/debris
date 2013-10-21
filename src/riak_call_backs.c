@@ -268,7 +268,8 @@ riak_read_result_callback(riak_bufferevent *bev,
         }
         // Decode the message from Protocol Buffers
         result = (rev->decoder)(rev, pbresp, &(rev->response), &done_streaming);
-
+        riak_free(ctx, &pbresp);
+        riak_free(ctx, &rev->msgbuf);
         // Call the user-defined callback for this message, when finished
         if (done_streaming) {
             if (rev->response_cb) (rev->response_cb)(rev->response, rev->cb_data);

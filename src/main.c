@@ -124,6 +124,7 @@ main(int   argc,
             if (riak_object_get_bucket(obj) == NULL ||
                 riak_object_get_value(obj) == NULL) {
                 fprintf(stderr, "Could not allocate bucket/value\n");
+                riak_free(ctx, &obj);
                 exit(1);
             }
             memset(&put_options, '\0', sizeof(riak_put_options));
@@ -144,6 +145,7 @@ main(int   argc,
                 printf("%s\n", output);
                 riak_free_put_response(ctx, &put_response);
             }
+            riak_object_free(ctx, &obj);
             break;
         case MSG_RPBDELREQ:
             if (args.async) {
