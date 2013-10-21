@@ -61,7 +61,7 @@ riak_decode_error_response(riak_event           *rev,
     RpbErrorResp *errresp = rpb_error_resp__unpack(ctx->pb_allocator, (pbresp->len)-1, (uint8_t*)((pbresp->data)+1));
     riak_error_response *response = (riak_error_response*)(ctx->malloc_fn)(sizeof(riak_error_response));
     *done = RIAK_TRUE;
-    riak_free(ctx, pbresp);
+    riak_free(ctx, &pbresp);
     if (response == NULL) {
         rpb_error_resp__free_unpacked(errresp, ctx->pb_allocator);
         return ERIAK_OUT_OF_MEMORY;
