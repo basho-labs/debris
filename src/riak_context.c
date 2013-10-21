@@ -109,7 +109,7 @@ void
 riak_context_free(riak_context **context) {
     riak_context *ctx = *context;
     riak_free_fn freer = ctx->free_fn;
-    if (ctx->base == NULL) event_base_free(ctx->base);
+    if (ctx->base != NULL) event_base_free(ctx->base);
     if (ctx->addrinfo) evutil_freeaddrinfo(ctx->addrinfo);
     (freer)(ctx);
     *context = NULL;
