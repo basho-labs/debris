@@ -43,7 +43,7 @@ riak_synchronous_request(riak_event *rev,
 
     // Terminates only on error or timeout
     event_base_dispatch(rev->base);
-    riak_event_free(&rev);
+    //riak_event_free(&rev);
     *response = wrapper.response;
     return ERIAK_OK;
 }
