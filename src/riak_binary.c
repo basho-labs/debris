@@ -96,6 +96,15 @@ riak_binary_deep_free(riak_context  *ctx,
 }
 
 void
+riak_binary_deep_free_pb(riak_context        *ctx,
+                         ProtobufCBinaryData *b) {
+      if (b == NULL) {
+          return;
+      }
+      riak_free(ctx, &(b->data));
+}
+
+void
 riak_binary_copy(riak_binary* to,
                  riak_binary* from) {
     to->len  = from->len;

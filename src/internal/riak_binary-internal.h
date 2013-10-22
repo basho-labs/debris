@@ -56,4 +56,13 @@ riak_binary_from_pb_deep_copy(riak_context        *ctx,
                               riak_binary         *to,
                               ProtobufCBinaryData *from);
 
+/**
+ * @brief Clean up deeply allocated PB binary
+ * @param ctx Riak Context
+ * @param b Protocol Buffer
+ */
+void
+riak_binary_deep_free_pb(riak_context        *ctx,
+                         ProtobufCBinaryData *b);
+
 #endif /* RIAK_BINARY_H_ */

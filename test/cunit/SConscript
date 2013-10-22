@@ -10,8 +10,8 @@ env.ParseConfig("pkg-config --libs libevent libprotobuf-c protobuf")
 env.ParseConfig("pkg-config --cflags libevent libprotobuf-c protobuf")
 lib_files = ['registry.c']
 
-env.Program('riak_c_cunit','registry.c', LIBS=['riak_c_client', 'event_core', 'event_extra', 'log4c', 'pthread', 'protobuf', 'protobuf-c','cunit'])
-
+riak_c_cunit = env.Program('riak_c_cunit','registry.c', LIBS=['riak_c_client', 'event_core', 'event_extra', 'log4c', 'pthread', 'protobuf', 'protobuf-c','cunit'])
+Depends(riak_c_cunit, '../../build/libriak_c_client.a')
 
 conf = Configure(env)
 if not conf.CheckLib('pthread'):
@@ -38,9 +38,9 @@ if not conf.CheckLib('cunit'):
   print 'Did not find cunit, exiting!'
   Exit(1)
 
-if not conf.CheckLib('riak_c_client'):
-  print 'Did not find riak_c_client, exiting!'
-  Exit(1)
+#if not conf.CheckLib('riak_c_client'):
+#  print 'Did not find riak_c_client, exiting!'
+#  Exit(1)
 
 env = conf.Finish()
 
